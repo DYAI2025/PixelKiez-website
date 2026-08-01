@@ -43,7 +43,12 @@
       menu.dataset.open = open ? 'true' : 'false';
       burger.setAttribute('aria-expanded', open ? 'true' : 'false');
       burger.setAttribute('aria-label', open ? 'Menü schließen' : 'Menü öffnen');
+      // Zugeklappt ist das Panel nur auf 1px gestaucht, nicht entfernt: ohne
+      // inert blieben die neun Links in der Tabreihenfolge und der Fokus
+      // wanderte durch unsichtbare Ziele.
+      menu.inert = !open;
     };
+    setNav(menu.dataset.open === 'true');   // Ausgangszustand aus dem Markup uebernehmen
     burger.addEventListener('click', function () {
       setNav(menu.dataset.open !== 'true');
     });
