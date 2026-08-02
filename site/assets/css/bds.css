@@ -351,6 +351,16 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
 @media (min-width:1080px){.brand__sub{display:inline}}
 
 .header__act{display:flex;align-items:center;gap:12px}
+/* Auf sehr schmalen Geraeten teilen sich Marke, Sprachumschalter und
+   Menuekopf 320 Pixel. Der Schriftzug gibt dabei nach — die beiden runden
+   Knoepfe bleiben bei 44px, weil darunter die Trefferflaeche zu klein wuerde.
+   Umbrechen darf der Name nicht, sonst waechst der Kopf in die Hoehe und
+   verschiebt alle Sprungziele. */
+@media (max-width:379px){
+  .brand{font-size:.9375rem;gap:9px}
+  .brand__mark{width:24px;height:24px}
+  .header__act{gap:8px}
+}
 /* Auf schmalen Geraeten haetten Marke, CTA und Menue zusammen keinen Platz.
    Der Schnellkontakt bleibt ueber den Hero-Button und den Sticky erreichbar. */
 @media (max-width:599px){.header__act .btn--split{display:none}}
@@ -365,6 +375,24 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
              border-color var(--dur) var(--ease);
 }
 .burger:hover{background:var(--paper-2);border-color:var(--ink)}
+
+/* Sprachumschalter. Greift die Form des Menuekopfs auf — gleicher Kreis,
+   gleiche Kante, gleiche Groesse —, damit im Kopf keine dritte Formsprache
+   entsteht. Er zeigt immer die andere Sprache, nicht die aktuelle: eine
+   Umschaltgruppe "DE | EN" braeuchte doppelt so viel Platz, und der Kopf ist
+   auf dem Handy schon knapp. */
+.lang{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:44px;height:44px;flex:none;
+  border:1px solid var(--line-strong);border-radius:50%;
+  font-family:var(--font-mono);font-size:.6875rem;font-weight:500;
+  letter-spacing:.08em;text-transform:uppercase;text-decoration:none;
+  color:var(--ink);
+  transition:background-color var(--dur) var(--ease),
+             border-color var(--dur) var(--ease),
+             color var(--dur) var(--ease);
+}
+.lang:hover{background:var(--paper-2);border-color:var(--ink);color:var(--accent-ink)}
 .burger__l{
   position:absolute;left:50%;top:50%;
   width:16px;height:1.5px;margin-left:-8px;background:var(--ink);

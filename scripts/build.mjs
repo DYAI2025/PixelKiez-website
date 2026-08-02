@@ -24,6 +24,8 @@ import { join, basename, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as esbuild from 'esbuild';
 import { minify as minifyHtml } from 'html-minifier-terser';
+import { uebersetze } from './i18n.mjs';
+import { uebersetzeJs } from './i18n-js.mjs';
 
 const WURZEL = fileURLToPath(new URL('..', import.meta.url));
 const QUELLE = join(WURZEL, 'site');
@@ -54,6 +56,131 @@ const HTML_OPTIONEN = {
 
 const kb = (n) => (n / 1024).toFixed(1).padStart(6) + ' KB';
 const log = (...a) => console.log(...a);
+
+const DOMAIN = 'https://berlin-digital-systems.de';
+
+/* -------------------------------------------------------------------------
+   Sprachverweise. Beide Fassungen nennen sich gegenseitig und sich selbst —
+   ohne x-default weiss eine Suchmaschine nicht, welche sie Besuchern ohne
+   passende Spracheinstellung zeigen soll.
+   ------------------------------------------------------------------------- */
+function setzeAlternates(html, sprache) {
+  const zeilen = [
+    `<link rel="alternate" hreflang="de" href="${DOMAIN}/">`,
+    `<link rel="alternate" hreflang="en" href="${DOMAIN}/en/">`,
+    `<link rel="alternate" hreflang="x-default" href="${DOMAIN}/">`,
+  ].join('\n');
+  const kanonisch = sprache === 'en' ? `${DOMAIN}/en/` : `${DOMAIN}/`;
+  // Kanonische Adresse auf die eigene Fassung ziehen, danach die Verweise
+  return html.replace(/<link rel="canonical" href="[^"]*">/, () =>
+    `<link rel="canonical" href="${kanonisch}">\n${zeilen}`);
+}
+
+/* -------------------------------------------------------------------------
+   Englische Fassung. Erzeugt aus derselben Quelle wie die deutsche — es gibt
+   bewusst keine zweite HTML-Datei, die man vergessen koennte nachzupflegen.
+   ------------------------------------------------------------------------- */
+async function baueEnglisch(cssMin, jsRoh, fontKarte) {
+  const tabHtml = JSON.parse(await readFile(join(QUELLE, 'i18n', 'en.json'), 'utf8'));
+  const tabJs   = JSON.parse(await readFile(join(QUELLE, 'i18n', 'en.js.json'), 'utf8'));
+  let html = await readFile(join(QUELLE, 'index.html'), 'utf8');
+
+  /* --- Text --- */
+  const t = uebersetze(html, tabHtml);
+  if (t.fehlend.length) throw new Error(
+    'index.html enthaelt Text ohne Uebersetzung. Nach einer Aenderung am\n' +
+    '    deutschen Text bitte "npm run i18n" ausfuehren und en.json ergaenzen:\n    · ' +
+    t.fehlend.slice(0, 6).map((s) => s.slice(0, 90)).join('\n    · '));
+  html = t.html;
+  const benutzt = new Set(t.benutzt);   // wird unten um das JSON-LD ergaenzt
+
+  /* --- Skript --- */
+  const j = uebersetzeJs(jsRoh, tabJs);
+  if (j.fehlend.length) throw new Error(
+    'bds.js enthaelt Zeichenketten ohne Uebersetzung (en.js.json ergaenzen):\n    · ' +
+    j.fehlend.slice(0, 6).map((s) => s.slice(0, 90)).join('\n    · '));
+  if (j.veraltet.length) throw new Error(
+    'en.js.json enthaelt Zeichenketten, die es in bds.js nicht mehr gibt:\n    · ' +
+    j.veraltet.slice(0, 6).map((s) => s.slice(0, 90)).join('\n    · '));
+  const jsEn = (await esbuild.transform(j.js, { loader: 'js', minify: true, target: 'es2015' })).code.trim();
+
+  /* --- Dokumentsprache --- */
+  html = html.replace('<html lang="de">', '<html lang="en">');
+  if (!html.includes('<html lang="en">')) throw new Error('en: <html lang="de"> nicht gefunden');
+
+  /* --- Umschalter zeigt jetzt zurueck aufs Deutsche --- */
+  const schalter = /<a class="lang"[^>]*data-lang-switch>[^<]*<\/a>/;
+  if (!schalter.test(html)) throw new Error('en: Sprachumschalter nicht gefunden');
+  html = html.replace(schalter, () =>
+    '<a class="lang" href="/" hreflang="de" lang="de" aria-label="Auf Deutsch wechseln" data-lang-switch>DE</a>');
+
+  /* --- Rechtsseiten bleiben deutsch und liegen im Wurzelverzeichnis.
+         Ein relativer Verweis zeigte von /en/ aus auf /en/impressum.html. --- */
+  html = html.replace(/href="(impressum|datenschutz)\.html"/g, (m, n) => `href="/${n}.html"`);
+
+  /* --- Sprachverweise und kanonische Adresse --- */
+  html = setzeAlternates(html, 'en');
+  html = html.replace(/<meta property="og:locale" content="[^"]*">/, () =>
+    '<meta property="og:locale" content="en_GB">');
+  html = html.replace(/<meta property="og:url" content="[^"]*">/, () =>
+    `<meta property="og:url" content="${DOMAIN}/en/">`);
+
+  /* --- JSON-LD: die Beschreibungen darin sind ebenfalls Inhalt --- */
+  html = html.replace(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/, (treffer, roh) => {
+    const daten = JSON.parse(roh);
+    const offen = [];
+    const geh = (o) => {
+      if (Array.isArray(o)) return o.map(geh);
+      if (o && typeof o === 'object') {
+        for (const k of Object.keys(o)) o[k] = geh(o[k]);
+        return o;
+      }
+      if (typeof o !== 'string') return o;
+      if (Object.prototype.hasOwnProperty.call(tabHtml, o)) { benutzt.add(o); return tabHtml[o]; }
+      // Deutsch gebliebene Saetze melden — Eigennamen und URLs nicht
+      if (/\s/.test(o) && /[äöüßÄÖÜ]|\b(der|die|das|und|für|mit|Ihre|Sie)\b/.test(o)) offen.push(o);
+      return o;
+    };
+    const uebersetzt = geh(daten);
+    // Sprache und Adresse im strukturierten Datensatz mitziehen
+    const s = JSON.stringify(uebersetzt)
+      .replace(/"inLanguage":"de(-DE)?"/g, '"inLanguage":"en"')
+      .replace(new RegExp(`"${DOMAIN}/"`, 'g'), `"${DOMAIN}/en/"`);
+    if (offen.length) throw new Error(
+      'JSON-LD enthaelt deutschen Text ohne Uebersetzung:\n    · ' +
+      offen.slice(0, 5).map((x) => x.slice(0, 90)).join('\n    · '));
+    return `<script type="application/ld+json">${s}</script>`;
+  });
+
+  /* --- Erst jetzt, mit beiden Ergebnissen, laesst sich sagen, welche
+         Eintraege niemand mehr braucht. --- */
+  const veraltet = Object.keys(tabHtml).filter((k) => !benutzt.has(k));
+  if (veraltet.length) throw new Error(
+    'en.json enthaelt Saetze, die weder im Text noch im JSON-LD vorkommen.\n' +
+    '    Vermutlich wurde der deutsche Text geaendert — bitte "npm run i18n"\n' +
+    '    ausfuehren und die Eintraege anpassen:\n    · ' +
+    veraltet.slice(0, 6).map((x) => x.slice(0, 90)).join('\n    · '));
+
+  /* --- Mittel einbetten, wie bei der deutschen Fassung --- */
+  const linkMuster = /[ \t]*<link rel="stylesheet" href="assets\/css\/fonts\.css">\s*\n[ \t]*<link rel="stylesheet" href="assets\/css\/bds\.css">/;
+  html = html.replace(linkMuster, () => `<style>${cssMin}</style>`);
+  html = html.replace(/href="assets\/fonts\/([^"]+\.woff2)"/g, (m, datei) => {
+    const neu = fontKarte.get(datei);
+    if (!neu) throw new Error(`en: Vorladehinweis auf unbekannte Schrift ${datei}`);
+    return `href="/assets/fonts/${neu}"`;
+  });
+  html = html.replace('<script src="assets/js/bds.js" defer></script>', () => `<script>${jsEn}</script>`);
+
+  html = await minifyHtml(html, HTML_OPTIONEN);
+  pruefe('en/index.html', html, jsEn);
+
+  /* Letzte Gegenprobe: kein offensichtliches Deutsch im sichtbaren Text */
+  const sichtbar = html.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>|<[^>]+>/g, ' ');
+  const deutsch = sichtbar.match(/\b(werden|wurde|nicht|Ihre|Ihnen|wir|unsere|Betriebe|Anfragen|Website ist)\b/g);
+  if (deutsch) throw new Error(`en/index.html enthaelt noch deutschen Text: ${[...new Set(deutsch)].join(', ')}`);
+
+  return html;
+}
 
 /* -------------------------------------------------------------------------
    Selbstpruefung je Seite. Deckt genau die Fehler ab, die beim Einbetten
@@ -135,13 +262,18 @@ async function build() {
   const bdsCss   = await readFile(join(QUELLE, 'assets', 'css', 'bds.css'), 'utf8');
   const cssRoh   = fontsCss + '\n' + bdsCss;
 
-  // ../fonts/x.woff2  →  assets/fonts/x.<hash>.woff2
+  // ../fonts/x.woff2  →  /assets/fonts/x.<hash>.woff2
+  //
+  // Wurzelabsolut, nicht relativ: das CSS wird in die Seite eingebettet und
+  // gilt damit relativ zum Dokument. Die englische Fassung liegt unter /en/ —
+  // ein relativer Pfad zeigte dort auf /en/assets/fonts/ und die Schriften
+  // waeren nicht auffindbar.
   let ersetzungen = 0;
   const cssPfade = cssRoh.replace(/url\((['"]?)\.\.\/fonts\/([^'")]+)\1\)/g, (treffer, q, datei) => {
     const neu = fontKarte.get(datei);
     if (!neu) throw new Error(`Schrift referenziert, aber nicht vorhanden: ${datei}`);
     ersetzungen++;
-    return `url(${q}assets/fonts/${neu}${q})`;
+    return `url(${q}/assets/fonts/${neu}${q})`;
   });
   if (ersetzungen === 0) throw new Error('Keine Schriftpfade umgeschrieben — Muster passt nicht mehr.');
 
@@ -180,11 +312,12 @@ async function build() {
     // ohne weiteres — $&& entsteht schon aus einer Variablen namens $.
     html = html.replace(linkMuster, () => `<style>${cssMin}</style>`);
 
-    /* 4b. Schrift-Vorladehinweise auf die gehashten Namen ziehen */
+    /* 4b. Schrift-Vorladehinweise auf die gehashten Namen ziehen, ebenfalls
+           wurzelabsolut — siehe Begruendung beim CSS. */
     html = html.replace(/href="assets\/fonts\/([^"]+\.woff2)"/g, (treffer, datei) => {
       const neu = fontKarte.get(datei);
       if (!neu) throw new Error(`${seite}: Vorladehinweis auf unbekannte Schrift ${datei}`);
-      return `href="assets/fonts/${neu}"`;
+      return `href="/assets/fonts/${neu}"`;
     });
 
     /* 4c. Skript einbetten, an genau derselben Stelle */
@@ -194,11 +327,12 @@ async function build() {
       throw new Error('index.html: Skriptverweis nicht gefunden');
     }
 
-    /* 4d. HTML minifizieren */
-    html = await minifyHtml(html, HTML_OPTIONEN);
+    /* 4d. Sprachverweise: jede Seite nennt ihre Gegenstuecke. Auf den
+           Rechtsseiten gibt es keine englische Fassung, dort entfaellt es. */
+    if (seite === 'index.html') html = setzeAlternates(html, 'de');
 
-    /* 4e. Selbstpruefung. Ein Build, der Kaputtes als Erfolg meldet, ist
-           wertlos — deshalb bricht er hier ab statt zu warnen. */
+    /* 4e. HTML minifizieren */
+    html = await minifyHtml(html, HTML_OPTIONEN);
     pruefe(seite, html, jsMin);
 
     await writeFile(join(ZIEL, seite), html, 'utf8');
@@ -206,6 +340,13 @@ async function build() {
     summeVorher += vorher; summeNachher += nachher;
     log(`${seite.padEnd(20)} ${kb(vorher)} → ${kb(nachher)}   (mit eingebettetem CSS/JS)`);
   }
+
+  /* ---- 4f. Englische Fassung ------------------------------------------- */
+  const enHtml = await baueEnglisch(cssMin, jsRoh, fontKarte);
+  await mkdir(join(ZIEL, 'en'), { recursive: true });
+  await writeFile(join(ZIEL, 'en', 'index.html'), enHtml, 'utf8');
+  summeNachher += Buffer.byteLength(enHtml);
+  log(`en/index.html        ${'—'.padStart(9)} → ${kb(Buffer.byteLength(enHtml))}   (aus der deutschen Quelle erzeugt)`);
 
   /* ---- 5. Bilanz -------------------------------------------------------- */
   log('─'.repeat(66));

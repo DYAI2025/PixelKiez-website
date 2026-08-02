@@ -74,6 +74,42 @@ Nur 4 der 8 Schriften werden geladen — `unicode-range` hält die
 Der Preis: die Folgeseiten tragen das CSS erneut (Impressum 2,9 → 10,8 KB
 komprimiert), weil es nicht mehr getrennt zwischengespeichert wird.
 
+## Sprachfassungen
+
+Die deutsche Seite ist die **einzige Quelle**. Die englische entsteht beim
+Build durch Ersetzen — es gibt bewusst keine zweite HTML-Datei, die man
+vergessen könnte nachzupflegen.
+
+```
+site/index.html          Quelle (deutsch)
+site/i18n/en.json        Übersetzungen für Text, Attribute und JSON-LD
+site/i18n/en.js.json     Übersetzungen für die Zeichenketten in bds.js
+        ↓  npm run build
+dist/index.html          deutsch,  /
+dist/en/index.html       englisch, /en/
+```
+
+**Der Build bricht ab**, wenn ein deutscher Satz keine Übersetzung hat oder
+eine Übersetzung ins Leere zeigt. Beides bedeutet: jemand hat den deutschen
+Text geändert und die englische Fassung nicht. Genau das soll auffallen.
+
+Nach jeder Änderung am deutschen Text:
+
+```bash
+npm run i18n      # neue Sätze nach site/i18n/en.json schreiben (leerer Wert)
+                  # dort übersetzen, dann:
+npm run build
+```
+
+Der Umschalter sitzt im Kopf und zeigt immer die **andere** Sprache — er
+greift Form und Größe des Menüknopfs auf. Beide Fassungen tragen `hreflang`
+aufeinander und ein `x-default` auf die deutsche.
+
+**Impressum und Datenschutz bleiben deutsch.** Beide tragen noch
+`[FREIGABE AUSSTEHEND]`; eine übersetzte, unfertige Rechtserklärung wäre ein
+Haftungsrisiko statt eines Nutzens. Die englische Seite verlinkt sie
+wurzelabsolut.
+
 ## Kontaktformular
 
 Der Weg vom Formular ins Postfach:

@@ -13,7 +13,7 @@ import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 
 const ZIEL = join(fileURLToPath(new URL('..', import.meta.url)), 'dist');
-const SEITEN = ['index.html', 'impressum.html', 'datenschutz.html'];
+const SEITEN = ['index.html', 'impressum.html', 'datenschutz.html', 'en/index.html'];
 
 const fehler = [];
 const hinweise = [];
@@ -78,6 +78,30 @@ async function verify() {
       const ziel = m[1].split('#')[0];
       if (!ziel) continue;
       if (!(await existiert(join(ZIEL, ziel)))) F(`${seite}: Verweis ins Leere — ${ziel}`);
+    }
+
+    /* --- Sprachfassung: Auszeichnung, Umschalter, Verweise --- */
+    const en = seite.startsWith('en/');
+    if (!/<html lang="(de|en)">/.test(html)) F(`${seite}: <html lang> fehlt oder unbekannt`);
+    if (en && !html.includes('<html lang="en">')) F('en/index.html: lang ist nicht "en"');
+    if (!en && seite === 'index.html' && !html.includes('<html lang="de">')) F('index.html: lang ist nicht "de"');
+    if (seite === 'index.html' || en) {
+      for (const hl of ['de', 'en', 'x-default']) {
+        if (!html.includes(`hreflang="${hl}"`)) F(`${seite}: hreflang="${hl}" fehlt`);
+      }
+      const s2 = html.match(/<a class="lang"[^>]*href="([^"]*)"[^>]*>([^<]*)</);
+      if (!s2) F(`${seite}: Sprachumschalter fehlt`);
+      else if (en && (s2[1] !== '/' || s2[2] !== 'DE')) F(`en: Umschalter zeigt auf ${s2[1]} mit "${s2[2]}" statt / und DE`);
+      else if (!en && (s2[1] !== '/en/' || s2[2] !== 'EN')) F(`index: Umschalter zeigt auf ${s2[1]} mit "${s2[2]}" statt /en/ und EN`);
+    }
+    // Auf der englischen Seite duerfen keine relativen Verweise stehen: sie
+    // liegt eine Ebene tiefer und wuerden dort ins Leere zeigen.
+    if (en) {
+      for (const m of html.matchAll(/(?:href|src)="(?!https?:|mailto:|data:|#|\/)([^"]+)"/g)) {
+        F(`en/index.html: relativer Verweis "${m[1]}" — von /en/ aus falsch`);
+      }
+      if (/[äöüÄÖÜß]/.test(html.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>|<[^>]+>/g, ' ')))
+        F('en/index.html: Umlaute im sichtbaren Text — vermutlich deutscher Rest');
     }
 
     /* --- SVG-Attribute in Grossschreibung --- */

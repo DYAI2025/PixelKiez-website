@@ -41,6 +41,11 @@ createServer(async (req, res) => {
   let pfad = decodeURIComponent(new URL(req.url, 'http://x').pathname);
   if (pfad.startsWith('/api/')) return anApi(req, res);
   if (pfad.endsWith('/')) pfad += 'index.html';
+  // Verzeichnis ohne Schraegstrich: umleiten wie Caddy es in der Auslieferung
+  // tut, damit lokal dasselbe passiert wie live.
+  else if (!extname(pfad)) {
+    res.writeHead(301, { Location: pfad + '/' }); res.end(); return;
+  }
   // Pfadausbruch verhindern
   const ziel = join(ZIEL, normalize(pfad).replace(/^(\.\.[/\\])+/, ''));
   if (!ziel.startsWith(ZIEL)) { res.writeHead(403).end('verboten'); return; }
