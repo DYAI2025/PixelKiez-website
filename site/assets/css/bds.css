@@ -374,7 +374,17 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
   transition:background-color var(--dur) var(--ease),
              border-color var(--dur) var(--ease);
 }
-.burger:hover{background:var(--paper-2);border-color:var(--ink)}
+/* Beide runden Knoepfe im Kopf laufen beim Ueberfahren auf Schwarz, ihr
+   Inhalt dreht auf die Papierfarbe — 10,6:1, weit ueber dem Noetigen.
+
+   Bewusst hinter (hover:hover): auf Touch-Geraeten bleibt :hover nach dem
+   Antippen haengen. Beim bisherigen dezenten Grau faellt das kaum auf, ein
+   dauerhaft schwarzer Knopf saehe dagegen nach einem Fehler aus. */
+@media (hover:hover) and (pointer:fine){
+  .burger:hover{background:var(--ink);border-color:var(--ink)}
+  .burger:hover .burger__l{background:var(--paper)}
+  .lang:hover{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+}
 
 /* Sprachumschalter. Greift die Form des Menuekopfs auf — gleicher Kreis,
    gleiche Kante, gleiche Groesse —, damit im Kopf keine dritte Formsprache
@@ -392,11 +402,10 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
              border-color var(--dur) var(--ease),
              color var(--dur) var(--ease);
 }
-.lang:hover{background:var(--paper-2);border-color:var(--ink);color:var(--accent-ink)}
 .burger__l{
   position:absolute;left:50%;top:50%;
   width:16px;height:1.5px;margin-left:-8px;background:var(--ink);
-  transition:transform 280ms var(--ease);
+  transition:transform 280ms var(--ease),background-color var(--dur) var(--ease);
 }
 .burger__l:nth-child(1){transform:translateY(-4px)}
 .burger__l:nth-child(2){transform:translateY(3px)}
