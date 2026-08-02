@@ -1,0 +1,18 @@
+{
+  "name": "bds-api",
+  "version": "1.0.0",
+  "description": "Nimmt das Kontaktformular entgegen und stellt die Anfrage per SMTP ins Postfach zu.",
+  "private": true,
+  "type": "module",
+  "main": "server.mjs",
+  "scripts": {
+    "start": "node server.mjs",
+    "dev": "node server.mjs"
+  },
+  "dependencies": {
+    "nodemailer": "^9.0.3"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

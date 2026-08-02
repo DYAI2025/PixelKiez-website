@@ -711,6 +711,92 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
 }
 .cstack__foot .small{max-width:46ch}
 
+/* ---------- 10b. Karussell auf schmalen Ansichten ------------------------
+   Auf dem Desktop bleibt alles, wie es ist: Branchen ein klebender Stapel,
+   Leistungen ein 2x2-Raster. Darunter waren beide nur noch eine lange
+   Spalte — sechs Branchenkarten allein kosteten 4331px, ein Viertel der
+   gesamten Seitenhoehe. Hier werden sie zu waagerechten Bahnen mit
+   Einrastpunkten: eine Karte fuellt den Bildschirm, die naechste schaut
+   angeschnitten herein und laedt zum Wischen ein.
+
+   Reines CSS. Das Skript setzt ausschliesslich die Fortschrittspunkte;
+   ohne JavaScript laesst sich trotzdem wischen.
+   ------------------------------------------------------------------------- */
+.carou__dots{display:none}
+
+@media (max-width:899px){
+  .cstack{
+    display:flex;
+    overflow-x:auto;
+    scroll-snap-type:x mandatory;
+    overscroll-behavior-x:contain;
+    gap:12px;
+    /* Bis an den Rand ziehen: sonst endet die Bahn am Textsatzspiegel und
+       die angeschnittene Karte waere nicht zu sehen. */
+    margin-inline:calc(var(--gutter) * -1);
+    padding-inline:var(--gutter);
+    scroll-padding-inline:var(--gutter);
+    scrollbar-width:none;
+  }
+  .cstack::-webkit-scrollbar{display:none}
+  .cstack__card{
+    flex:0 0 min(90%,380px);
+    scroll-snap-align:start;
+    scroll-snap-stop:always;
+    /* In der Bahn ist die Karte schmaler als in der Spalte zuvor, der Text
+       bricht also haeufiger um. Ohne engeren Satz wuerde eine Karte hoeher
+       als der Bildschirm — man muesste senkrecht und waagerecht zugleich
+       scrollen. Deshalb hier ein eigener, dichterer Satz. */
+    padding:20px 18px;
+  }
+  .cstack__card .prose{font-size:.9375rem;line-height:1.5}
+  .cstack__card .prose + .prose{margin-top:.7em}
+  .cstack__card .h-md{font-size:1.125rem}
+  .cstack__sub{margin-top:5px;margin-bottom:12px;font-size:.875rem}
+  .cstack__foot{margin-top:16px;padding-top:14px;gap:12px}
+  .cstack__foot .small{font-size:.8125rem;line-height:1.5}
+  .carou__dots--cstack{display:flex}
+}
+
+@media (max-width:819px){
+  .crc-grid{
+    display:flex;
+    overflow-x:auto;
+    scroll-snap-type:x mandatory;
+    overscroll-behavior-x:contain;
+    gap:12px;
+    margin-inline:calc(var(--gutter) * -1);
+    padding-inline:var(--gutter);
+    scroll-padding-inline:var(--gutter);
+    scrollbar-width:none;
+  }
+  .crc-grid::-webkit-scrollbar{display:none}
+  .crc{
+    flex:0 0 min(86%,380px);
+    scroll-snap-align:start;
+    scroll-snap-stop:always;
+  }
+  .carou__dots--crc{display:flex}
+}
+
+/* Fortschrittspunkte. Rein anzeigend — gewischt wird auf der Bahn selbst,
+   deshalb aria-hidden im Markup und keine zusaetzlichen Tabstopps. */
+.carou__dots{
+  justify-content:center;align-items:center;gap:7px;
+  margin-top:16px;
+}
+.carou__dots i{
+  width:6px;height:6px;border-radius:50%;
+  background:var(--line-strong);opacity:.34;
+  transition:opacity var(--dur) var(--ease),
+             width var(--dur) var(--ease),
+             background-color var(--dur) var(--ease);
+}
+.carou__dots i.on{
+  width:20px;border-radius:3px;
+  background:var(--accent);opacity:1;
+}
+
 /* ---------- 11. Projekt-Check -------------------------------------------
    Ein Bedienfeld statt zweier Spalten: drei Fragen nebeneinander, das
    Ergebnis darunter ueber die volle Breite. Kompakter und ruhiger.
@@ -1065,6 +1151,17 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
   transition:color var(--dur) var(--ease);width:fit-content;
 }
 .footer nav a:hover{color:var(--accent-ink)}
+/* Schmal: vier untereinander gestapelte Spalten kosteten 1115px fuer
+   55 Woerter. Marke und Kontakt bleiben breit — die Adresse braucht die
+   Zeile —, die beiden Linklisten stehen nebeneinander. */
+@media (max-width:819px){
+  .footer__grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:30px 20px}
+  .footer__grid > :first-child,
+  .footer__grid > :last-child{grid-column:1 / -1}
+  .footer nav{gap:0}
+  .footer nav a{padding-block:4px;font-size:.875rem}
+  .footer h4{margin-bottom:9px}
+}
 .footer__bar{
   display:flex;flex-wrap:wrap;gap:10px 24px;justify-content:space-between;
   margin-top:clamp(40px,5vw,60px);padding-top:22px;border-top:1px solid var(--line);

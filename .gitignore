@@ -3,3 +3,4 @@
 .gstack/
 node_modules/
 *.log
+dist/

@@ -6,12 +6,19 @@
   'use strict';
 
   /* --- Konfiguration ------------------------------------------------------
-     ENDPOINT: eigener HTTPS-Endpunkt, der das Formular als JSON entgegennimmt.
-     Solange leer, oeffnet das Formular das E-Mail-Programm des Besuchers mit
-     der fertigen Nachricht — es verlaesst dann kein Datenpaket den Browser.
-     Zum Aktivieren eines Backends genuegt es, hier die URL einzutragen.
+     ENDPOINT nimmt das Formular als JSON entgegen und stellt es per SMTP ins
+     Postfach zu (siehe api/server.mjs). Der Pfad ist bewusst relativ: Caddy
+     leitet /api/* an den Formulardienst weiter, fuer den Browser ist es
+     dieselbe Herkunft wie die Seite — kein CORS, keine zweite Domain.
+
+     Scheitert die Uebertragung — Dienst nicht erreichbar, Mailserver
+     gestoert —, faengt der catch-Zweig das ab und nennt die Adresse zum
+     direkten Anschreiben. Es geht also nie eine Anfrage lautlos verloren.
+
+     Auf leer gesetzt, oeffnet das Formular stattdessen das E-Mail-Programm
+     des Besuchers; dann verlaesst kein Datenpaket den Browser.
      ------------------------------------------------------------------------ */
-  var ENDPOINT = '';
+  var ENDPOINT = '/api/kontakt';
   var MAILTO   = 'kontakt@berlin-digital-systems.de';
 
   var $  = function (s, r) { return (r || document).querySelector(s); };
@@ -314,6 +321,70 @@
     var rt;
     window.addEventListener('resize', function () {
       clearTimeout(rt); rt = setTimeout(measure, 180);
+    });
+  })();
+
+  /* --- 7b. Karussellpunkte ----------------------------------------------
+     Auf schmalen Ansichten laufen Branchen und Leistungen als waagerechte
+     Bahn mit Einrastpunkten. Gewischt wird per CSS scroll-snap; hier wird
+     nur angezeigt, an welcher Stelle man steht. Die Punkte sind im Markup
+     aria-hidden — sie sind Orientierung, kein Bedienelement, und sollen
+     keine zusaetzlichen Tabstopps erzeugen. Faellt das Skript aus, laesst
+     sich weiterhin wischen, nur die Anzeige fehlt.
+     ---------------------------------------------------------------------- */
+  (function karussell() {
+    $$('[data-dots]').forEach(function (dots) {
+      var bahn = $(dots.dataset.dots);
+      if (!bahn) return;
+      var karten = Array.prototype.slice.call(bahn.children);
+      if (karten.length < 2) return;
+
+      karten.forEach(function () { dots.appendChild(document.createElement('i')); });
+      var punkte = Array.prototype.slice.call(dots.children);
+
+      var aktiv = -1;
+      var sync = function () {
+        var r = bahn.getBoundingClientRect();
+        var mitte = r.left + r.width / 2;
+        var beste = Infinity, treffer = 0;
+        karten.forEach(function (k, n) {
+          var kr = k.getBoundingClientRect();
+          var d = Math.abs(kr.left + kr.width / 2 - mitte);
+          if (d < beste) { beste = d; treffer = n; }
+        });
+        if (treffer === aktiv) return;
+        aktiv = treffer;
+        punkte.forEach(function (p, n) { p.className = n === treffer ? 'on' : ''; });
+      };
+
+      var wartet = false;
+      bahn.addEventListener('scroll', function () {
+        if (wartet) return;
+        wartet = true;
+        window.requestAnimationFrame(function () { wartet = false; sync(); });
+      }, { passive: true });
+
+      // Tastatur: der Browser scrollt eine fokussierte Karte nur dann heran,
+      // wenn sie voellig ausserhalb liegt. Angeschnittene Karten laesst er
+      // stehen — der Fokus sass dann auf einem Knopf, der zu zwei Dritteln
+      // aus dem Bild ragte. Deshalb hier selbst heranholen.
+      bahn.addEventListener('focusin', function (e) {
+        for (var i = 0; i < karten.length; i++) {
+          if (!karten[i].contains(e.target)) continue;
+          var kr = karten[i].getBoundingClientRect();
+          var br = bahn.getBoundingClientRect();
+          if (kr.left < br.left - 1 || kr.right > br.right + 1) {
+            karten[i].scrollIntoView({
+              block: 'nearest', inline: 'start',
+              behavior: reduced ? 'auto' : 'smooth'
+            });
+          }
+          return;
+        }
+      });
+
+      window.addEventListener('resize', sync);
+      sync();
     });
   })();
 

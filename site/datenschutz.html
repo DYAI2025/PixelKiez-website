@@ -69,11 +69,24 @@
       <li><strong>Branche</strong> — freiwillig, zur Vorbereitung der Antwort</li>
       <li><strong>Anliegen</strong> — freiwillig, Freitextfeld</li>
     </ul>
-    <p><strong>Übertragungsweg — wichtig:</strong> Das Formular sendet Ihre Eingaben <strong>an keinen Server</strong>. Alle Angaben bleiben in Ihrem Browser. Beim Klick auf „Anfrage senden“ öffnet sich <strong>Ihr eigenes E-Mail-Programm</strong> mit einer fertig vorbereiteten Nachricht, die Sie selbst absenden — oder verwerfen. Erst mit dem Absenden durch Sie erreichen uns die Daten, und zwar als gewöhnliche E-Mail. Es kommt <strong>kein externer Formulardienst</strong> und <strong>keine Formular-Schnittstelle</strong> zum Einsatz; es entsteht keine Übermittlung an Dritte.</p>
+    <p><strong>Übertragungsweg:</strong> Beim Klick auf „Anfrage senden“ werden Ihre Eingaben verschlüsselt (TLS) an unseren eigenen Server unter derselben Domain übertragen. Dort werden sie <strong>nicht gespeichert</strong>, sondern unmittelbar als E-Mail an unser Postfach weitergeleitet und anschließend aus dem Arbeitsspeicher verworfen. Es kommt <strong>kein externer Formulardienst</strong> zum Einsatz — Ihre Angaben gehen an niemanden außer uns und den unten genannten Dienstleister, der den Server betreibt.</p>
+    <p><strong>IP-Adresse:</strong> Zum Schutz vor automatisiertem Massenversand merkt sich der Server für zehn Minuten, von welcher IP-Adresse eine Anfrage kam, und begrenzt die Zahl der Absendungen. Diese Angabe wird ausschließlich im Arbeitsspeicher gehalten, nicht mit der Anfrage verknüpft, nicht ausgewertet und nach Ablauf der zehn Minuten verworfen. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse am Schutz vor Missbrauch).</p>
+    <p><strong>Scheitert die Übertragung</strong> — etwa weil der Server nicht erreichbar ist —, erhalten Sie einen Hinweis mit unserer E-Mail-Adresse und können uns direkt anschreiben. Es gehen dabei keine Daten an Dritte.</p>
     <p>Rechtsgrundlage für die anschließende Bearbeitung Ihrer E-Mail ist Art. 6 Abs. 1 lit. b DSGVO, soweit die Anfrage auf den Abschluss oder die Durchführung eines Vertrags gerichtet ist, sonst Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an der Beantwortung von Anfragen). Die Checkbox im Formular dokumentiert zusätzlich Ihr Einverständnis nach Art. 6 Abs. 1 lit. a DSGVO; sie ist jederzeit formlos widerrufbar, die Rechtmäßigkeit der bis dahin erfolgten Verarbeitung bleibt unberührt.</p>
     <p><strong>Spamschutz ohne Nutzerhürde:</strong> Statt eines Captchas enthält das Formular ein für Menschen unsichtbares Zusatzfeld („Honeypot“). Wird dieses ausgefüllt, bricht das Formular ab. Dabei werden keine zusätzlichen personenbezogenen Daten erhoben und es findet keine Profilbildung statt.</p>
-    <p class="todo"><b>[HINWEIS FÜR DIE PFLEGE]</b><br>
-    Dieser Abschnitt beschreibt den aktuell ausgelieferten Stand: Formular ohne Backend, Versand über das E-Mail-Programm des Besuchers. Sobald in <code>assets/js/bds.js</code> ein eigener Endpunkt (<code>ENDPOINT</code>) hinterlegt wird, ändert sich der Übertragungsweg — dann müssen hier Endpunkt, Server-Standort, Benachrichtigungsweg, Speicherdauer und ggf. die Auftragsverarbeitung ergänzt werden.</p>
+    <p class="todo"><b>[ENTWURF — VOR LIVEGANG RECHTLICH PRÜFEN UND VERVOLLSTÄNDIGEN]</b><br>
+    Dieser Abschnitt beschreibt den ausgelieferten Stand: Formular mit eigenem
+    Endpunkt (<code>/api/kontakt</code>), Weiterleitung per SMTP ins eigene Postfach.
+    Vor dem Livegang zwingend zu ergänzen:<br>
+    <b>1.</b> <b>Hosting-Dienstleister als Auftragsverarbeiter benennen</b> — Name,
+    Anschrift und Serverstandort des Anbieters, bei dem Website und Formulardienst
+    laufen. Ein Vertrag zur Auftragsverarbeitung (Art. 28 DSGVO) muss vorliegen.<br>
+    <b>2.</b> Sitzt der Anbieter außerhalb der EU oder verarbeitet er dort, ist die
+    <b>Grundlage der Drittlandübermittlung</b> anzugeben (Art. 44 ff. DSGVO —
+    Angemessenheitsbeschluss oder Standardvertragsklauseln).<br>
+    <b>3.</b> <b>E-Mail-Anbieter benennen</b>, über dessen Postfach die Anfrage
+    zugestellt und gespeichert wird.<br>
+    <b>4.</b> <b>[Zeitraum]</b> unter „Speicherdauer“ durch eine konkrete Frist ersetzen.</p>
     <p><strong>Speicherdauer:</strong> Wir löschen Ihre Anfrage, sobald sie abschließend bearbeitet ist und keine gesetzlichen Aufbewahrungspflichten entgegenstehen — spätestens nach [Zeitraum]. Entsteht aus der Anfrage ein Vertragsverhältnis, gelten die handels- und steuerrechtlichen Aufbewahrungsfristen (in der Regel 6 bzw. 10 Jahre).</p>
 
     <h2>5. Kontakt per E-Mail</h2>

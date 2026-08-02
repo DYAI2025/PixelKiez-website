@@ -1,7 +1,10 @@
 :{$PORT:80} {
 	root * /srv
 	encode gzip zstd
-	file_server
+
+	@fonts path /assets/fonts/*
+	@seiten not path /assets/* /api/*
+	@api path /api/*
 
 	header {
 		X-Content-Type-Options nosniff
@@ -10,9 +13,32 @@
 		-Server
 	}
 
-	# Schriften sind versioniert unveraenderlich, CSS/JS kurz cachen
-	header /assets/fonts/* Cache-Control "public, max-age=31536000, immutable"
-	header /assets/css/*   Cache-Control "public, max-age=3600"
-	header /assets/js/*    Cache-Control "public, max-age=3600"
-	header /*.html         Cache-Control "public, max-age=300"
+	# Schriften tragen seit dem Build einen Inhalts-Hash im Dateinamen. Aendert
+	# sich eine Schrift, aendert sich ihr Name — deshalb ist "immutable" hier
+	# gefahrlos und ein Jahr angemessen.
+	header @fonts Cache-Control "public, max-age=31536000, immutable"
+
+	# Die Seiten tragen CSS und JS eingebettet, es gibt also keine getrennten
+	# Mitteldateien mehr, die veralten koennten. Der Matcher deckt bewusst auch
+	# den blanken Pfad "/" ab — die frueherere Regel /*.html tat das nicht, die
+	# Startseite lief dadurch ganz ohne Cache-Header.
+	header @seiten Cache-Control "public, max-age=300"
+
+	# Das Kontaktformular geht an den Formulardienst. Ueber denselben Host
+	# ausgeliefert, damit es kein CORS und keine zweite Domain braucht —
+	# fuer den Browser ist es dieselbe Herkunft wie die Seite.
+	#
+	# API_UPSTREAM zeigt im Betrieb auf das private Netz von Railway, z. B.
+	#   bds-api.railway.internal:3000
+	# Ist die Variable nicht gesetzt, laeuft die Seite ohne Formulardienst und
+	# das Formular weicht selbsttaetig auf den E-Mail-Pfad aus.
+	handle @api {
+		reverse_proxy {$API_UPSTREAM:127.0.0.1:3000} {
+			header_up X-Forwarded-For {remote_host}
+		}
+	}
+
+	handle {
+		file_server
+	}
 }
