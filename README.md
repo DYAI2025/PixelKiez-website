@@ -112,9 +112,39 @@ Umgebungsvariablen des Formulardienstes — **keine davon gehört in den Code**:
 Am Webdienst zusätzlich `API_UPSTREAM` auf den Formulardienst im privaten
 Netz zeigen lassen, z. B. `bds-api.railway.internal:3000`.
 
-Solange `SMTP_HOST` oder `MAIL_TO` fehlt, läuft der Dienst im **Trockenlauf**:
-Er nimmt an, prüft und protokolliert, versendet aber nicht. `/api/health`
-zeigt den Modus an.
+Solange `SMTP_HOST` oder `MAIL_TO` fehlt, **weist der Dienst jede Anfrage mit
+einem Fehler ab**. Das Formular zeigt dann die E-Mail-Adresse zum direkten
+Anschreiben und behält die Eingaben. Eine Erfolgsmeldung ohne Zustellung gibt
+es bewusst nicht — eine lautlos verlorene Anfrage wäre schlimmer als eine
+sichtbar gescheiterte. `/api/health` zeigt den Modus an.
+
+### Zugang prüfen, bevor die Seite live geht
+
+Die Werte kommen aus der Mail-Verwaltung Ihres Hosters — meist unter
+„E-Mail" → „Postausgangsserver" oder „SMTP". Vor dem Eintragen in Railway
+lassen sie sich lokal prüfen:
+
+```bash
+cd api
+SMTP_HOST=smtp.ihr-hoster.de \
+SMTP_PORT=465 \
+SMTP_USER=website@ihre-domain.de \
+SMTP_PASS='...' \
+MAIL_TO=kontakt@ihre-domain.de \
+MAIL_FROM=website@ihre-domain.de \
+npm run mailtest              # nur Verbindung und Anmeldung
+# ... und wenn das klappt:
+node mailtest.mjs --senden    # echte Testmail ins Postfach
+```
+
+Das Werkzeug prüft in drei Stufen — Vollständigkeit, Anmeldung, echter
+Versand — und nennt bei jedem Fehler die wahrscheinliche Ursache: falscher
+Port, falsches Kennwort, Tippfehler im Servernamen, Absenderdomain passt
+nicht zum Postfach.
+
+**Wichtig:** `MAIL_FROM` muss zur selben Domain gehören wie `SMTP_USER`.
+Sonst lehnen die meisten Hoster den Versand ab — und wenn nicht, landet die
+Mail beim Empfänger im Spam, weil SPF nicht passt.
 
 ## Deployment
 
