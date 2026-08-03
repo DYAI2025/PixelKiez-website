@@ -339,7 +339,21 @@
       var karten = Array.prototype.slice.call(bahn.children);
       if (karten.length < 2) return;
 
-      karten.forEach(function () { dots.appendChild(document.createElement('i')); });
+      // Punkte sind Schalter, keine blosse Anzeige. Etwas, das wie ein
+      // Bedienelement aussieht und auf Antippen nicht reagiert, wirkt wie ein
+      // Fehler — und in einem Karussell erwartet man genau diese Bedienung.
+      karten.forEach(function (k, n) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.setAttribute('aria-label', dots.dataset.beschriftung
+          ? dots.dataset.beschriftung.replace('%', String(n + 1))
+          : 'Karte ' + (n + 1));
+        b.addEventListener('click', function () {
+          k.scrollIntoView({ block: 'nearest', inline: 'start',
+                             behavior: reduced ? 'auto' : 'smooth' });
+        });
+        dots.appendChild(b);
+      });
       var punkte = Array.prototype.slice.call(dots.children);
 
       var aktiv = -1;
@@ -391,21 +405,19 @@
   /* --- 8. Projekt-Check -------------------------------------------------- */
   var BRANCHEN = {
     praxis:   'Arztpraxen & ZMVZ',
-    psycho:   'Psychotherapiepraxen',
     hotel:    'Hotellerie',
-    handwerk: 'Handwerk',
-    bau:      'Baubetriebe',
+    bau:      'Baubetriebe & Handwerk',
     gastro:   'Gastronomie',
+    startup:  'Startups',
     andere:   'Andere Branche'
   };
 
   var DREH = {
-    praxis:   'Anliegen-Triage vor dem Telefon — Ihr Buchungstool bleibt die Terminmaschine. Dazu Selbstzahlerseiten und MFA-Recruiting.',
-    psycho:   'Strukturierte Erstanfrage mit Kassensitz/Privat, Verfahren und Kapazitätsstatus. Ziel ist Entlastung und Passung, nicht mehr Anfragen.',
+    praxis:   'Anliegen-Triage vor dem Telefon, Ihr Buchungstool bleibt die Terminmaschine. Dazu Selbstzahlerseiten und MFA-Recruiting; für Psychotherapiepraxen die strukturierte Erstanfrage mit Kassensitz, Verfahren und Kapazitätsstatus.',
     hotel:    'Direktbuchungspfad zur bestehenden Booking-Engine, dazu Event- und Tagungsanfragen mit Personenzahl und Budgetrahmen.',
-    handwerk: 'Benannte Projekt-Konfiguratoren mit Eckdaten, Budgetrahmen und Foto-Upload — plus Karriereseiten mit 60-Sekunden-Bewerbung.',
-    bau:      'Projekt-Konfigurator mit Projektart, Größenordnung, Zeitfenster und Plan-Upload sowie getrennte Recruiting-Funnels.',
+    bau:      'Projekt-Konfigurator mit Projektart, Größenordnung, Zeitfenster und Plan-Upload sowie getrennte Recruiting-Funnels für gewerbliche Rollen und Bauleitung.',
     gastro:   'Eigene Reservierung, echte HTML-Speisekarte statt PDF sowie Event-, Catering- und Gutscheinstrecken.',
+    startup:  'Klares Nutzenversprechen statt Buzzwords, eine Landingpage je Zielgruppe und ein Anfragepfad, dessen Abschlussquote vom ersten Tag an messbar ist.',
     andere:   'Im Erstgespräch prüfen wir ehrlich, ob unser Vorgehen zu Ihrem Engpass passt.'
   };
 
@@ -429,10 +441,10 @@
       entry: 'Kostenloser Quick-Check im Erstgespräch: Wir testen Ihre aktuelle Bewerbungsstrecke live am Handy.',
     },
     website: {
-      label: 'Website ist alt — oder es gibt keine',
+      label: 'Website ist alt oder es gibt keine',
       title: 'Launch- & Redesign-Paket',
       mods: ['One-Page- oder Business-Website bzw. Redesign', 'SEO-Fundament', 'GEO-Grundsetup', 'Google-Business-Profil'],
-      entry: 'Einstieg über die Diagnose im Erstgespräch — mit erster Analyse Ihres aktuellen Auftritts.',
+      entry: 'Einstieg über die Diagnose im Erstgespräch, mit erster Analyse Ihres aktuellen Auftritts.',
     },
     verwaltung: {
       label: 'Zu viel Telefon und Verwaltung',
@@ -449,9 +461,9 @@
   };
 
   var ZEIT = {
-    sofort:  { label: 'So schnell wie möglich', line: 'Kurzfristig — wir melden uns innerhalb eines Werktags mit Einschätzung und möglichen Startterminen.' },
-    quartal: { label: 'Im nächsten Quartal',    line: 'Nächstes Quartal — wir liefern die Diagnose jetzt, damit das Angebot zum Start bereitliegt.' },
-    offen:   { label: 'Wir orientieren uns',    line: 'Offener Zeitrahmen — Sie erhalten eine Einschätzung ohne Termindruck.' }
+    sofort:  { label: 'So schnell wie möglich', line: 'Kurzfristig, wir melden uns innerhalb eines Werktags mit Einschätzung und möglichen Startterminen.' },
+    quartal: { label: 'Im nächsten Quartal',    line: 'Nächstes Quartal, wir liefern die Diagnose jetzt, damit das Angebot zum Start bereitliegt.' },
+    offen:   { label: 'Wir orientieren uns',    line: 'Offener Zeitrahmen, Sie erhalten eine Einschätzung ohne Termindruck.' }
   };
 
   var pick = { branche: '', thema: '', zeit: '' };
@@ -475,7 +487,7 @@
       var missing = !pick.branche ? 'Branche' : (!pick.thema ? 'Ihr Thema' : 'Ihr Zeitrahmen');
       out.innerHTML = '<div class="pc__wait">' + meter +
         '<span class="pc__hint">Noch offen: <em class="q">' + missing +
-        '</em> — danach sehen Sie hier Ihr passendes System.</span></div>';
+        '</em>, danach sehen Sie hier Ihr passendes System.</span></div>';
       return;
     }
 
@@ -717,16 +729,16 @@
       // Ohne konfiguriertes Backend: Nachricht im E-Mail-Programm vorbereiten.
       if (!ENDPOINT) {
         window.location.href = 'mailto:' + MAILTO +
-          '?subject=' + encodeURIComponent('Anfrage über die Website — ' + payload.name) +
+          '?subject=' + encodeURIComponent('Anfrage über die Website von ' + payload.name) +
           '&body=' + encodeURIComponent(
             'Name: '     + payload.name +
             '\nKontakt: '  + payload.kontakt +
             '\nBranche: '  + (payload.branche || 'keine Angabe') +
-            '\n\nAnliegen:\n' + (payload.anliegen || '—') +
-            '\n\n— gesendet über das Kontaktformular'
+            '\n\nAnliegen:\n' + (payload.anliegen || 'keine Angabe') +
+            '\n\nGesendet über das Kontaktformular'
           );
         done();
-        say('ok', '<strong>Ihr E-Mail-Programm öffnet sich</strong> mit der fertigen Nachricht — bitte einmal absenden. Falls nichts passiert, schreiben Sie direkt an <a href="mailto:' +
+        say('ok', '<strong>Ihr E-Mail-Programm öffnet sich</strong> mit der fertigen Nachricht, bitte einmal absenden. Falls nichts passiert, schreiben Sie direkt an <a href="mailto:' +
                   MAILTO + '">' + MAILTO + '</a>.');
         return;
       }
@@ -739,11 +751,11 @@
         if (!r.ok) throw new Error('HTTP ' + r.status);
         form.reset();
         done();
-        say('ok', '<strong>Angekommen.</strong> Sie erhalten innerhalb eines Werktags eine qualifizierte Antwort — kein Newsletter, kein unangekündigter Verkaufsanruf.');
+        say('ok', '<strong>Angekommen.</strong> Sie erhalten innerhalb eines Werktags eine qualifizierte Antwort, kein Newsletter und kein unangekündigter Verkaufsanruf.');
       }).catch(function () {
         done();
         say('err', 'Die Übertragung hat nicht geklappt. Schreiben Sie uns bitte direkt an <a href="mailto:' + MAILTO +
-                   '?subject=Anfrage%20über%20die%20Website">' + MAILTO + '</a> — wir antworten genauso schnell.');
+                   '?subject=Anfrage%20über%20die%20Website">' + MAILTO + '</a>, wir antworten genauso schnell.');
       });
     });
   }

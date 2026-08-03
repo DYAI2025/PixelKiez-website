@@ -8,7 +8,27 @@ import { lieseStrings } from './i18n.mjs';
 
 const W = fileURLToPath(new URL('..', import.meta.url));
 const html = await readFile(join(W, 'site', 'index.html'), 'utf8');
-const strings = lieseStrings(html);
+
+/* Textknoten und Attribute holt lieseStrings. Das JSON-LD steckt in einem
+   <script>, das der Zerleger bewusst nicht anfasst — seine Beschreibungen
+   sind aber genauso Inhalt und muessen mit. Ohne diesen Zweig verwarf jeder
+   Lauf die vorhandenen JSON-LD-Uebersetzungen. */
+function ldStrings(quelle) {
+  const m = quelle.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);
+  if (!m) return [];
+  const raus = [];
+  const geh = (o) => {
+    if (Array.isArray(o)) return o.forEach(geh);
+    if (o && typeof o === 'object') return Object.values(o).forEach(geh);
+    if (typeof o !== 'string') return;
+    // Nur Saetze, keine Bezeichner, Adressen oder Codes
+    if (/\s/.test(o) && !/^https?:/.test(o) && /[a-zA-ZäöüÄÖÜß]/.test(o)) raus.push(o);
+  };
+  geh(JSON.parse(m[1]));
+  return raus;
+}
+
+const strings = [...new Set([...lieseStrings(html), ...ldStrings(html)])];
 
 let alt = {};
 try { alt = JSON.parse(await readFile(join(W, 'site', 'i18n', 'en.json'), 'utf8')); } catch {}

@@ -9,7 +9,8 @@
     "verify": "node scripts/verify.mjs",
     "serve": "node scripts/serve.mjs",
     "clean": "rm -rf dist",
-    "i18n": "node scripts/i18n-extract.mjs"
+    "i18n": "node scripts/i18n-extract.mjs",
+    "deps": "sh scripts/deps.sh"
   },
   "devDependencies": {
     "esbuild": "^0.25.0",

@@ -8,3 +8,4 @@ dist
 **/.gstack
 *.md
 *.log
+node_modules.nosync

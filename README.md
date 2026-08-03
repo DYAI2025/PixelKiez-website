@@ -30,7 +30,7 @@ Bauplan, Leistungs-Content) und gehören nicht ins Web-Root.
 ## Befehle
 
 ```bash
-npm install         # einmalig
+npm run deps        # einmalig: installieren und aus dem iCloud-Sync nehmen
 npm run build       # site/ → dist/
 npm run verify      # dist/ abnehmen (Exit 1 bei Fehlern)
 npm run serve       # dist/ auf http://localhost:8080 ansehen
@@ -38,6 +38,21 @@ npm run clean       # dist/ löschen
 ```
 
 Vor einem Deploy: `npm run build && npm run verify`.
+
+### Warum `npm run deps` statt `npm install`
+
+Das Projekt liegt unter `~/Documents` und wird von iCloud synchronisiert.
+`node_modules` sind mehrere tausend kleine Dateien; schreibt npm sie, während
+iCloud sie hochlädt, entstehen Duplikate mit „ 2“ im Namen und einzelne
+Module hängen beim Laden. Das ist bereits passiert und legte den Build lahm.
+
+iCloud überspringt alles, was auf `.nosync` endet. npm ersetzt einen
+vorhandenen Symlink allerdings bei **jeder** Installation durch ein echtes
+Verzeichnis, auch bei `npm ci`. `npm run deps` installiert deshalb zuerst
+normal und hängt das Ergebnis danach nach `node_modules.nosync` um.
+
+Wenn der Build einmal ohne Ausgabe hängt oder `npm ls` überzählige Pakete
+meldet: `npm run deps` erneut ausführen.
 
 ## Was der Build macht
 

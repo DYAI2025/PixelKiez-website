@@ -110,9 +110,6 @@ hr{border:0;border-top:1px solid var(--line);margin:0}
   color:var(--ink-45);
   display:flex;align-items:center;gap:10px;
 }
-.kicker::before{
-  content:"";width:22px;height:1px;background:var(--accent);flex:none;
-}
 
 .h-xl,.h-lg,.h-md{
   font-family:var(--font-display);
@@ -633,15 +630,34 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
 .crc__body{margin-top:22px}
 
 /* Der Vorhang */
+/* Der Vorhang traegt je Karte eine eigene Markenfarbe. Sie steht hier
+   ausgeschrieben und nicht als var(--accent): sonst haenge sie am Abschnitt
+   und wuerde auf orangem Grund schwarz, mit fast schwarzer Schrift darauf.
+
+   Jede Karte bekommt bewusst eine andere Farbe als ihren Ruhezustand —
+   waeren beide gleich, bliebe beim Aufziehen nichts zu sehen. Zu jeder
+   Flaeche gehoert die passende Schriftrampe, sonst faellt der Kontrast. */
 .crc__open{
   position:absolute;inset:0;
-  /* Fuellfarbe explizit, nicht ueber --accent: sonst haengt sie am Abschnitt
-     und wird auf orangem Grund schwarz — mit nahezu schwarzer Schrift darauf. */
   background:#EC5D43;
-  /* Schriftrampe fuer die Farbflaeche: auf Orange traegt nur nahezu Schwarz */
   --ink:#0E1413;--ink-70:#151B19;--ink-45:#1A211F;
   --accent-ink:#0E1413;--line-soft:#C8462F;--line-strong:#0E1413;
   color:var(--ink);
+}
+.crc[data-vorhang="schwarz"] .crc__open{
+  background:#0E1413;
+  --ink:#B6C7C4;--ink-70:#93A29E;--ink-45:#7C8A86;
+  --accent-ink:#EC5D43;--line-soft:#222B29;--line-strong:#566360;
+}
+.crc[data-vorhang="weiss"] .crc__open{
+  background:#FFFFFF;
+  --ink:#0E1413;--ink-70:#2A3634;--ink-45:#47534F;
+  --accent-ink:#8F2410;--line-soft:#EAEFEE;--line-strong:#5A706C;
+}
+.crc[data-vorhang="blau"] .crc__open{
+  background:#B6C7C4;
+  --ink:#0E1413;--ink-70:#2A3634;--ink-45:#47534F;
+  --accent-ink:#8F2410;--line-soft:#93A8A4;--line-strong:#5A706C;
 }
 .tone--orange .crc__open,
 .sec--orange .crc__open{
@@ -733,10 +749,6 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
 .cstack__head{
   display:flex;align-items:baseline;justify-content:space-between;gap:18px;
 }
-.cstack__num{
-  font-family:var(--font-mono);font-size:.8125rem;letter-spacing:.12em;
-  color:var(--accent-ink);flex:none;
-}
 .cstack__sub{
   margin-top:7px;margin-bottom:16px;
   font-size:.9375rem;color:var(--accent-ink);font-weight:500;
@@ -819,20 +831,29 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
 /* Fortschrittspunkte. Rein anzeigend — gewischt wird auf der Bahn selbst,
    deshalb aria-hidden im Markup und keine zusaetzlichen Tabstopps. */
 .carou__dots{
-  justify-content:center;align-items:center;gap:7px;
-  margin-top:16px;
+  justify-content:center;align-items:center;gap:0;
+  margin-top:12px;
 }
-.carou__dots i{
-  width:6px;height:6px;border-radius:50%;
+/* Die Punkte sind Schalter. Die Trefferflaeche ist deshalb 24px hoch und
+   liegt unsichtbar um den Punkt herum — sichtbar bleibt der 6px-Punkt, damit
+   die Anzeige ruhig wirkt, greifbar ist sie trotzdem. */
+.carou__dots button{
+  width:24px;height:24px;padding:0;border:0;background:none;
+  display:grid;place-items:center;cursor:pointer;
+}
+.carou__dots button::before{
+  content:"";width:6px;height:6px;border-radius:50%;
   background:var(--line-strong);opacity:.34;
   transition:opacity var(--dur) var(--ease),
              width var(--dur) var(--ease),
              background-color var(--dur) var(--ease);
 }
-.carou__dots i.on{
+.carou__dots button.on::before{
   width:20px;border-radius:3px;
   background:var(--accent);opacity:1;
 }
+.carou__dots button:hover::before{opacity:.7}
+.carou__dots button.on:hover::before{opacity:1}
 
 /* ---------- 11. Projekt-Check -------------------------------------------
    Ein Bedienfeld statt zweier Spalten: drei Fragen nebeneinander, das
