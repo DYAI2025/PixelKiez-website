@@ -862,6 +862,47 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
 .pc .chip{padding:8px 13px;min-height:38px;font-size:.8125rem;gap:7px}
 .pc .chip[aria-pressed="true"]::before{width:6px;height:6px}
 
+/* --- Schrittweise auf schmalen Ansichten ---------------------------------
+   Auf dem Desktop stehen die drei Fragen nebeneinander und passen. Darunter
+   standen sie untereinander, alle offen — 1288px, wovon die Themenspalte
+   allein 272px verbrauchte, weil jede lange Beschriftung eine eigene Zeile
+   belegte.
+
+   Beantwortet heisst hier: Fragetext und ungewaehlte Chips treten zurueck,
+   der gewaehlte Chip rueckt neben die Nummer. Aus einem Block wird eine
+   Zeile. Der stehengebliebene Chip ist zugleich der Schalter zum Aendern —
+   deshalb braucht es kein zusaetzliches Bedienelement.
+   ------------------------------------------------------------------------- */
+.pc__pick{display:none}
+
+@media (max-width:899px){
+  .pc__q{padding:15px 0}
+
+  /* Zugeklappt: aus dem Block wird eine Zeile — Nummer links, getroffene
+     Wahl rechts. Fragetext und Chipreihe treten ganz zurueck. */
+  .pc__q[data-erledigt="true"]{
+    display:flex;align-items:center;gap:14px;
+    padding:13px 0;cursor:pointer;
+  }
+  .pc__q[data-erledigt="true"] .pc__lbl{flex:none}
+  .pc__q[data-erledigt="true"] .pc__ask,
+  .pc__q[data-erledigt="true"] .chips{display:none}
+  .pc__q[data-erledigt="true"] .pc__pick{
+    display:block;margin-left:auto;text-align:right;
+    font-size:.875rem;font-weight:500;color:var(--ink);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  /* Noch nicht beantwortet: statt der Wahl ein Hinweis, dass hier etwas kommt */
+  .pc__q[data-erledigt="true"] .pc__pick:empty::after{
+    content:"—";color:var(--ink-45);
+  }
+  .pc__q[data-erledigt="true"]:hover .pc__lbl b{color:var(--accent)}
+
+  /* Etwas dichter auch im offenen Zustand */
+  .pc__ask{margin:7px 0 11px;font-size:.9375rem}
+  .pc .chips{gap:6px}
+}
+
 .pc__out{
   border-left:2px solid var(--accent);
   padding:clamp(20px,2.2vw,28px) 0 0 clamp(18px,2vw,26px);

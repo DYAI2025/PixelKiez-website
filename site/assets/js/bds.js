@@ -502,16 +502,99 @@
     $('#check-handoff').addEventListener('click', handoff);
   };
 
+  /* --- Schrittweise Anzeige auf schmalen Ansichten ----------------------
+     Alle drei Fragen gleichzeitig offen kosteten 1288px, ein Drittel davon
+     Leerraum neben den langen Themen-Beschriftungen. Beantwortete Fragen
+     zeigen deshalb nur noch den gewaehlten Chip; Fragetext und uebrige Chips
+     treten zurueck.
+
+     Bewusst ohne neues Bedienelement: der gewaehlte Chip bleibt stehen und
+     ist selbst der Schalter, mit dem sich die Gruppe wieder oeffnet. Damit
+     entstehen weder zusaetzliche Tabstopps noch Markup, das auf dem Desktop
+     mitgeschleppt und wieder versteckt werden muesste.
+     ---------------------------------------------------------------------- */
+  var fragen = $$('.pc__q');
+  var schmal = function () { return window.matchMedia('(max-width:899px)').matches; };
+
+  // Je Frage eine Zeile fuer die getroffene Wahl. Sie steht im zugeklappten
+  // Zustand rechts neben der Nummer und ersetzt dort die Chipreihe.
+  fragen.forEach(function (q) {
+    var s = document.createElement('span');
+    s.className = 'pc__pick';
+    q.insertBefore(s, $('.pc__ask', q));
+  });
+
+  var gruppeVon = function (q) { var b = $('[data-check]', q); return b && b.dataset.check; };
+  var offeneFrage = fragen[0] || null;
+
+  var zeigeSchritte = function () {
+    fragen.forEach(function (q) {
+      var g = gruppeVon(q);
+      var wahl = g && pick[g];
+      var zu = schmal() && q !== offeneFrage;
+
+      q.dataset.erledigt = zu ? 'true' : 'false';
+      $('.pc__pick', q).textContent = wahl
+        ? ($$('[data-check="' + g + '"][data-value="' + wahl + '"]')[0] || {}).textContent || ''
+        : '';
+
+      // Zugeklappt traegt die Zeile selbst die Bedienung. Das kostet keinen
+      // zusaetzlichen Tabstopp, sondern spart welche: die bis zu sieben Chips
+      // darin sind ausgeblendet und damit ohnehin nicht mehr erreichbar.
+      if (zu) {
+        q.setAttribute('role', 'button');
+        q.setAttribute('tabindex', '0');
+        q.setAttribute('aria-expanded', 'false');
+      } else {
+        q.removeAttribute('role');
+        q.removeAttribute('tabindex');
+        q.removeAttribute('aria-expanded');
+      }
+    });
+  };
+
+  var oeffne = function (q) { offeneFrage = q; zeigeSchritte(); };
+
+  fragen.forEach(function (q) {
+    q.addEventListener('click', function (e) {
+      if (q.dataset.erledigt === 'true' && !e.target.closest('[data-check]')) oeffne(q);
+    });
+    q.addEventListener('keydown', function (e) {
+      if (q.dataset.erledigt !== 'true') return;
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); oeffne(q); }
+    });
+  });
+
+  // Beim Wechsel zwischen schmal und breit den Zustand nachziehen: auf dem
+  // Desktop stehen alle drei Fragen nebeneinander und duerfen nicht zuklappen.
+  window.addEventListener('resize', function () {
+    if (!schmal()) offeneFrage = null;
+    else if (!offeneFrage) offeneFrage = fragen[0];
+    zeigeSchritte();
+  });
+
   $$('[data-check]').forEach(function (btn) {
     btn.addEventListener('click', function () {
       var group = btn.dataset.check, value = btn.dataset.value;
+      var q = btn.closest('.pc__q');
+
       $$('[data-check="' + group + '"]').forEach(function (o) {
         o.setAttribute('aria-pressed', String(o === btn));
       });
       pick[group] = value;
+
+      // Weiter zur ersten noch unbeantworteten Frage. Ist keine mehr offen,
+      // klappen alle zu und das Ergebnis bekommt den Platz.
+      offeneFrage = null;
+      for (var i = 0; i < fragen.length; i++) {
+        var g = gruppeVon(fragen[i]);
+        if (g && !pick[g]) { offeneFrage = fragen[i]; break; }
+      }
+      zeigeSchritte();
       render();
     });
   });
+  zeigeSchritte();
   render();
 
   /* --- 9. Schnellkontakt: Dialog, Uebergabe, Versand -------------------- */

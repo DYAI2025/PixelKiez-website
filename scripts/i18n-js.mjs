@@ -10,6 +10,8 @@
 const CODE = [
   /^[.#\[]/,                       // Selektoren
   /^[a-z]+(-[a-z]+)*$/,            // Ereignisnamen, Attributnamen, Schluesselwoerter
+  /^[a-z][a-z0-9]*__[a-z0-9-]+$/,  // Klassennamen nach BEM: pc__pick, tb__line
+  /\[data-/,                       // Selektorbruchstuecke
   /^\/[\w/.-]*$/,                  // Pfade
   /^https?:|^mailto:|^\?|^&\w+=/,  // Adressen und Parameter
   /^\(?(min|max)-width|prefers-|^\(\w+:/,  // Media Queries
@@ -27,8 +29,8 @@ const CODE = [
    nicht als Muster — bei einem Muster waere nie klar, was es sonst noch
    erwischt. */
 const EXAKT_CODE = new Set([
-  'Escape', 'IntersectionObserver', 'POST', 'Content-Type',
-  'textPath', 'startOffset', 'tb__line', 'tb__inner', 'tb__block',
+  'Escape', 'Enter', 'IntersectionObserver', 'POST', 'Content-Type',
+  'textPath', 'startOffset',
   '--d', '--n', '<i class="',
 ]);
 
