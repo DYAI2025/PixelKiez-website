@@ -57,7 +57,7 @@ const HTML_OPTIONEN = {
 const kb = (n) => (n / 1024).toFixed(1).padStart(6) + ' KB';
 const log = (...a) => console.log(...a);
 
-const DOMAIN = 'https://berlin-digital-systems.de';
+const DOMAIN = 'https://pixelkiez.de';
 
 /* -------------------------------------------------------------------------
    Sprachverweise. Beide Fassungen nennen sich gegenseitig und sich selbst —
@@ -80,7 +80,7 @@ function setzeAlternates(html, sprache) {
    Englische Fassung. Erzeugt aus derselben Quelle wie die deutsche — es gibt
    bewusst keine zweite HTML-Datei, die man vergessen koennte nachzupflegen.
    ------------------------------------------------------------------------- */
-async function baueEnglisch(cssMin, jsRoh, fontKarte) {
+async function baueEnglisch(cssMin, jsRoh, fontKarte, bildKarte) {
   const tabHtml = JSON.parse(await readFile(join(QUELLE, 'i18n', 'en.json'), 'utf8'));
   const tabJs   = JSON.parse(await readFile(join(QUELLE, 'i18n', 'en.js.json'), 'utf8'));
   let html = await readFile(join(QUELLE, 'index.html'), 'utf8');
@@ -168,6 +168,11 @@ async function baueEnglisch(cssMin, jsRoh, fontKarte) {
     const neu = fontKarte.get(datei);
     if (!neu) throw new Error(`en: Vorladehinweis auf unbekannte Schrift ${datei}`);
     return `href="/assets/fonts/${neu}"`;
+  });
+  html = html.replace(/(?:href|src|content)="assets\/img\/([^"]+)"/g, (treffer, datei) => {
+    const n = bildKarte.get(datei);
+    if (!n) throw new Error(`en: Verweis auf unbekanntes Bild assets/img/${datei}`);
+    return treffer.replace(`assets/img/${datei}`, `/assets/img/${n}`);
   });
   html = html.replace('<script src="assets/js/bds.js" defer></script>', () => `<script>${jsEn}</script>`);
 
@@ -257,6 +262,27 @@ async function build() {
   }
   log(`Schriften    ${fontDateien.length} Dateien mit Inhalts-Hash   ${kb(fontBytes)}`);
 
+  /* ---- 1b. Bilder: Logo, Vorschaubild, Favicon ------------------------- */
+  const bildVerzeichnis = join(QUELLE, 'assets', 'img');
+  const bildKarte = new Map();
+  let bildBytes = 0;
+  try {
+    const bilder = (await readdir(bildVerzeichnis))
+      .filter((f) => /\.(svg|png|jpe?g|webp|ico)$/i.test(f)).sort();
+    if (bilder.length) await mkdir(join(ZIEL, 'assets', 'img'), { recursive: true });
+    for (const datei of bilder) {
+      const inhalt = await readFile(join(bildVerzeichnis, datei));
+      const hash = createHash('sha256').update(inhalt).digest('hex').slice(0, 8);
+      const neu = `${basename(datei, extname(datei))}.${hash}${extname(datei)}`;
+      await copyFile(join(bildVerzeichnis, datei), join(ZIEL, 'assets', 'img', neu));
+      bildKarte.set(datei, neu);
+      bildBytes += inhalt.length;
+    }
+    if (bilder.length) log(`Bilder       ${bilder.length} Dateien mit Inhalts-Hash   ${kb(bildBytes)}`);
+  } catch (e) {
+    if (e.code !== 'ENOENT') throw e;   // Ordner darf fehlen, solange nichts darauf zeigt
+  }
+
   /* ---- 2. CSS: zusammenlegen, Pfade umschreiben, minifizieren ----------- */
   const fontsCss = await readFile(join(QUELLE, 'assets', 'css', 'fonts.css'), 'utf8');
   const bdsCss   = await readFile(join(QUELLE, 'assets', 'css', 'bds.css'), 'utf8');
@@ -320,6 +346,13 @@ async function build() {
       return `href="/assets/fonts/${neu}"`;
     });
 
+    /* 4b-2. Bildverweise auf die gehashten Namen ziehen */
+    html = html.replace(/(?:href|src|content)="assets\/img\/([^"]+)"/g, (treffer, datei) => {
+      const neu = bildKarte.get(datei);
+      if (!neu) throw new Error(`${seite}: Verweis auf unbekanntes Bild assets/img/${datei}`);
+      return treffer.replace(`assets/img/${datei}`, `/assets/img/${neu}`);
+    });
+
     /* 4c. Skript einbetten, an genau derselben Stelle */
     if (html.includes('<script src="assets/js/bds.js" defer></script>')) {
       html = html.replace('<script src="assets/js/bds.js" defer></script>', () => `<script>${jsMin}</script>`);
@@ -342,7 +375,7 @@ async function build() {
   }
 
   /* ---- 4f. Englische Fassung ------------------------------------------- */
-  const enHtml = await baueEnglisch(cssMin, jsRoh, fontKarte);
+  const enHtml = await baueEnglisch(cssMin, jsRoh, fontKarte, bildKarte);
   await mkdir(join(ZIEL, 'en'), { recursive: true });
   await writeFile(join(ZIEL, 'en', 'index.html'), enHtml, 'utf8');
   summeNachher += Buffer.byteLength(enHtml);

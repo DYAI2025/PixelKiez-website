@@ -228,7 +228,7 @@ Alle Textkontraste erfüllen WCAG AA. Wer Farben ändert, prüft das nach.
   Ohne vollständiges Impressum ist eine gewerbliche Seite in Deutschland
   abmahnfähig (§ 5 DDG).
 - **Domain** — Canonical, Open Graph und JSON-LD zeigen auf den Platzhalter
-  `berlin-digital-systems.de`.
+  `pixelkiez.de`.
 - **SMTP-Zugang** — der Formulardienst läuft bis zum Setzen von `SMTP_HOST`
   und `MAIL_TO` im Trockenlauf und versendet nichts. Ohne diese Angaben
   erreicht Sie keine Anfrage.

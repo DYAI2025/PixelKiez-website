@@ -17,7 +17,7 @@
      SMTP_PASS      dessen Kennwort
      MAIL_TO        wohin die Anfrage geht
      MAIL_FROM      Absenderadresse, muss zur SMTP-Domain passen
-     ALLOWED_ORIGIN erlaubte Herkunft, z. B. https://berlin-digital-systems.de
+     ALLOWED_ORIGIN erlaubte Herkunft, z. B. https://pixelkiez.de
      PORT           von Railway gesetzt
 
    Fehlen SMTP_HOST oder MAIL_TO, weist der Dienst Anfragen mit 503 ab. Das

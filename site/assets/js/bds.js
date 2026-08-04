@@ -19,7 +19,7 @@
      des Besuchers; dann verlaesst kein Datenpaket den Browser.
      ------------------------------------------------------------------------ */
   var ENDPOINT = '/api/kontakt';
-  var MAILTO   = 'kontakt@berlin-digital-systems.de';
+  var MAILTO   = 'kontakt@pixelkiez.de';
 
   var $  = function (s, r) { return (r || document).querySelector(s); };
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
