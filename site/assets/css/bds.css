@@ -339,7 +339,18 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
   text-decoration:none;font-family:var(--font-display);
   font-weight:600;letter-spacing:-.028em;font-size:1.0625rem;white-space:nowrap;
 }
-.brand__mark{width:26px;height:26px;flex:none}
+/* Das gelieferte Logo ist 420 zu 330, also breiter als hoch. Feste
+   Hoehe, Breite rechnet der Browser aus dem Seitenverhaeltnis. */
+.brand__mark{height:30px;width:auto;flex:none}
+
+/* Im Footer steht das Logo auf dunklem Grund. Sein Schriftzug ragt schwarz
+   ueber das orange Quadrat hinaus und waere dort unsichtbar — deshalb
+   bekommt es eine helle Auflage in Papierfarbe. */
+.footer .brand__mark{
+  background:var(--paper-3, #D3DEDC);
+  padding:4px 7px;border-radius:4px;
+  height:26px;box-sizing:content-box;
+}
 .brand__sub{
   display:none;font-family:var(--font-mono);font-size:.625rem;
   letter-spacing:.16em;text-transform:uppercase;color:var(--ink-45);
@@ -355,7 +366,7 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
    verschiebt alle Sprungziele. */
 @media (max-width:379px){
   .brand{font-size:.9375rem;gap:9px}
-  .brand__mark{width:24px;height:24px}
+  .brand__mark{height:26px}
   .header__act{gap:8px}
 }
 /* Auf schmalen Geraeten haetten Marke, CTA und Menue zusammen keinen Platz.
