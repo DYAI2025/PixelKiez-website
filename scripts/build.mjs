@@ -136,7 +136,7 @@ async function baueEnglisch(cssMin, jsRoh, fontKarte, bildKarte) {
         return o;
       }
       if (typeof o !== 'string') return o;
-      if (Object.prototype.hasOwnProperty.call(tabHtml, o)) { benutzt.add(o); return tabHtml[o]; }
+      if (tabHtml[o]) { benutzt.add(o); return tabHtml[o]; }
       // Deutsch gebliebene Saetze melden — Eigennamen und URLs nicht
       if (/\s/.test(o) && /[äöüßÄÖÜ]|\b(der|die|das|und|für|mit|Ihre|Sie)\b/.test(o)) offen.push(o);
       return o;
@@ -169,10 +169,11 @@ async function baueEnglisch(cssMin, jsRoh, fontKarte, bildKarte) {
     if (!neu) throw new Error(`en: Vorladehinweis auf unbekannte Schrift ${datei}`);
     return `href="/assets/fonts/${neu}"`;
   });
-  html = html.replace(/(?:href|src|content)="assets\/img\/([^"]+)"/g, (treffer, datei) => {
+  html = html.replace(/(href|src|content)="assets\/img\/([^"]+)"/g, (treffer, attr, datei) => {
     const n = bildKarte.get(datei);
     if (!n) throw new Error(`en: Verweis auf unbekanntes Bild assets/img/${datei}`);
-    return treffer.replace(`assets/img/${datei}`, `/assets/img/${n}`);
+    const ziel = attr === 'content' ? `${DOMAIN}/assets/img/${n}` : `/assets/img/${n}`;
+    return `${attr}="${ziel}"`;
   });
   html = html.replace('<script src="assets/js/bds.js" defer></script>', () => `<script>${jsEn}</script>`);
 
@@ -347,10 +348,13 @@ async function build() {
     });
 
     /* 4b-2. Bildverweise auf die gehashten Namen ziehen */
-    html = html.replace(/(?:href|src|content)="assets\/img\/([^"]+)"/g, (treffer, datei) => {
-      const neu = bildKarte.get(datei);
-      if (!neu) throw new Error(`${seite}: Verweis auf unbekanntes Bild assets/img/${datei}`);
-      return treffer.replace(`assets/img/${datei}`, `/assets/img/${neu}`);
+    // og:image braucht eine vollstaendige Adresse: viele Dienste, die eine
+    // Vorschau erzeugen, lesen relative Pfade nicht auf.
+    html = html.replace(/(href|src|content)="assets\/img\/([^"]+)"/g, (treffer, attr, datei) => {
+      const n = bildKarte.get(datei);
+      if (!n) throw new Error(`${seite}: Verweis auf unbekanntes Bild assets/img/${datei}`);
+      const ziel = attr === 'content' ? `${DOMAIN}/assets/img/${n}` : `/assets/img/${n}`;
+      return `${attr}="${ziel}"`;
     });
 
     /* 4c. Skript einbetten, an genau derselben Stelle */

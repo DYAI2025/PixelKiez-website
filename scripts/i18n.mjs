@@ -128,7 +128,11 @@ export function uebersetze(html, tabelle) {
     if (!istUebersetzbar(kern)) return s;
     if (s.art === 'attr' && s.attribut === 'content' && !/[a-zäöüß]\s+[a-zäöüß]/i.test(kern)) return s;
 
-    if (!Object.prototype.hasOwnProperty.call(tabelle, kern)) {
+    // Ein leerer Wert zaehlt als fehlend. Sonst rutscht ein frisch
+    // ausgelesener, noch nicht uebersetzter Eintrag durch und die englische
+    // Seite bekommt an dieser Stelle eine leere Zeichenkette — bei einem
+    // og:title faellt das erst auf, wenn jemand den Link teilt.
+    if (!Object.prototype.hasOwnProperty.call(tabelle, kern) || !tabelle[kern]) {
       if (!fehlend.includes(kern)) fehlend.push(kern);
       return s;
     }

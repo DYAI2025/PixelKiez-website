@@ -90,7 +90,9 @@ export function uebersetzeJs(src, tabelle) {
   const out = zerlegeJs(src).map((t) => {
     if (t.art === 'code') return t.wert;
     if (!istDeutsch(t.wert)) return "'" + t.wert + "'";
-    if (!Object.prototype.hasOwnProperty.call(tabelle, t.wert)) {
+    // Leerer Wert zaehlt als fehlend — sonst entsteht eine leere
+    // Zeichenkette im ausgelieferten Skript.
+    if (!Object.prototype.hasOwnProperty.call(tabelle, t.wert) || !tabelle[t.wert]) {
       if (!fehlend.includes(t.wert)) fehlend.push(t.wert);
       return "'" + t.wert + "'";
     }
