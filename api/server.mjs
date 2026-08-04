@@ -1,5 +1,5 @@
 /* =========================================================================
-   Berlin Digital Systems — Formular-Gegenstelle
+   Pixelkiez — Formular-Gegenstelle
 
    Nimmt die Anfrage aus dem Kontaktformular als JSON entgegen und stellt sie
    per SMTP ins Postfach zu. Absender ist das eigene Postfach, Antwortadresse

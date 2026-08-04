@@ -1,4 +1,4 @@
-# Berlin Digital Systems — Website
+# Pixelkiez — Website
 
 Statische Website mit Build-Schritt. Bearbeitet wird `site/`, ausgeliefert
 wird `dist/`. Die Auslieferung lädt CSS und JavaScript nicht nach, sondern

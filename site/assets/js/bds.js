@@ -1,5 +1,5 @@
 /* =========================================================================
-   Berlin Digital Systems — Interaktion
+   Pixelkiez — Interaktion
    Keine externen Bibliotheken. Alles degradiert gutartig.
    ========================================================================= */
 (function () {
