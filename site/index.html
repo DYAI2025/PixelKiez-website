@@ -274,6 +274,16 @@
 
 <!-- ===================== HERO ===================== -->
 <section class="wrap hero section--flush">
+  <!-- Auftakt: Schriftzug gross, faltet sich in sich zusammen, Hero oeffnet sich.
+       Rein ueber CSS, ohne Skript. Grundzustand der Schicht ist unsichtbar —
+       laeuft keine Animation, liegt der Hero sofort frei. -->
+  <div class="intro" aria-hidden="true">
+    <p class="intro__mark">
+      <span class="intro__wort">Pixelkiez<span class="intro__punkt"></span></span>
+      <span class="intro__sub">Digitale Geschäftssysteme</span>
+    </p>
+  </div>
+
   <!-- Laufband als Kurve hinter der Ueberschrift, laeuft rechts nach links -->
   <div class="heroband" aria-hidden="true">
     <svg viewBox="0 0 1440 600" preserveAspectRatio="xMidYMid slice" focusable="false">
