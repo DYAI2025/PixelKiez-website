@@ -236,12 +236,28 @@
   <symbol id="i-file" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></symbol>
 </svg>
 
+<!-- ===================== AUFTAKT =====================
+     Beim Oeffnen steht nur das Logo auf leerer Flaeche. Danach wandert es
+     an seinen Platz oben links und die Seite erscheint darunter.
+
+     Die Schicht liegt bewusst direkt im Seitenkoerper: position:fixed
+     wuerde sich an einen transformierten Vorfahren binden, und im Hero
+     koennte spaeter einer entstehen.
+
+     Grundzustand ist unsichtbar. Laeuft keine Animation, ist die Seite
+     sofort da — eine Schicht, die haengen bleibt, waere hier der einzige
+     wirklich teure Fehler. -->
+<div class="intro" aria-hidden="true">
+  <span class="intro__flaeche"></span>
+  <img class="intro__logo" src="assets/img/logo.png" alt="" width="460" height="113" fetchpriority="high">
+</div>
+
 <!-- ===================== HEADER ===================== -->
 <header class="header">
   <div class="wrap header__in">
     <a class="brand" href="#top" aria-label="Pixelkiez — Startseite">
-      <img class="brand__mark" src="assets/img/logo.png" alt="" width="38" height="30" decoding="async">
-      <span>Pixelkiez<span class="brand__sub">Digitale Geschäftssysteme</span></span>
+      <img class="brand__mark" src="assets/img/logo.png" alt="Pixelkiez" width="460" height="113" decoding="async">
+      <span class="brand__sub">Digitale Geschäftssysteme</span>
     </a>
 
     <div class="header__act">
@@ -274,16 +290,6 @@
 
 <!-- ===================== HERO ===================== -->
 <section class="wrap hero section--flush">
-  <!-- Auftakt: Schriftzug gross, faltet sich in sich zusammen, Hero oeffnet sich.
-       Rein ueber CSS, ohne Skript. Grundzustand der Schicht ist unsichtbar —
-       laeuft keine Animation, liegt der Hero sofort frei. -->
-  <div class="intro" aria-hidden="true">
-    <p class="intro__mark">
-      <span class="intro__wort">Pixelkiez<span class="intro__punkt"></span></span>
-      <span class="intro__sub">Digitale Geschäftssysteme</span>
-    </p>
-  </div>
-
   <!-- Laufband als Kurve hinter der Ueberschrift, laeuft rechts nach links -->
   <div class="heroband" aria-hidden="true">
     <svg viewBox="0 0 1440 600" preserveAspectRatio="xMidYMid slice" focusable="false">
@@ -943,9 +949,8 @@
   <div class="wrap">
     <div class="footer__grid">
       <div>
-        <a class="brand" href="#top" style="margin-bottom:14px">
-          <img class="brand__mark" src="assets/img/logo.png" alt="" width="38" height="30" decoding="async">
-          <span>Pixelkiez</span>
+        <a class="brand" href="#top" style="margin-bottom:14px" aria-label="Pixelkiez — Startseite">
+          <img class="brand__mark" src="assets/img/logo.png" alt="Pixelkiez" width="460" height="113" decoding="async">
         </a>
         <p class="small" style="max-width:38ch">Webseiten als Geschäftssystem für Praxen, Hotellerie, Bau, Gastronomie und Startups. Festpreis nach Diagnose, Antwort in einem Werktag.</p>
       </div>

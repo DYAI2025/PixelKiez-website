@@ -35,6 +35,42 @@
     window.setTimeout(run, 2000);
   };
 
+  /* --- 0. Auftakt: Landepunkt des Logos ---------------------------------
+     Das Logo wandert am Ende auf den Platz der Kopfmarke. Wo der genau
+     liegt, weiss nur der Browser — es haengt an Fensterbreite, Schriftgroesse
+     und dem Umbruch daneben. Also messen statt schaetzen und das Ergebnis
+     als --zx/--zy/--zs an die CSS-Animation reichen.
+
+     Die Animation laeuft auch ohne diese Werte; im CSS stehen Ersatzwerte.
+     Ohne Skript landet das Logo also ungefaehr richtig statt gar nicht. */
+  (function () {
+    var auftakt = $('.intro');
+    var reise   = auftakt && auftakt.querySelector('.intro__logo');
+    var ziel    = $('.header .brand__mark');
+    if (!auftakt || !reise || !ziel) return;
+
+    var messen = function () {
+      var z = ziel.getBoundingClientRect();
+      // offsetWidth ist die Breite vor der Transformation — genau die brauchen wir
+      var startBreite = reise.offsetWidth;
+      if (!z.width || !startBreite) return;
+      // Startmitte ist die Fenstermitte (left/top 50% plus translate(-50%,-50%))
+      auftakt.style.setProperty('--zx', (z.left + z.width / 2 - window.innerWidth / 2) + 'px');
+      auftakt.style.setProperty('--zy', (z.top + z.height / 2 - window.innerHeight / 2) + 'px');
+      auftakt.style.setProperty('--zs', z.width / startBreite);
+    };
+
+    messen();
+    // Das Logo hat feste Masse im Markup, kann aber noch nachladen.
+    if (!reise.complete) reise.addEventListener('load', messen);
+    // Der Kopf klebt oben, verschiebt sich beim Scrollen also nicht. Fenster
+    // drehen oder Schriften nachladen aendert die Lage aber sehr wohl.
+    window.addEventListener('resize', messen);
+    whenFontsReady(messen);
+    // Nach dem Auftakt wird nicht mehr gemessen.
+    window.setTimeout(function () { window.removeEventListener('resize', messen); }, 3000);
+  })();
+
   /* --- 1. Header + Mobilnavigation -------------------------------------- */
   var header = $('.header');
   var onScroll = function () {

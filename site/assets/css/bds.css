@@ -40,6 +40,7 @@
   --z-header:30;
   --z-sticky:40;
   --z-dialog:50;
+  --z-intro:60;              /* Auftakt liegt ueber allem, auch ueber Dialogen */
 }
 
 /* Invertierte Sektionen: dieselben Komponenten, gespiegelte Tokens */
@@ -339,18 +340,14 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
   text-decoration:none;font-family:var(--font-display);
   font-weight:600;letter-spacing:-.028em;font-size:1.0625rem;white-space:nowrap;
 }
-/* Das gelieferte Logo ist 420 zu 330, also breiter als hoch. Feste
-   Hoehe, Breite rechnet der Browser aus dem Seitenverhaeltnis. */
-.brand__mark{height:30px;width:auto;flex:none}
+/* Das gelieferte Logo ist ein Schriftzug, 460 zu 113. Er traegt den Namen
+   selbst, daher steht daneben kein zweites "Pixelkiez" mehr. Feste Hoehe,
+   die Breite rechnet der Browser aus dem Seitenverhaeltnis. */
+.brand__mark{height:22px;width:auto;flex:none}
 
-/* Im Footer steht das Logo auf dunklem Grund. Sein Schriftzug ragt schwarz
-   ueber das orange Quadrat hinaus und waere dort unsichtbar — deshalb
-   bekommt es eine helle Auflage in Papierfarbe. */
-.footer .brand__mark{
-  background:var(--paper-3, #D3DEDC);
-  padding:4px 7px;border-radius:4px;
-  height:26px;box-sizing:content-box;
-}
+/* In der Fusszeile steht der Schriftzug auf dunklem Grund. Er ist reines
+   Schwarz und waere dort unsichtbar — invertiert wird er weiss. */
+.footer .brand__mark{filter:invert(1);height:24px}
 .brand__sub{
   display:none;font-family:var(--font-mono);font-size:.625rem;
   letter-spacing:.16em;text-transform:uppercase;color:var(--ink-45);
@@ -366,7 +363,7 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
    verschiebt alle Sprungziele. */
 @media (max-width:379px){
   .brand{font-size:.9375rem;gap:9px}
-  .brand__mark{height:26px}
+  .brand__mark{height:19px}
   .header__act{gap:8px}
 }
 /* Auf schmalen Geraeten haetten Marke, CTA und Menue zusammen keinen Platz.
@@ -448,71 +445,73 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
 /* ---------- 7. Hero ------------------------------------------------------ */
 .hero{position:relative;padding-block:clamp(40px,5vw,64px) clamp(40px,5vw,64px)}
 
-/* --- Auftakt: Schriftzug faltet sich zusammen, Hero oeffnet sich ---------
-   Bewusst ohne Skript. Der Grundzustand ist unsichtbar, erst die Animation
-   blendet die Schicht ein. Faellt die Animation aus — alte Engine, Bewegung
-   reduziert, CSS nur halb geladen — bleibt es beim Grundzustand und der Hero
-   ist sofort da. Eine Schicht, die den Hero dauerhaft verdecken kann, waere
-   der einzige wirklich teure Fehler an dieser Stelle. */
-/* Bis zum Rand, sonst blitzt das Laufband links und rechts neben der
-   Inhaltsspalte durch. Gleiches Muster wie .heroband. */
+/* --- Auftakt: nur das Logo, danach wandert es an seinen Platz -------------
+   Beim Oeffnen liegt eine volle Flaeche ueber der Seite, darauf allein das
+   Logo. Nach gut anderthalb Sekunden wandert es nach oben links auf den
+   Platz der Kopfmarke, waehrend die Flaeche verschwindet und die Seite
+   erscheint.
+
+   Der Grundzustand der Schicht ist unsichtbar. Faellt die Animation aus —
+   alte Engine, Bewegung reduziert, CSS nur halb geladen — ist die Seite
+   sofort da. Eine Schicht, die haengen bleibt, waere hier der einzige
+   wirklich teure Fehler.
+
+   Dauer an einer Stelle aendern: die 2.8s in allen vier Regeln unten. */
 .intro{
-  position:absolute;top:0;bottom:0;left:50%;transform:translateX(-50%);
-  width:100vw;z-index:3;
-  display:grid;place-items:center;
-  padding-inline:var(--gutter);
-  background:var(--paper);
+  position:fixed;inset:0;z-index:var(--z-intro);
   pointer-events:none;            /* rein dekorativ, faengt nie einen Klick */
   visibility:hidden;
-  animation:intro-vorhang 1.55s cubic-bezier(.7,0,.2,1) forwards;
+  /* Ersatzwerte, falls das Skript nicht laeuft: ungefaehr die Kopfmarke.
+     Mit Skript stehen hier die gemessenen Werte, dann sitzt die Landung
+     exakt auf dem Logo im Kopf. */
+  --zx:calc(var(--gutter) + 45px - 50vw);
+  --zy:calc(35px - 50vh);
+  --zs:.21;
+  animation:intro-schicht 2.8s linear forwards;
 }
-.intro__mark{
-  margin:0;text-align:center;
+.intro__flaeche{
+  position:absolute;inset:0;background:var(--paper);
+  animation:intro-blende 2.8s cubic-bezier(.6,0,.2,1) both;
+}
+.intro__logo{
+  position:absolute;left:50%;top:50%;
+  width:min(66vw,420px);height:auto;
   transform-origin:50% 50%;
-  animation:intro-falten 1.55s cubic-bezier(.7,0,.2,1) both;
-}
-.intro__wort{
-  display:block;
-  font-family:var(--font-display);font-weight:600;
-  font-size:clamp(2.4rem,17vw,12rem);
-  letter-spacing:-.05em;line-height:.92;color:var(--ink);
-  white-space:nowrap;
-  animation:intro-auf 1.55s cubic-bezier(.16,1,.3,1) both;
-}
-/* Der orangene Block aus der Wortmarke, als Schlusspunkt */
-.intro__punkt{
-  display:inline-block;width:.17em;height:.17em;
-  margin-left:.11em;background:#EC5D43;
-}
-.intro__sub{
-  display:block;margin-top:1em;
-  font-family:var(--font-mono);font-size:clamp(.6rem,1.6vw,.78rem);
-  letter-spacing:.22em;text-transform:uppercase;color:var(--ink-45);
-  animation:intro-auf 1.55s cubic-bezier(.16,1,.3,1) .1s both;
+  animation:intro-reise 2.8s cubic-bezier(.72,0,.16,1) both;
 }
 
-/* Die Schicht schliesst sich zur Mittellinie — genau dort, wo der Schriftzug
-   eben zusammengefallen ist. Die Falz ist die Naht, an der der Hero aufgeht. */
-@keyframes intro-vorhang{
-  0%,58%  {visibility:visible;clip-path:inset(0 0 0 0)}
-  99.9%   {visibility:visible;clip-path:inset(50% 0 50% 0)}
-  100%    {visibility:hidden; clip-path:inset(50% 0 50% 0)}
+@keyframes intro-schicht{
+  0%,99.9%{visibility:visible}
+  100%    {visibility:hidden}
+}
+@keyframes intro-blende{
+  0%,50%  {opacity:1}
+  86%,100%{opacity:0}
 }
 /* Gleiche Funktionsfolge in jedem Schritt, sonst interpoliert transform nicht */
-@keyframes intro-falten{
-  0%,54%   {transform:scale(1,1);   opacity:1}
-  72%      {transform:scale(1,.03); opacity:1}
-  86%,100% {transform:scale(1,.03); opacity:0}
+@keyframes intro-reise{
+  0%,50%   {transform:translate(-50%,-50%) translate(0px,0px) scale(1)}
+  86%,100% {transform:translate(-50%,-50%) translate(var(--zx),var(--zy)) scale(var(--zs))}
 }
-@keyframes intro-auf{
-  0%       {opacity:0;transform:translateY(.32em)}
-  22%,100% {opacity:1;transform:translateY(0)}
+
+/* Die Marke im Kopf bleibt aus, bis das wandernde Logo darauf landet — sonst
+   stuenden kurz zwei davon da. Die ganze Marke, nicht nur das Bild: sonst
+   haengt waehrend der Wanderung die Unterzeile mit ihrem Trennstrich an
+   leerer Stelle. Der Platz bleibt reserviert, das Skript misst ihn.
+   Grundzustand ist sichtbar, damit ohne Animation nichts fehlt. */
+body:has(.intro) .header .brand{
+  animation:intro-kopf 2.8s linear forwards;
+}
+@keyframes intro-kopf{
+  0%,85%  {opacity:0}
+  86%,100%{opacity:1}
 }
 
 /* Wer Bewegung abbestellt hat, bekommt keinen Auftakt, sondern sofort Inhalt */
 @media (prefers-reduced-motion:reduce){
   .intro{display:none;animation:none}
-  .intro__mark,.intro__wort,.intro__sub{animation:none}
+  .intro__flaeche,.intro__logo{animation:none}
+  body:has(.intro) .header .brand{animation:none}
 }
 
 /* --- Portierung animated-hero.tsx: zentrierte Buehne ---------------------- */
