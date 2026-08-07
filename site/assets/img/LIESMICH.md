@@ -16,6 +16,23 @@ Schriftzug im Auftakt werden kann. Bei 980 Pixeln ist bei rund 680 CSS-Pixeln
 Schluss, darüber wird nur noch weichgerechnet. Mit einem SVG fiele diese
 Grenze weg.
 
+## Die Wortmarke trägt feine Gestaltungsdetails
+
+Am **P** ist oben links eine Kerbe, und der **Punkt über dem ersten i** ist
+kein voller Kreis, sondern eine Sichel mit einem Anbiss unten links. Das ist
+so gewollt und gehört zur Marke.
+
+Wer den Schriftzug verkleinert, rastert oder nachbaut, muss diese beiden
+Stellen prüfen. Sie sind nur wenige Pixel groß und fallen als Erstes weg.
+Der Partikeleffekt im Auftakt tastet das Logo deshalb im Ein-Pixel-Raster ab
+und nicht gröber — bei zwei Pixeln verklumpen beide Details (gemessen:
+Deckung 97,5 % gegen 100 %).
+
+Ältere Lieferungen vom 3. und 4. August (`quelle/pixelkiez_logo.png` und die
+`PixelKiez*.png` mit 773 × 179 großer Wortmarke) haben diese Details **noch
+nicht** — dort sind P und i-Punkt geschlossen. Das ist die überholte Fassung,
+nicht die richtige.
+
 **Neues Logo einsetzen:** Datei nach `quelle/` legen und Bescheid geben. Sie
 wird freigestellt, auf Graustufe mit Alpha gebracht und an allen vier Stellen
 verdrahtet. Direkt `logo.png` überschreiben geht auch, dann muss sie aber

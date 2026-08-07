@@ -157,11 +157,15 @@
     var ctx = leinwand.getContext('2d');
     if (!ctx) return;
 
-    /* Die Farbe wird NICHT gesetzt, sondern aus dem Bild gelesen. Ein
-       Tokenwert wie --ink waere ein anderes Schwarz als das der Datei, und
-       das Logo saehe anders aus als vorher. */
-    var FARBEN  = ['#000000'];
-    var RASTER  = 2;     // Kantenlaenge einer Zelle in Pixeln
+    /* Fester Ton, das Schwarz der Seite. Nicht aus dem Bild mitteln: die
+       Datei traegt reines Schwarz, das ist ein anderer Ton als dieser, und
+       der Auftakt saehe damit anders aus als bisher. */
+    var FARBEN  = ['#0E1413'];
+    /* Ein Punkt Kantenlaenge, nicht zwei. Die Wortmarke traegt feine
+       Gestaltungsdetails — die Kerbe oben am P und den Anbiss am Punkt des
+       ersten i. Bei zwei Punkten fallen beide in eine Zelle und verklumpen;
+       bei einem Punkt sind sie da. Gemessen: Deckung 97,5 % gegen 100 %. */
+    var RASTER  = 1;     // Kantenlaenge einer Zelle in Pixeln
     var RADIUS  = 50;    // Wirkradius des Zeigers
     var KRAFT   = 30;    // Staerke des Stosses
     var AUFBAU  = 1000;  // Millisekunden bis das Feld steht
@@ -217,26 +221,14 @@
       var x, y, i, treffer = 0;
       var spalten = Math.ceil(bw / RASTER), zeilen = Math.ceil(bh / RASTER);
       var maske = new Uint8Array(spalten * zeilen);
-      /* Farbe aus dem Bild mitteln, nicht setzen */
-      var sumR = 0, sumG = 0, sumB = 0, sumN = 0;
 
       for (y = 0; y < zeilen; y++) {
         for (x = 0; x < spalten; x++) {
           var gx = Math.round(x * RASTER * dpr), gy = Math.round(y * RASTER * dpr);
-          if (deckung(gx, gy) >= 0.5) {
-            maske[y * spalten + x] = 1; treffer++;
-            var o = ((gy * spaltenW) + gx) * 4;
-            sumR += daten[o]; sumG += daten[o + 1]; sumB += daten[o + 2]; sumN++;
-          }
+          if (deckung(gx, gy) >= 0.5) { maske[y * spalten + x] = 1; treffer++; }
         }
       }
       if (!treffer) return false;
-
-      if (sumN) {
-        FARBEN[0] = 'rgb(' + Math.round(sumR / sumN) + ',' +
-                             Math.round(sumG / sumN) + ',' +
-                             Math.round(sumB / sumN) + ')';
-      }
 
       var duenner = treffer > 60000 ? Math.ceil(treffer / 60000) : 1;
       var platz = Math.min(treffer, 60000);
@@ -286,10 +278,16 @@
       if (lr.width <= 0 || lr.height <= 0 || br.width <= 0) return false;
       dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
       cssW = Math.round(lr.width); cssH = Math.round(lr.height);
-      bx = Math.round(br.left - lr.left);
-      by = Math.round(br.top - lr.top);
-      bw = Math.round(br.width);
-      bh = Math.round(br.height);
+      /* Lage und Groesse des Bildes NICHT runden. Das Bild sitzt selten auf
+         ganzen Punkten — hier etwa 127,36 von oben bei 120,41 Hoehe. Auf
+         ganze Punkte gerundet verschiebt sich das Partikelfeld gegen das
+         Bild, und bei doppelter Punktdichte ist das ein sichtbarer halber
+         Kasten. Gerundet wird erst dort, wo es sein muss: bei der Groesse
+         der Abtastflaeche in Bildpunkten. */
+      bx = br.left - lr.left;
+      by = br.top - lr.top;
+      bw = br.width;
+      bh = br.height;
       leinwand.width  = Math.round(cssW * dpr);
       leinwand.height = Math.round(cssH * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -309,8 +307,16 @@
       ctx.clearRect(0, 0, cssW, cssH);
       /* Kantenlaenge gleich Rasterabstand: die Quadrate stossen luecken-
          los aneinander. Kleinere Quadrate liessen das Logo loechrig wirken,
-         groessere wuerden es aufdicken. */
-      var kante = RASTER, halb = kante / 2;
+         groessere wuerden es aufdicken.
+
+         Aufgerundet auf ganze BILDPUNKTE, nicht CSS-Punkte. Ein Quadrat von
+         einem CSS-Punkt liegt sonst je nach Lage des Bildes auf halben
+         Bildpunkten, und der Browser rechnet es ueber zwei Reihen weich —
+         gemessen kam kein einziger Punkt voll deckend heraus, das Logo waere
+         blasser als seine Vorlage. Gezeichnet wird deshalb unten auf dem
+         Bildpunktgitter eingerastet. */
+      var zellD = Math.max(1, Math.round(RASTER * dpr));   // Kante in Bildpunkten
+      var kante = zellD / dpr, halb = kante / 2;
 
       var jetzt = window.performance ? performance.now() : Date.now();
       var dt = Math.min(64, Math.max(0, jetzt - (letzter === null ? jetzt : letzter)));
@@ -376,7 +382,12 @@
         ctx.fillStyle = FARBEN[b];
         for (var k = 0; k < eimer[b].length; k++) {
           var j = eimer[b][k];
-          ctx.fillRect(px[j] - halb, py[j] - halb, kante, kante);
+          /* Auf ganze Bildpunkte einrasten. Der Versatz betraegt hoechstens
+             einen halben Bildpunkt und ist damit unsichtbar; ohne ihn waere
+             jeder Kasten weichgerechnet. */
+          ctx.fillRect(Math.round((px[j] - halb) * dpr) / dpr,
+                       Math.round((py[j] - halb) * dpr) / dpr,
+                       kante, kante);
         }
       }
       ctx.globalAlpha = 1;
