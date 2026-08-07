@@ -236,28 +236,12 @@
   <symbol id="i-file" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></symbol>
 </svg>
 
-<!-- ===================== AUFTAKT =====================
-     Beim Oeffnen steht nur das Logo auf leerer Flaeche. Danach wandert es
-     an seinen Platz oben links und die Seite erscheint darunter.
-
-     Die Schicht liegt bewusst direkt im Seitenkoerper: position:fixed
-     wuerde sich an einen transformierten Vorfahren binden, und im Hero
-     koennte spaeter einer entstehen.
-
-     Grundzustand ist unsichtbar. Laeuft keine Animation, ist die Seite
-     sofort da — eine Schicht, die haengen bleibt, waere hier der einzige
-     wirklich teure Fehler. -->
-<div class="intro" aria-hidden="true">
-  <span class="intro__flaeche"></span>
-  <img class="intro__logo" src="assets/img/logo.png" alt="" width="460" height="113" fetchpriority="high">
-</div>
-
 <!-- ===================== HEADER ===================== -->
 <header class="header">
   <div class="wrap header__in">
     <a class="brand" href="#top" aria-label="Pixelkiez — Startseite">
-      <img class="brand__mark" src="assets/img/logo.png" alt="Pixelkiez" width="460" height="113" decoding="async">
-      <span class="brand__sub">Digitale Geschäftssysteme</span>
+      <img class="brand__mark" src="assets/img/logo.png" alt="Pixelkiez" width="980" height="240" decoding="async">
+      <span class="brand__sub">Webdesign</span>
     </a>
 
     <div class="header__act">
@@ -290,21 +274,23 @@
 
 <!-- ===================== HERO ===================== -->
 <section class="wrap hero section--flush">
-  <!-- Laufband als Kurve hinter der Ueberschrift, laeuft rechts nach links -->
-  <div class="heroband" aria-hidden="true">
-    <svg viewBox="0 0 1440 600" preserveAspectRatio="xMidYMid slice" focusable="false">
-      <path id="heroband-curve" d="M -200,540 C 280,240 1160,240 1640,540" fill="none"/>
-      <use href="#heroband-curve" class="heroband__line"/>
-      <text id="heroband-text" class="heroband__t" data-repeats="4">
-        <textPath href="#heroband-curve" startOffset="0">Arztpraxen  ·  Hotellerie  ·  Baubetriebe  ·  Gastronomie  ·  Startups  ·  Anfrage-Filter  ·  Passende Anfragen  ·  60-Sekunden-Bewerbung  ·  Direktbuchung  ·  Anliegen-Triage  ·  KI-Sichtbarkeit  ·  Arztpraxen  ·  Hotellerie  ·  Baubetriebe  ·  Gastronomie  ·  Startups  ·  Anfrage-Filter  ·  Passende Anfragen  ·  60-Sekunden-Bewerbung  ·  Direktbuchung  ·  Anliegen-Triage  ·  KI-Sichtbarkeit  ·  Arztpraxen  ·  Hotellerie  ·  Baubetriebe  ·  Gastronomie  ·  Startups  ·  Anfrage-Filter  ·  Passende Anfragen  ·  60-Sekunden-Bewerbung  ·  Direktbuchung  ·  Anliegen-Triage  ·  KI-Sichtbarkeit  ·  Arztpraxen  ·  Hotellerie  ·  Baubetriebe  ·  Gastronomie  ·  Startups  ·  Anfrage-Filter  ·  Passende Anfragen  ·  60-Sekunden-Bewerbung  ·  Direktbuchung  ·  Anliegen-Triage  ·  KI-Sichtbarkeit  ·  </textPath>
-      </text>
-    </svg>
-  </div>
-
-  <!-- Portierung von animated-hero.tsx (21st.dev): Badge · rotierende Headline · Lead · zwei CTAs -->
+  <!-- Portierung von animated-hero.tsx (21st.dev): rotierende Headline · zwei CTAs -->
   <div class="hero__stage">
+    <!-- Wortmarke ueber der Ueberschrift. Dekorativ, denn den Namen traegt
+         schon die Marke im Kopf — sonst hoerte man ihn zweimal.
+
+         Das Bild bleibt die Quelle der Wahrheit: Ohne Skript, bei reduzierter
+         Bewegung oder wenn die Abtastung scheitert, steht es einfach da. Das
+         Skript legt nur eine Leinwand darueber, die dasselbe Bild Pixel fuer
+         Pixel als Partikel nachzeichnet. Die Form aendert sich dabei nicht. -->
+    <span class="hero__logo-buehne" data-reveal>
+      <img class="hero__logo" src="assets/img/logo.png" alt="" width="980" height="240" fetchpriority="high">
+      <canvas class="hero__logo-drift" aria-hidden="true"></canvas>
+    </span>
+    <p class="hero__claim" data-reveal>Wir bauen deine professionelle Webseite</p>
+
     <h1 class="h-xl hero__h1" data-reveal>
-      <span class="h1-a11y">Webseiten, die gefunden werden, Anfragen filtern, Termine füllen, Mitarbeiter gewinnen, modern aussehen und Ergebnisse messbar machen.</span>
+      <span class="h1-a11y">Webseiten, die gefunden werden, Anfragen filtern, Termine füllen, Mitarbeiter gewinnen, professionell aussehen und Ergebnisse messbar machen.</span>
       <span class="rotwrap" aria-hidden="true">
         <span class="rotwrap__lead">Webseiten, die</span>
         <span class="rot" id="hero-rotator">
@@ -312,13 +298,12 @@
           <span class="rot__item">Anfragen filtern</span>
           <span class="rot__item">Termine füllen</span>
           <span class="rot__item">Mitarbeiter gewinnen</span>
-          <span class="rot__item">modern aussehen</span>
+          <span class="rot__item">professionell aussehen</span>
           <span class="rot__item">Ergebnisse messen</span>
         </span>
       </span>
     </h1>
 
-    <p class="lead hero__lead" data-reveal>Von der Webseite zum digitalen Geschäftssystem, für Arztpraxen, Hotellerie, Baubetriebe, Gastronomie und Startups. Festpreis nach Diagnose, Antwort in einem Werktag.</p>
 
     <div class="btn-row hero__cta" data-reveal>
       <button type="button" class="btn btn--ghost" data-open-contact>
@@ -327,11 +312,6 @@
       <button type="button" class="btn btn--split btn--primary" data-open-contact><span class="btn__label">Schnellkontakt in unter 60 Sekunden</span><span class="btn__ico"><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg></span></button>
     </div>
 
-    <p class="hero__price" data-reveal>
-      <span class="hero__price-l">Webseiten</span>
-      <strong>ab 995,&ndash;</strong>
-      <span class="hero__price-n">netto &middot; Festpreis nach Diagnose</span>
-    </p>
   </div>
 
   <ul class="facts" data-reveal>
@@ -343,7 +323,8 @@
 </section>
 
 <!-- ===================== AUSGANGSLAGE ===================== -->
-<section class="section sec--orange" id="ausgangslage">
+<section class="section sec--orange naht-anker" id="ausgangslage">
+  <span class="naht naht--von-blau" aria-hidden="true"></span>
   <div class="wrap">
     <div class="section__head">
       <p class="kicker" data-reveal>01 — Ausgangslage</p>
@@ -385,7 +366,8 @@
 </section>
 
 <!-- ===================== LEISTUNGEN ===================== -->
-<section class="section section--flush" id="leistungen">
+<section class="section section--flush naht-anker" id="leistungen">
+  <span class="naht naht--von-orange" aria-hidden="true"></span>
   <div class="wrap">
     <div class="section__head">
       <p class="kicker" data-reveal>02 — Leistungen</p>
@@ -504,7 +486,7 @@
     <div class="branchen">
       <div class="branchen__intro">
         <p class="kicker">03 — Branchen</p>
-        <h2 class="h-lg tb tb--schwarz" style="margin:18px 0 14px" data-textblock>Sechs Branchen. Sechs konkrete Engpässe.</h2>
+        <h2 class="h-lg tb tb--schwarz" style="margin:18px 0 14px" data-textblock>Fünf Branchen. Fünf konkrete Engpässe.</h2>
         <p class="lead">Wir arbeiten nicht für alle. Wir arbeiten für Betriebe, deren Engpass wir kennen, und benennen ihn, bevor Sie fragen müssen.</p>
       </div>
 
@@ -591,7 +573,8 @@
 </section>
 
 <!-- ===================== PROJEKT-CHECK ===================== -->
-<section class="section inv" id="check">
+<section class="section inv naht-anker" id="check">
+  <span class="naht naht--von-blau" aria-hidden="true"></span>
   <div class="wrap">
     <div class="section__head">
       <p class="kicker" data-reveal>04 — Diagnose</p>
@@ -619,8 +602,8 @@
           <div class="chips" role="group" aria-label="Thema wählen">
             <button type="button" class="chip" data-check="thema" data-value="sichtbarkeit" aria-pressed="false">Wir werden nicht gefunden</button>
             <button type="button" class="chip" data-check="thema" data-value="filter"       aria-pressed="false">Zu viele unpassende Anfragen</button>
-            <button type="button" class="chip" data-check="thema" data-value="recruiting"   aria-pressed="false">Wir finden keine Leute</button>
-            <button type="button" class="chip" data-check="thema" data-value="website"      aria-pressed="false">Website ist alt oder es gibt keine</button>
+            <button type="button" class="chip" data-check="thema" data-value="recruiting"   aria-pressed="false">Wir bekommen keine neuen Bewerber</button>
+            <button type="button" class="chip" data-check="thema" data-value="website"      aria-pressed="false">Webseite ist alt oder es existiert noch keine</button>
             <button type="button" class="chip" data-check="thema" data-value="verwaltung"   aria-pressed="false">Zu viel Telefon und Verwaltung</button>
             <button type="button" class="chip" data-check="thema" data-value="plattform"    aria-pressed="false">Zu abhängig von Plattformen</button>
           </div>
@@ -641,7 +624,8 @@
 </section>
 
 <!-- ===================== PAKETE ===================== -->
-<section class="section section--flush" id="pakete">
+<section class="section section--flush naht-anker" id="pakete">
+  <span class="naht naht--von-schwarz" aria-hidden="true"></span>
   <div class="wrap">
     <div class="section__head">
       <p class="kicker" data-reveal>05 — Pakete</p>
@@ -664,7 +648,7 @@
 
       <article class="card card--tint pack" data-reveal>
         <p class="tag">Recruiting-Paket</p>
-        <p class="pack__quote"><span>„</span>Wir finden keine Leute.<span>“</span></p>
+        <p class="pack__quote"><span>„</span>Wir bekommen keine neuen Bewerber.<span>“</span></p>
         <ul>
           <li><svg aria-hidden="true"><use href="#i-check"/></svg><span>Recruiting-System</span></li>
           <li><svg aria-hidden="true"><use href="#i-check"/></svg><span>60-Sekunden-Bewerbung</span></li>
@@ -676,7 +660,7 @@
 
       <article class="card card--tint pack" data-reveal>
         <p class="tag">Launch- &amp; Redesign-Paket</p>
-        <p class="pack__quote"><span>„</span>Unsere Website ist alt oder es gibt keine.<span>“</span></p>
+        <p class="pack__quote"><span>„</span>Unsere Webseite ist alt oder es existiert noch keine.<span>“</span></p>
         <ul>
           <li><svg aria-hidden="true"><use href="#i-check"/></svg><span>One-Page- oder Business-Website bzw. Redesign</span></li>
           <li><svg aria-hidden="true"><use href="#i-check"/></svg><span>SEO-Fundament</span></li>
@@ -852,7 +836,8 @@
 </section>
 
 <!-- ===================== KONTAKT ===================== -->
-<section class="section inv" id="kontakt">
+<section class="section inv naht-anker" id="kontakt">
+  <span class="naht naht--von-blau" aria-hidden="true"></span>
   <div class="wrap">
     <div class="section__head">
       <p class="kicker" data-reveal>09 — Kontakt</p>
@@ -950,7 +935,7 @@
     <div class="footer__grid">
       <div>
         <a class="brand" href="#top" style="margin-bottom:14px" aria-label="Pixelkiez — Startseite">
-          <img class="brand__mark" src="assets/img/logo.png" alt="Pixelkiez" width="460" height="113" decoding="async">
+          <img class="brand__mark" src="assets/img/logo.png" alt="Pixelkiez" width="980" height="240" decoding="async">
         </a>
         <p class="small" style="max-width:38ch">Webseiten als Geschäftssystem für Praxen, Hotellerie, Bau, Gastronomie und Startups. Festpreis nach Diagnose, Antwort in einem Werktag.</p>
       </div>
@@ -980,6 +965,9 @@
         <h4>Kontakt</h4>
         <nav aria-label="Kontakt">
           <a href="mailto:kontakt@pixelkiez.de">kontakt@pixelkiez.de</a>
+          <!-- Ohne Skript fuehrt der Sprung in den Kontaktabschnitt, mit
+               Skript oeffnet sich das Formular mit vorbelegtem Anliegen. -->
+          <a href="#kontakt" data-open-contact data-anliegen="Preisanfrage: Bitte um ein Angebot.">Preis anfragen</a>
           <a href="#check">Projekt-Check</a>
           <a href="impressum.html">Impressum</a>
           <a href="datenschutz.html">Datenschutz</a>

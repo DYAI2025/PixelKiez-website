@@ -22,7 +22,6 @@
   "SEO-Fundament": "SEO foundation",
   "GEO-Grundsetup": "Basic GEO setup",
   "Einstieg über die Diagnose: Wir definieren die Filterlogik, bevor ein Angebot entsteht.": "Entry via the diagnosis: we define the filtering logic before a quote is drawn up.",
-  "Wir finden keine Leute": "We cannot find people",
   "Recruiting-Paket": "Recruiting package",
   "Recruiting-System": "Recruiting system",
   "60-Sekunden-Bewerbung": "60-second application",
@@ -66,7 +65,6 @@
   "Anliegen-Triage vor dem Telefon, Ihr Buchungstool bleibt die Terminmaschine. Dazu Selbstzahlerseiten und MFA-Recruiting; für Psychotherapiepraxen die strukturierte Erstanfrage mit Kassensitz, Verfahren und Kapazitätsstatus.": "Request triage before the phone rings, your booking tool remains the scheduling engine. Plus self-pay treatment pages and assistant-staff recruiting; for psychotherapy practices, a structured initial enquiry covering insurance status, therapy method and capacity.",
   "Projekt-Konfigurator mit Projektart, Größenordnung, Zeitfenster und Plan-Upload sowie getrennte Recruiting-Funnels für gewerbliche Rollen und Bauleitung.": "A project configurator covering project type, scale, time frame and plan upload, plus separate recruiting funnels for site-based roles and site management.",
   "Klares Nutzenversprechen statt Buzzwords, eine Landingpage je Zielgruppe und ein Anfragepfad, dessen Abschlussquote vom ersten Tag an messbar ist.": "A clear value proposition instead of buzzwords, one landing page per audience, and an enquiry path whose completion rate is measurable from day one.",
-  "Website ist alt oder es gibt keine": "The website is old or there isn't one",
   "Einstieg über die Diagnose im Erstgespräch, mit erster Analyse Ihres aktuellen Auftritts.": "Entry via the diagnosis in the initial consultation, including a first analysis of your current presence.",
   "Kurzfristig, wir melden uns innerhalb eines Werktags mit Einschätzung und möglichen Startterminen.": "Short term, we will come back within one business day with an assessment and possible start dates.",
   "Nächstes Quartal, wir liefern die Diagnose jetzt, damit das Angebot zum Start bereitliegt.": "Next quarter, we deliver the diagnosis now so the quote is ready when you start.",
@@ -74,5 +72,7 @@
   "Anfrage über die Website von ": "Website enquiry from ",
   "\\n\\nGesendet über das Kontaktformular": "\\n\\nSent via the contact form",
   "<strong>Ihr E-Mail-Programm öffnet sich</strong> mit der fertigen Nachricht, bitte einmal absenden. Falls nichts passiert, schreiben Sie direkt an <a href=\"mailto:": "<strong>Your email program is opening</strong> with the message ready to go, please send it. If nothing happens, write to us directly at <a href=\"mailto:",
-  "<strong>Angekommen.</strong> Sie erhalten innerhalb eines Werktags eine qualifizierte Antwort, kein Newsletter und kein unangekündigter Verkaufsanruf.": "<strong>Received.</strong> You will get a qualified reply within one business day, no newsletter and no unannounced sales call."
+  "<strong>Angekommen.</strong> Sie erhalten innerhalb eines Werktags eine qualifizierte Antwort, kein Newsletter und kein unangekündigter Verkaufsanruf.": "<strong>Received.</strong> You will get a qualified reply within one business day, no newsletter and no unannounced sales call.",
+  "Wir bekommen keine neuen Bewerber": "We get no new applicants",
+  "Webseite ist alt oder es existiert noch keine": "Website is outdated or does not exist yet"
 }

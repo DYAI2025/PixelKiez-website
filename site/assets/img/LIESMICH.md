@@ -3,13 +3,24 @@
 Hier hinein gehören Logo, Favicon und das Vorschaubild. Der Build kopiert
 diesen Ordner mit Inhalts-Hash nach `dist/assets/img/`.
 
-## Was gebraucht wird, nach Wichtigkeit
+## Stand
 
-| Datei | Format | Maße | Wofür | Priorität |
+| Datei | Format | Maße | Wofür | Stand |
 |---|---|---|---|---|
-| `logo.svg` | SVG | beliebig | Kopfbereich und Footer der Website | **wichtig** |
-| `favicon.svg` | SVG | 32 × 32 Zeichenfläche | Browser-Tab und Lesezeichen | **wichtig** |
-| `og.png` | PNG oder JPG | 1200 × 630 | Vorschau, wenn jemand den Link verschickt | nützlich |
+| `logo.png` | PNG, Graustufe + Alpha | 980 × 240 | Kopf, Fußzeile, Auftakt, Rechtsseiten | liegt, aus `quelle/PixelKiez-2000.png` freigestellt |
+| `og.png` | PNG | 1200 × 630 | Vorschau, wenn jemand den Link verschickt | liegt, wird beim Logowechsel neu gesetzt |
+| `logo.svg` | SVG | beliebig | ersetzt `logo.png`, sobald vorhanden | **fehlt, wäre besser** |
+
+Solange nur ein PNG vorliegt, begrenzt dessen echte Breite, wie groß der
+Schriftzug im Auftakt werden kann. Bei 980 Pixeln ist bei rund 680 CSS-Pixeln
+Schluss, darüber wird nur noch weichgerechnet. Mit einem SVG fiele diese
+Grenze weg.
+
+**Neues Logo einsetzen:** Datei nach `quelle/` legen und Bescheid geben. Sie
+wird freigestellt, auf Graustufe mit Alpha gebracht und an allen vier Stellen
+verdrahtet. Direkt `logo.png` überschreiben geht auch, dann muss sie aber
+schon freigestellt und beschnitten sein, sonst stimmen die Maßangaben im
+Markup nicht mehr.
 
 ## Warum das Vorschaubild bei Instagram weniger zählt
 

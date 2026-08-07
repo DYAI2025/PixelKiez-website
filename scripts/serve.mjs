@@ -60,9 +60,15 @@ createServer(async (req, res) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'SAMEORIGIN');
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-    res.setHeader('Cache-Control', pfad.startsWith('/assets/fonts/')
+    /* Schriften und Bilder tragen einen Inhalts-Hash im Namen, die duerfen
+       ewig liegen bleiben. HTML dagegen nie: dies ist der Vorschau-Server,
+       hier wird zwischen zwei Aufrufen neu gebaut. Mit max-age haelt der
+       Browser eine alte oder halb geschriebene Fassung fest und man sucht
+       den Fehler im Code, wo keiner ist. In Produktion setzt Caddy die
+       Kopfzeilen, dort gilt weiterhin max-age=300. */
+    res.setHeader('Cache-Control', pfad.startsWith('/assets/')
       ? 'public, max-age=31536000, immutable'
-      : 'public, max-age=300');
+      : 'no-store');
 
     res.writeHead(200).end(inhalt);
   } catch {

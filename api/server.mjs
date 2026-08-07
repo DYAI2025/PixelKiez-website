@@ -28,13 +28,38 @@
    ========================================================================= */
 
 import { createServer } from 'node:http';
+import { setDefaultResultOrder } from 'node:dns';
+import { lookup } from 'node:dns/promises';
+import net from 'node:net';
 import nodemailer from 'nodemailer';
+
+/* IPv4 erzwingen.
+
+   Der Container hat keine Route ins IPv6-Netz. Hostingers Mailserver liegt
+   hinter Cloudflare und hat eine AAAA-Adresse; der Verbindungsversuch dorthin
+   endet in ENETUNREACH oder einem Timeout — auf jedem Port. Im Protokoll
+   sieht das aus wie ein falsches Kennwort, dabei hat die Anmeldung nie
+   stattgefunden.
+
+   Drei Riegel, weil einer allein nicht reicht:
+     · ipv4first sortiert die Aufloesung, aber Node 20+ probiert seit
+       "Happy Eyeballs" beide Familien PARALLEL — der IPv6-Versuch lief also
+       trotzdem und schlug durch;
+     · autoSelectFamily(false) schaltet genau dieses Parallelprobieren ab;
+     · family:4 am Transport (weiter unten) schliesst IPv6 endgueltig aus.
+
+   Muss vor dem ersten Verbindungsaufbau stehen. */
+setDefaultResultOrder('ipv4first');
+if (typeof net.setDefaultAutoSelectFamily === 'function') {
+  net.setDefaultAutoSelectFamily(false);
+}
 
 const PORT           = Number(process.env.PORT || 3000);
 const SMTP_HOST      = process.env.SMTP_HOST || '';
 const SMTP_PORT      = Number(process.env.SMTP_PORT || 465);
 const SMTP_USER      = process.env.SMTP_USER || '';
 const SMTP_PASS      = process.env.SMTP_PASS || '';
+const RESEND_KEY     = process.env.RESEND_KEY || '';
 const MAIL_TO        = process.env.MAIL_TO || '';
 const MAIL_FROM      = process.env.MAIL_FROM || SMTP_USER;
 const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || '';
@@ -44,7 +69,26 @@ const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || '';
 // Adresse zum direkten Anschreiben zeigt. Ein "Angekommen" ohne Zustellung
 // waere die schlimmste Variante: die Anfrage waere lautlos verloren.
 // MAIL_DRYRUN=1 erlaubt bewusstes Annehmen ohne Versand — nur zum Testen.
-const NICHT_KONFIGURIERT = !SMTP_HOST || !MAIL_TO;
+/* Zwei Versandwege, der Dienst waehlt selbst:
+
+     RESEND_KEY gesetzt → HTTPS an api.resend.com (Port 443)
+     sonst              → SMTP an SMTP_HOST
+
+   Der HTTPS-Weg ist der, der auf Railway funktioniert: ausgehendes SMTP ist
+   dort gesperrt, Verbindungen auf 465 und 587 laufen in einen Timeout. Der
+   SMTP-Weg bleibt trotzdem drin — auf einem Server, der ihn zulaesst (etwa
+   bei Hostinger selbst), genuegt dann das Entfernen des Schluessels.
+
+   In beiden Faellen geht die Mail an MAIL_TO. Wo sie landet, entscheiden die
+   MX-Eintraege der Domain, und die zeigen auf Hostinger.
+
+   Das Kennwort zaehlt zur Konfiguration dazu. Ohne es meldete der Dienst
+   "versandbereit" und scheiterte erst beim Versand — eine Anzeige, die gruen
+   zeigt und trotzdem nichts zustellt, ist schlimmer als gar keine. */
+const PER_HTTPS = !!RESEND_KEY;
+const NICHT_KONFIGURIERT = !MAIL_TO || (PER_HTTPS
+  ? false
+  : (!SMTP_HOST || (!!SMTP_USER && !SMTP_PASS)));
 const DRYRUN = /^(1|true|ja)$/i.test(process.env.MAIL_DRYRUN || '');
 const TROCKENLAUF = NICHT_KONFIGURIERT;
 
@@ -100,11 +144,34 @@ const SICHER = process.env.SMTP_SECURE
   ? /^(1|true|ja)$/i.test(process.env.SMTP_SECURE)
   : SMTP_PORT === 465;
 
-const transport = TROCKENLAUF ? null : nodemailer.createTransport({
-  host: SMTP_HOST,
+/* Der Namen wird hier selbst aufgeloest, und zwar ausdruecklich auf IPv4.
+
+   Weder ipv4first noch autoSelectFamily(false) noch family:4 am Transport
+   haben den IPv6-Versuch verhindert — nodemailer reicht die Socket-Option
+   nicht bis zum Verbindungsaufbau durch. Uebergibt man dagegen gleich eine
+   IPv4-Adresse, gibt es nichts mehr zu waehlen.
+
+   servername traegt weiterhin den Hostnamen, damit das Zertifikat gegen
+   smtp.hostinger.com geprueft wird und nicht gegen die nackte Adresse.
+   Schlaegt die Aufloesung fehl, bleibt es beim Namen — dann ist der Zustand
+   wie vorher, aber nicht schlechter. */
+let smtpZiel = SMTP_HOST;
+if (!TROCKENLAUF && !PER_HTTPS) {
+  try {
+    const { address } = await lookup(SMTP_HOST, { family: 4 });
+    smtpZiel = address;
+    console.log(`SMTP-Ziel: ${SMTP_HOST} → ${address} (IPv4)`);
+  } catch (e) {
+    console.log(`SMTP-Ziel: IPv4-Aufloesung fehlgeschlagen (${e.message}), nutze ${SMTP_HOST}`);
+  }
+}
+
+const transport = (TROCKENLAUF || PER_HTTPS) ? null : nodemailer.createTransport({
+  host: smtpZiel,
   port: SMTP_PORT,
   secure: SICHER,
   auth: SMTP_USER ? { user: SMTP_USER, pass: SMTP_PASS } : undefined,
+  tls: { servername: SMTP_HOST },   // Zertifikat gegen den Namen, nicht die Adresse
   requireTLS: !SICHER,
   connectionTimeout: 10000,
   greetingTimeout: 10000,
@@ -212,20 +279,66 @@ const server = createServer((req, res) => {
         console.log('[Trockenlauf] Anfrage angenommen, nicht versendet:\n' + text + '\n');
         return antwort(req, res, 200, { ok: true, hinweis: 'Trockenlauf — nicht versendet' });
       }
-      console.error('Anfrage NICHT zustellbar — SMTP_HOST oder MAIL_TO fehlt. Von: ' + name);
+      console.error('Anfrage NICHT zustellbar — Versand nicht eingerichtet (RESEND_KEY oder SMTP-Zugang und MAIL_TO). Von: ' + name);
       return antwort(req, res, 503, { ok: false, fehler: 'Versand nicht eingerichtet' });
     }
 
+    const betreff = 'Website-Anfrage: ' + name + (branche ? ' · ' + branche : '');
+
+    /* Der Absender traegt den Interessenten im ANZEIGENAMEN, die Adresse
+       bleibt die eigene.
+
+       Warum nicht gleich seine Adresse als Absender: dann behauptete dieser
+       Server, fuer fremde Domains zu sprechen. SPF und DKIM fallen durch, die
+       Mail landet im Spam oder wird abgewiesen.
+
+       Postfaecher zeigen in der Uebersicht den Anzeigenamen, nicht die
+       Adresse. In der Liste steht damit "Max Mustermann · max@example.com"
+       statt immer nur der eigenen Adresse — sortierbar und auf einen Blick
+       zuzuordnen.
+
+       Anfuehrungszeichen und Backslash muessen raus: sie wuerden die
+       Namensangabe zerlegen. Zeilenumbrueche hat einzeilig() schon entfernt,
+       das ist der Riegel gegen eingeschleuste Kopfzeilen. */
+    const anzeige = (name + ' · ' + kontakt).replace(/[\\"]/g, ' ').trim().slice(0, 120);
+    const absender = '"' + anzeige + '" <' + MAIL_FROM + '>';
+    // Nur setzen, wenn es wirklich eine Adresse ist. Sonst wuerde eine
+    // Telefonnummer als Antwortadresse landen und die Antwort verpuffen.
+    const antwortAn = istMail(kontakt) ? kontakt : undefined;
+
     try {
-      await transport.sendMail({
-        from: MAIL_FROM,                  // eigene Domain, sonst scheitert SPF
-        to: MAIL_TO,
-        subject: 'Website-Anfrage: ' + name + (branche ? ' · ' + branche : ''),
-        text,
-        // Nur setzen, wenn es wirklich eine Adresse ist. Sonst wuerde eine
-        // Telefonnummer als Antwortadresse landen und die Antwort verpuffen.
-        replyTo: istMail(kontakt) ? kontakt : undefined,
-      });
+      if (PER_HTTPS) {
+        const r = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer ' + RESEND_KEY,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from: absender,               // Name des Interessenten, Adresse die eigene
+            to: [MAIL_TO],
+            subject: betreff,
+            text,
+            reply_to: antwortAn,
+          }),
+          signal: AbortSignal.timeout(15000),
+        });
+        if (!r.ok) {
+          // Grund aus der Antwort holen, damit im Protokoll steht, WORAN es
+          // lag — nicht bestaetigte Domain, falscher Schluessel, Kontingent.
+          let grund = 'HTTP ' + r.status;
+          try { const j = await r.json(); if (j && j.message) grund += ' — ' + j.message; } catch {}
+          throw new Error(grund);
+        }
+      } else {
+        await transport.sendMail({
+          from: absender,                 // Name des Interessenten, Adresse die eigene
+          to: MAIL_TO,
+          subject: betreff,
+          text,
+          replyTo: antwortAn,
+        });
+      }
       console.log('Anfrage zugestellt an ' + MAIL_TO + ' — von ' + name);
       return antwort(req, res, 200, { ok: true });
     } catch (e) {
@@ -240,6 +353,8 @@ const server = createServer((req, res) => {
 server.listen(PORT, () => {
   console.log('BDS-Formulardienst auf Port ' + PORT);
   console.log(TROCKENLAUF
-    ? 'Modus: TROCKENLAUF — es wird nichts versendet (SMTP_HOST oder MAIL_TO fehlt)'
-    : 'Modus: Versand über ' + SMTP_HOST + ':' + SMTP_PORT + ' an ' + MAIL_TO);
+    ? 'Modus: TROCKENLAUF — nichts wird versendet (RESEND_KEY oder SMTP-Zugang und MAIL_TO fehlen)'
+    : PER_HTTPS
+      ? 'Modus: Versand über HTTPS (Resend), Absender ' + MAIL_FROM + ', Ziel ' + MAIL_TO
+      : 'Modus: Versand über SMTP ' + SMTP_HOST + ':' + SMTP_PORT + ' an ' + MAIL_TO);
 });

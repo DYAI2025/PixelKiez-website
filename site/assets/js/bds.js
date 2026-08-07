@@ -35,41 +35,9 @@
     window.setTimeout(run, 2000);
   };
 
-  /* --- 0. Auftakt: Landepunkt des Logos ---------------------------------
-     Das Logo wandert am Ende auf den Platz der Kopfmarke. Wo der genau
-     liegt, weiss nur der Browser — es haengt an Fensterbreite, Schriftgroesse
-     und dem Umbruch daneben. Also messen statt schaetzen und das Ergebnis
-     als --zx/--zy/--zs an die CSS-Animation reichen.
-
-     Die Animation laeuft auch ohne diese Werte; im CSS stehen Ersatzwerte.
-     Ohne Skript landet das Logo also ungefaehr richtig statt gar nicht. */
-  (function () {
-    var auftakt = $('.intro');
-    var reise   = auftakt && auftakt.querySelector('.intro__logo');
-    var ziel    = $('.header .brand__mark');
-    if (!auftakt || !reise || !ziel) return;
-
-    var messen = function () {
-      var z = ziel.getBoundingClientRect();
-      // offsetWidth ist die Breite vor der Transformation — genau die brauchen wir
-      var startBreite = reise.offsetWidth;
-      if (!z.width || !startBreite) return;
-      // Startmitte ist die Fenstermitte (left/top 50% plus translate(-50%,-50%))
-      auftakt.style.setProperty('--zx', (z.left + z.width / 2 - window.innerWidth / 2) + 'px');
-      auftakt.style.setProperty('--zy', (z.top + z.height / 2 - window.innerHeight / 2) + 'px');
-      auftakt.style.setProperty('--zs', z.width / startBreite);
-    };
-
-    messen();
-    // Das Logo hat feste Masse im Markup, kann aber noch nachladen.
-    if (!reise.complete) reise.addEventListener('load', messen);
-    // Der Kopf klebt oben, verschiebt sich beim Scrollen also nicht. Fenster
-    // drehen oder Schriften nachladen aendert die Lage aber sehr wohl.
-    window.addEventListener('resize', messen);
-    whenFontsReady(messen);
-    // Nach dem Auftakt wird nicht mehr gemessen.
-    window.setTimeout(function () { window.removeEventListener('resize', messen); }, 3000);
-  })();
+  /* Der Auftakt braucht kein Skript: gewechselt wird unter voller Deckung
+     des Wischblocks, es gibt also nichts zu messen und nichts zu treffen.
+     Alles dazu steht im CSS unter "7a. Auftakt". */
 
   /* --- 1. Header + Mobilnavigation -------------------------------------- */
   var header = $('.header');
@@ -158,6 +126,278 @@
     } else { tick(); }
     document.addEventListener('visibilitychange', function () {
       document.hidden ? stop() : (timer || tick());
+    });
+  })();
+
+  /* --- 3b. Pixel Drift auf der Wortmarke --------------------------------
+     Portierung des Originkit-Bausteins "Pixel Drift" (React/Canvas) auf
+     schlichtes JavaScript. Ein Unterschied zur Vorlage, und es ist der
+     entscheidende: dort ist die Vorlage gezeichneter Text, hier ist sie die
+     Logodatei selbst. Abgetastet wird also das Bild — jeder Bildpunkt mit
+     Deckkraft ueber 128 im Raster 150/Dichte wird ein Partikel. Die Form
+     bleibt dadurch exakt die des gelieferten Logos, nichts wird nachgebaut.
+
+     Aus der Vorlage uebernommen:
+       · Startpunkte auf einem Ring ausserhalb der Flaeche
+       · ratenbasierter Aufbauwert statt Zeitleiste — laesst sich mitten in
+         der Bewegung umkehren, ohne zu springen
+       · Abstossung nach Zeigergeschwindigkeit, Ziel auf dem Radiusrand
+       · Ruecklauf 0.97 je Bild, Geschwindigkeitszerfall 0.88
+       · Farbeimer statt Farbwechsel je Partikel
+
+     Bei reduzierter Bewegung passiert gar nichts, dann bleibt das Bild
+     stehen. Ebenso, wenn die Abtastung nichts findet.
+     ---------------------------------------------------------------------- */
+  (function pixelDrift () {
+    var buehne = $('.hero__logo-buehne');
+    if (!buehne || reduced) return;
+    var bild = $('.hero__logo', buehne);
+    var leinwand = $('.hero__logo-drift', buehne);
+    if (!bild || !leinwand) return;
+    var ctx = leinwand.getContext('2d');
+    if (!ctx) return;
+
+    /* Ein Ton, das Schwarz des Logos. Die Vorlage mischt drei Farben, das
+       veraenderte hier aber das Erscheinungsbild der Wortmarke. */
+    var FARBEN  = ['#0E1413'];
+    var GROESSE = 10;    // Kantenlaenge wird davon ein Viertel, wie in der Vorlage
+    var DICHTE  = 50;    // 1..50, hoeher = dichter
+    var RADIUS  = 50;    // Wirkradius des Zeigers
+    var KRAFT   = 30;    // Staerke des Stosses
+    var AUFBAU  = 1000;  // Millisekunden bis das Feld steht
+
+    var anzahl = 0, ox, oy, sx, sy, px, py, repX, repY, farbe;
+    var cssW = 0, cssH = 0, dpr = 1;
+    var wert = 0, letzter = null, verborgen = true, rueckwaerts = false;
+    var zx = -99999, zy = -99999, aktiv = false;
+    var vorX = -99999, vorY = -99999, tempo = 0, glattX = -99999, glattY = -99999;
+    var raf = null, sichtbar = false;
+
+    var randX = 0, randY = 0;   /* Ueberstand der Leinwand ueber das Bild */
+    var maxWeg = 0;             /* weiteste erlaubte Auslenkung eines Partikels */
+
+    var abtasten = function () {
+      if (cssW <= 0 || cssH <= 0 || !bild.naturalWidth) return false;
+      var ab = document.createElement('canvas');
+      ab.width  = Math.max(1, Math.floor(cssW * dpr));
+      ab.height = Math.max(1, Math.floor(cssH * dpr));
+      var abCtx = ab.getContext('2d', { willReadFrequently: true });
+      if (!abCtx) return false;
+      abCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      abCtx.clearRect(0, 0, cssW, cssH);
+      // Mittig einzeichnen: die Leinwand ist ringsum groesser als das Bild,
+      // die Partikel bekommen dadurch Platz zum Ausweichen.
+      abCtx.drawImage(bild, randX, randY, cssW - 2 * randX, cssH - 2 * randY);
+
+      var daten;
+      try { daten = abCtx.getImageData(0, 0, ab.width, ab.height).data; }
+      catch (e) { return false; }          // fremde Herkunft — dann bleibt das Bild
+
+      var schritt = Math.max(2, Math.round(150 / Math.max(1, Math.min(50, DICHTE))));
+      var x, y, i;
+      var treffer = 0;
+      for (y = 0; y < cssH; y += schritt) {
+        for (x = 0; x < cssW; x += schritt) {
+          if (daten[((Math.floor(y * dpr) * ab.width) + Math.floor(x * dpr)) * 4 + 3] > 128) treffer++;
+        }
+      }
+      if (!treffer) return false;
+
+      var duenner = treffer > 30000 ? Math.ceil(treffer / 30000) : 1;
+      var platz = Math.min(treffer, 30000);
+      ox = new Float32Array(platz); oy = new Float32Array(platz);
+      sx = new Float32Array(platz); sy = new Float32Array(platz);
+      px = new Float32Array(platz); py = new Float32Array(platz);
+      repX = new Float32Array(platz); repY = new Float32Array(platz);
+      farbe = new Uint8Array(platz);
+
+      i = 0;
+      var gesehen = 0;
+      for (y = 0; y < cssH && i < platz; y += schritt) {
+        for (x = 0; x < cssW && i < platz; x += schritt) {
+          if (daten[((Math.floor(y * dpr) * ab.width) + Math.floor(x * dpr)) * 4 + 3] > 128) {
+            if (gesehen % duenner === 0) {
+              ox[i] = x; oy[i] = y;
+              // Startpunkt auf einem Ring ausserhalb der Flaeche: die Partikel
+              // fliegen von draussen herein und loesen sich dorthin wieder auf.
+              var w = Math.random() * Math.PI * 2;
+              var r = Math.max(cssW, cssH) * (0.6 + Math.random() * 0.5);
+              sx[i] = cssW / 2 + Math.cos(w) * r;
+              sy[i] = cssH / 2 + Math.sin(w) * r;
+              px[i] = sx[i]; py[i] = sy[i];
+              farbe[i] = Math.floor(Math.random() * FARBEN.length);
+              i++;
+            }
+            gesehen++;
+          }
+        }
+      }
+      anzahl = i;
+      wert = 0; letzter = null;
+      return anzahl > 0;
+    };
+
+    var messen = function () {
+      var lr = leinwand.getBoundingClientRect();
+      var br = bild.getBoundingClientRect();
+      var w = Math.floor(lr.width), h = Math.floor(lr.height);
+      if (w <= 0 || h <= 0 || br.width <= 0) return false;
+      dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      cssW = w; cssH = h;
+      randX = Math.max(0, Math.round((lr.width - br.width) / 2));
+      randY = Math.max(0, Math.round((lr.height - br.height) / 2));
+      /* Kein Partikel darf weiter als bis knapp vor die Kante. Damit kann es
+         gar nicht erst anstossen — die Begrenzung liegt im Weg, nicht in der
+         Leinwand. Der Abzug ist die halbe Kantenlaenge plus zwei Pixel Luft. */
+      maxWeg = Math.max(6, Math.min(randX, randY) - (GROESSE / 8 + 2));
+      leinwand.width  = Math.floor(cssW * dpr);
+      leinwand.height = Math.floor(cssH * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      return abtasten();
+    };
+
+    var eimer = FARBEN.map(function () { return []; });
+
+    var bild_zeichnen = function () {
+      ctx.clearRect(0, 0, cssW, cssH);
+      var kante = Math.max(1, GROESSE / 4), halb = kante / 2;
+
+      var jetzt = window.performance ? performance.now() : Date.now();
+      var dt = Math.min(64, Math.max(0, jetzt - (letzter === null ? jetzt : letzter)));
+      letzter = jetzt;
+      var ziel = rueckwaerts ? 0 : 1;
+      if (wert < ziel) wert = Math.min(ziel, wert + dt / AUFBAU);
+      else if (wert > ziel) wert = Math.max(ziel, wert - dt / AUFBAU);
+      if (rueckwaerts && wert <= 0) verborgen = true;
+      if (verborgen) return;
+
+      var baut = wert < 1;
+      // Die Vorlage nutzt hier ihre Transition-Kurve; ohne eigene Angabe ist
+      // das linear, also der Wert selbst.
+      var anteil = wert;
+
+      var stoss = tempo;
+      tempo *= 0.88;
+      var wirkt = !baut && aktiv;
+      if (wirkt) {
+        var lerp = Math.max(0.08, 0.3 - stoss * 0.006);
+        if (glattX < -9000) { glattX = zx; glattY = zy; }
+        else { glattX += (zx - glattX) * lerp; glattY += (zy - glattY) * lerp; }
+      } else { glattX = -99999; glattY = -99999; }
+      /* Der Radius bleibt unter der Schranke. Waere er groesser, laege die
+         natuerliche Zielauslenkung schon auf ihr und alle Partikel draengten
+         sich dort — die Schranke wuerde selbst zur sichtbaren Kante. */
+      var rGrenze = Math.max(6, Math.min(RADIUS, maxWeg * 0.85));
+      var rGrenzeQ = rGrenze * rGrenze;
+
+      var b, i;
+      for (b = 0; b < eimer.length; b++) eimer[b].length = 0;
+
+      for (i = 0; i < anzahl; i++) {
+        var oxi = ox[i], oyi = oy[i];
+        if (baut) {
+          px[i] = sx[i] + (oxi - sx[i]) * anteil;
+          py[i] = sy[i] + (oyi - sy[i]) * anteil;
+          eimer[farbe[i]].push(i);
+          continue;
+        }
+        var inZone = false;
+        if (wirkt) {
+          var dx = oxi - glattX, dy = oyi - glattY;
+          var q = dx * dx + dy * dy;
+          if (q > 0 && q < rGrenzeQ) {
+            var d = Math.sqrt(q), nx = dx / d, ny = dy / d;
+            // Der Stoss der Vorlage ist nach oben offen: bei schnellem Streichen
+            // fliegt ein Partikel in einem einzigen Bild weit ueber den Radius
+            // hinaus. Gedeckelt auf den erlaubten Weg, sonst schoesse es sofort
+            // an die Kante.
+            var schub = Math.min(maxWeg, (1 - d / rGrenze) * stoss * KRAFT * 0.05);
+            repX[i] += nx * schub; repY[i] += ny * schub;
+            repX[i] += (nx * (rGrenze - d) - repX[i]) * 0.06;
+            repY[i] += (ny * (rGrenze - d) - repY[i]) * 0.06;
+            inZone = true;
+          }
+        }
+        if (!inZone) { repX[i] *= 0.97; repY[i] *= 0.97; }
+        // Harte Schranke auf den Betrag: was auch immer sich aufsummiert hat,
+        // weiter als maxWeg kommt kein Partikel. Die Leinwandkante ist damit
+        // unerreichbar, es kann dort nichts abgeschnitten werden.
+        var wq = repX[i] * repX[i] + repY[i] * repY[i];
+        if (wq > maxWeg * maxWeg) {
+          var f = maxWeg / Math.sqrt(wq);
+          repX[i] *= f; repY[i] *= f;
+        }
+        px[i] = oxi + repX[i];
+        py[i] = oyi + repY[i];
+        eimer[farbe[i]].push(i);
+      }
+
+      ctx.globalAlpha = baut ? Math.min(1, Math.max(0, anteil)) : 1;
+      for (b = 0; b < eimer.length; b++) {
+        if (!eimer[b].length) continue;
+        ctx.fillStyle = FARBEN[b];
+        for (var k = 0; k < eimer[b].length; k++) {
+          var j = eimer[b][k];
+          ctx.fillRect(px[j] - halb, py[j] - halb, kante, kante);
+        }
+      }
+      ctx.globalAlpha = 1;
+    };
+
+    var schleife = function () { bild_zeichnen(); raf = requestAnimationFrame(schleife); };
+    var start = function () { if (raf === null) { letzter = null; raf = requestAnimationFrame(schleife); } };
+    var halt  = function () { if (raf !== null) { cancelAnimationFrame(raf); raf = null; } };
+
+    /* Der Zeiger wird am Hero abgefragt, nicht an der Leinwand. Haenge die
+       Abfrage an der Leinwand, begaenne und endete die Wirkung an deren Kante
+       — man saehe das Rechteck, auch wenn es unsichtbar ist. So faehrt der
+       Zeiger durch, und die Partikel reagieren einfach nach Entfernung. */
+    var feld = $('.hero') || document;
+    feld.addEventListener('pointermove', function (e) {
+      var rect = leinwand.getBoundingClientRect();
+      var skX = rect.width  > 0 ? cssW / rect.width  : 1;
+      var skY = rect.height > 0 ? cssH / rect.height : 1;
+      var mx = (e.clientX - rect.left) * skX, my = (e.clientY - rect.top) * skY;
+      if (vorX > -9000) {
+        var ddx = mx - vorX, ddy = my - vorY;
+        tempo = Math.sqrt(ddx * ddx + ddy * ddy);
+      }
+      vorX = mx; vorY = my; zx = mx; zy = my; aktiv = true;
+    });
+    var weg = function () { zx = -99999; zy = -99999; aktiv = false; vorX = -99999; vorY = -99999; };
+    feld.addEventListener('pointerleave', weg);
+    feld.addEventListener('pointercancel', weg);
+
+    var anwerfen = function () {
+      if (!messen()) return;               // Abtastung leer — Bild bleibt stehen
+      buehne.dataset.drift = 'an';
+      verborgen = false; rueckwaerts = false;
+      if (sichtbar) start();
+    };
+
+    // Erst wenn das Bild wirklich da ist, sonst tastet man eine leere Flaeche ab
+    if (bild.complete && bild.naturalWidth) anwerfen();
+    else bild.addEventListener('load', anwerfen);
+
+    // Nur laufen lassen, solange die Marke im Bild ist — das spart Rechenzeit
+    // beim Scrollen. Der Zustand bleibt dabei ABSICHTLICH stehen: der Aufbau
+    // gehoert zum Seitenaufruf, nicht zum Scrollen. Wer zurueckscrollt, findet
+    // die Wortmarke fertig vor, nicht mitten im Zusammensetzen.
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(function (e) {
+        sichtbar = e[0].isIntersecting;
+        if (sichtbar) start(); else halt();
+      }, { threshold: 0 }).observe(buehne);
+    } else { sichtbar = true; start(); }
+
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) halt(); else if (sichtbar) start();
+    });
+
+    var rt;
+    window.addEventListener('resize', function () {
+      clearTimeout(rt);
+      rt = setTimeout(function () { if (buehne.dataset.drift === 'an') messen(); }, 200);
     });
   })();
 
@@ -471,13 +711,13 @@
       entry: 'Einstieg über die Diagnose: Wir definieren die Filterlogik, bevor ein Angebot entsteht.',
     },
     recruiting: {
-      label: 'Wir finden keine Leute',
+      label: 'Wir bekommen keine neuen Bewerber',
       title: 'Recruiting-Paket',
       mods: ['Recruiting-System', '60-Sekunden-Bewerbung', 'Google-for-Jobs-Setup', 'Recruiting-Begleitung'],
       entry: 'Kostenloser Quick-Check im Erstgespräch: Wir testen Ihre aktuelle Bewerbungsstrecke live am Handy.',
     },
     website: {
-      label: 'Website ist alt oder es gibt keine',
+      label: 'Webseite ist alt oder es existiert noch keine',
       title: 'Launch- & Redesign-Paket',
       mods: ['One-Page- oder Business-Website bzw. Redesign', 'SEO-Fundament', 'GEO-Grundsetup', 'Google-Business-Profil'],
       entry: 'Einstieg über die Diagnose im Erstgespräch, mit erster Analyse Ihres aktuellen Auftritts.',
@@ -686,7 +926,17 @@
     }
   };
   $$('[data-open-contact]').forEach(function (b) {
-    b.addEventListener('click', function (e) { e.preventDefault(); openContact(); });
+    b.addEventListener('click', function (e) {
+      e.preventDefault();
+      /* Ein Knopf darf sein Anliegen mitgeben — dann steht es schon im
+         Formular und die Anfrage kommt beschriftet an, statt als leeres Feld.
+         Nur setzen, wenn noch nichts drinsteht: sonst ueberschriebe ein
+         zweiter Klick, was jemand schon getippt hat. */
+      var vorgabe = b.getAttribute('data-anliegen');
+      var feld = $('#f-anliegen');
+      if (vorgabe && feld && !feld.value.trim()) feld.value = vorgabe;
+      openContact();
+    });
   });
 
   function handoff() {

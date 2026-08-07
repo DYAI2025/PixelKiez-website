@@ -14,7 +14,9 @@
    ========================================================================= */
 
 /* Attribute, deren Inhalt sichtbar oder vorlesbar ist. */
-export const ATTRIBUTE = ['alt', 'title', 'aria-label', 'placeholder', 'content'];
+export const ATTRIBUTE = ['alt', 'title', 'aria-label', 'placeholder', 'content',
+  /* Vorbelegung des Anliegen-Feldes — landet sichtbar im Formular */
+  'data-anliegen'];
 
 /* Nicht uebersetzen: Eigennamen, Zahlen, technische Werte. Der Vergleich
    laeuft nach trim() und Kleinschreibung. */
