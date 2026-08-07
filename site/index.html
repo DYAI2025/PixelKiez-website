@@ -274,6 +274,12 @@
 
 <!-- ===================== HERO ===================== -->
 <section class="wrap hero section--flush">
+  <!-- Leinwand fuer den Partikeleffekt. Sie spannt ueber den GANZEN Hero,
+       nicht nur ueber das Logo: die Partikel starten weit ausserhalb und
+       fliegen herein. Waere sie so gross wie das Logo, tauchten sie an ihrer
+       Kante auf und man saehe ein Rechteck. -->
+  <canvas class="hero__logo-drift" aria-hidden="true"></canvas>
+
   <!-- Portierung von animated-hero.tsx (21st.dev): rotierende Headline · zwei CTAs -->
   <div class="hero__stage">
     <!-- Wortmarke ueber der Ueberschrift. Dekorativ, denn den Namen traegt
@@ -283,9 +289,11 @@
          Bewegung oder wenn die Abtastung scheitert, steht es einfach da. Das
          Skript legt nur eine Leinwand darueber, die dasselbe Bild Pixel fuer
          Pixel als Partikel nachzeichnet. Die Form aendert sich dabei nicht. -->
-    <span class="hero__logo-buehne" data-reveal>
+    <!-- Bewusst ohne data-reveal: dessen translate3d(0,14px,0) verschiebt das
+         Bild waehrend der Einblendung, und genau dorthin wuerden die Partikel
+         gezeichnet. Der Aufbau des Partikelfeldes IST die Einblendung. -->
+    <span class="hero__logo-buehne">
       <img class="hero__logo" src="assets/img/logo.png" alt="" width="980" height="240" fetchpriority="high">
-      <canvas class="hero__logo-drift" aria-hidden="true"></canvas>
     </span>
     <p class="hero__claim" data-reveal>Wir bauen deine professionelle Webseite</p>
 

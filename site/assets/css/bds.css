@@ -495,36 +495,25 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
   width:min(76vw,520px);margin-inline:auto;
 }
 .hero__logo{display:block;width:100%;height:auto}
-/* Die Leinwand ragt ringsum ueber das Bild hinaus. Deckungsgleich waere sie
-   ein Kaefig: weggeschobene Partikel wuerden an der Kante abgeschnitten, und
-   man saehe das Rechteck des Logos. Der Rand ist etwas groesser als der
-   Wirkradius des Zeigers, damit nichts anstoesst.
+/* Die Leinwand spannt ueber den GANZEN Hero, randlos bis zum Bildschirmrand.
+   Nur so koennen die Partikel von weit draussen hereinfliegen. Waere sie so
+   gross wie das Logo, tauchten sie an ihrer Kante auf, und genau das saehe
+   man als Rechteck.
 
-   pointer-events:none — die Leinwand hoert selbst nicht zu. Der Zeiger wird
-   am Hero abgefragt, sonst begaenne und endete die Wirkung an genau dieser
-   Kante, und das Rechteck waere wieder da, nur unsichtbar. */
-/* Breite und Hoehe ausgeschrieben: canvas ist ein ersetztes Element und
-   dehnt sich nicht allein durch inset, es behielte seine Eigenmasse. */
+   Breite und Hoehe ausgeschrieben, weil canvas ein ersetztes Element ist und
+   sich nicht allein durch inset dehnt. max-width:none, weil die Grundregel
+   img,svg,canvas sonst auf 100% deckelt.
+
+   pointer-events:none — die Leinwand hoert selbst nicht zu, der Zeiger wird
+   am Hero abgefragt. Sonst begaenne und endete die Wirkung an ihrer Kante. */
 .hero__logo-drift{
-  /* Waagerecht ist der Platz von der Inhaltsspalte begrenzt, senkrecht nicht.
-     Deshalb zwei Werte. Wie weit ein Partikel tatsaechlich darf, rechnet das
-     Skript daraus aus — es begrenzt den Weg, damit die Kante nie erreicht
-     wird. Ein groesserer Rand allein wuerde das Anstossen nur verschieben. */
-  --rand-x:clamp(16px,6vw,110px);
-  --rand-y:clamp(40px,9vw,120px);
-  position:absolute;
-  left:50%;transform:translateX(-50%);
-  top:calc(-1 * var(--rand-y));
-  width:calc(100% + 2 * var(--rand-x));
-  height:calc(100% + 2 * var(--rand-y));
-  max-width:none;                  /* die Grundregel img,svg,canvas deckelt sonst auf 100% */
+  position:absolute;top:0;left:50%;
+  margin-left:-50vw;width:100vw;height:100%;
+  max-width:none;z-index:2;
   display:block;opacity:0;pointer-events:none;
 }
-/* Schutz fuer schmale Geraete: der ueberstehende Rand darf die Seite nicht
-   breiter machen. Senkrecht bleibt alles sichtbar. */
-.hero__stage{overflow-x:clip;overflow-y:visible}
-.hero__logo-buehne[data-drift="an"] .hero__logo{opacity:0}
-.hero__logo-buehne[data-drift="an"] .hero__logo-drift{opacity:1}
+.hero[data-drift="an"] .hero__logo{opacity:0}
+.hero[data-drift="an"] .hero__logo-drift{opacity:1}
 /* Der Satz unter der Wortmarke. Mono und gesperrt wie die uebrigen
    Auszeichnungen der Seite, damit er die Ueberschrift nicht bedraengt. */
 .hero__claim{
