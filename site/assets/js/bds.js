@@ -157,10 +157,11 @@
     var ctx = leinwand.getContext('2d');
     if (!ctx) return;
 
-    /* Ein Ton, das Schwarz des Logos. Die Vorlage mischt drei Farben, das
-       veraenderte hier aber das Erscheinungsbild der Wortmarke. */
-    var FARBEN  = ['#0E1413'];
-    var RASTER  = 2;     // Abtastabstand in Pixeln
+    /* Die Farbe wird NICHT gesetzt, sondern aus dem Bild gelesen. Ein
+       Tokenwert wie --ink waere ein anderes Schwarz als das der Datei, und
+       das Logo saehe anders aus als vorher. */
+    var FARBEN  = ['#000000'];
+    var RASTER  = 2;     // Kantenlaenge einer Zelle in Pixeln
     var RADIUS  = 50;    // Wirkradius des Zeigers
     var KRAFT   = 30;    // Staerke des Stosses
     var AUFBAU  = 1000;  // Millisekunden bis das Feld steht
@@ -192,13 +193,50 @@
       try { daten = abCtx.getImageData(0, 0, ab.width, ab.height).data; }
       catch (e) { return false; }          // fremde Herkunft — dann bleibt das Bild
 
+      /* Flaechenmittel statt Punktprobe.
+
+         Vorher wurde EIN Bildpunkt je Zelle gefragt und bei Treffer das ganze
+         Quadrat gemalt. Das rundet nach aussen: liegt die Zelle nur mit einer
+         Ecke im Buchstaben, wird sie trotzdem voll. Die Striche wurden dadurch
+         fetter und die Punze im P lief zu. Jetzt zaehlt der Anteil der Zelle,
+         der wirklich im Buchstaben liegt — ueber die Haelfte wird gemalt,
+         darunter nicht. Das ist dieselbe Regel, nach der ein Bild verkleinert
+         wird, und sie traegt die Form treu. */
+      var zelle = Math.max(1, Math.round(RASTER * dpr));   // Zellenkante in Bildpunkten
+      var spaltenW = ab.width, zeilenH = ab.height;
+
+      var deckung = function (gx, gy) {
+        var summe = 0, n = 0, ex = Math.min(gx + zelle, spaltenW), ey = Math.min(gy + zelle, zeilenH);
+        for (var yy = gy; yy < ey; yy++) {
+          var basis = yy * spaltenW;
+          for (var xx = gx; xx < ex; xx++) { summe += daten[(basis + xx) * 4 + 3]; n++; }
+        }
+        return n ? summe / (n * 255) : 0;
+      };
+
       var x, y, i, treffer = 0;
-      for (y = 0; y < bh; y += RASTER) {
-        for (x = 0; x < bw; x += RASTER) {
-          if (daten[((Math.round(y * dpr) * ab.width) + Math.round(x * dpr)) * 4 + 3] > 128) treffer++;
+      var spalten = Math.ceil(bw / RASTER), zeilen = Math.ceil(bh / RASTER);
+      var maske = new Uint8Array(spalten * zeilen);
+      /* Farbe aus dem Bild mitteln, nicht setzen */
+      var sumR = 0, sumG = 0, sumB = 0, sumN = 0;
+
+      for (y = 0; y < zeilen; y++) {
+        for (x = 0; x < spalten; x++) {
+          var gx = Math.round(x * RASTER * dpr), gy = Math.round(y * RASTER * dpr);
+          if (deckung(gx, gy) >= 0.5) {
+            maske[y * spalten + x] = 1; treffer++;
+            var o = ((gy * spaltenW) + gx) * 4;
+            sumR += daten[o]; sumG += daten[o + 1]; sumB += daten[o + 2]; sumN++;
+          }
         }
       }
       if (!treffer) return false;
+
+      if (sumN) {
+        FARBEN[0] = 'rgb(' + Math.round(sumR / sumN) + ',' +
+                             Math.round(sumG / sumN) + ',' +
+                             Math.round(sumB / sumN) + ')';
+      }
 
       var duenner = treffer > 60000 ? Math.ceil(treffer / 60000) : 1;
       var platz = Math.min(treffer, 60000);
@@ -213,24 +251,28 @@
          Bildschirms — die Partikel kommen also wirklich von draussen. */
       var mx = cssW / 2, my = cssH / 2;
       var weit = Math.sqrt(cssW * cssW + cssH * cssH) * 0.62;
+      var halbeZelle = RASTER / 2;
 
       i = 0;
       var gesehen = 0;
-      for (y = 0; y < bh && i < platz; y += RASTER) {
-        for (x = 0; x < bw && i < platz; x += RASTER) {
-          if (daten[((Math.round(y * dpr) * ab.width) + Math.round(x * dpr)) * 4 + 3] > 128) {
-            if (gesehen % duenner === 0) {
-              ox[i] = bx + x; oy[i] = by + y;
-              var w = Math.random() * Math.PI * 2;
-              var r = weit * (1 + Math.random() * 0.7);
-              sx[i] = mx + Math.cos(w) * r;
-              sy[i] = my + Math.sin(w) * r;
-              px[i] = sx[i]; py[i] = sy[i];
-              farbe[i] = Math.floor(Math.random() * FARBEN.length);
-              i++;
-            }
-            gesehen++;
+      for (y = 0; y < zeilen && i < platz; y++) {
+        for (x = 0; x < spalten && i < platz; x++) {
+          if (!maske[y * spalten + x]) continue;
+          if (gesehen % duenner === 0) {
+            /* Auf die MITTE der Zelle, nicht auf ihre Ecke: gezeichnet wird
+               um diesen Punkt herum, sonst saesse jedes Quadrat einen halben
+               Rasterschritt zu weit oben links. */
+            ox[i] = bx + x * RASTER + halbeZelle;
+            oy[i] = by + y * RASTER + halbeZelle;
+            var w = Math.random() * Math.PI * 2;
+            var r = weit * (1 + Math.random() * 0.7);
+            sx[i] = mx + Math.cos(w) * r;
+            sy[i] = my + Math.sin(w) * r;
+            px[i] = sx[i]; py[i] = sy[i];
+            farbe[i] = 0;
+            i++;
           }
+          gesehen++;
         }
       }
       anzahl = i;
