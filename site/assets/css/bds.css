@@ -1309,6 +1309,12 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
   font-family:var(--font-mono);font-size:.6875rem;letter-spacing:.14em;
   text-transform:uppercase;color:var(--ink-45);font-weight:500;margin-bottom:15px;
 }
+/* Die Anschrift in der Kontaktspalte. font-style normal, weil address
+   sonst kursiv steht und aus der Fusszeile herausfaellt. */
+.foot__adr{
+  font-style:normal;font-size:.9375rem;color:var(--ink-70);
+  line-height:1.55;margin:0 0 14px;
+}
 .footer nav{display:grid;gap:4px}
 .footer nav a{
   text-decoration:none;font-size:.9375rem;color:var(--ink-70);padding-block:6px;
