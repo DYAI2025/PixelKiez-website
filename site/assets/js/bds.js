@@ -161,11 +161,17 @@
        Datei traegt reines Schwarz, das ist ein anderer Ton als dieser, und
        der Auftakt saehe damit anders aus als bisher. */
     var FARBEN  = ['#0E1413'];
-    /* Ein Punkt Kantenlaenge, nicht zwei. Die Wortmarke traegt feine
-       Gestaltungsdetails — die Kerbe oben am P und den Anbiss am Punkt des
-       ersten i. Bei zwei Punkten fallen beide in eine Zelle und verklumpen;
-       bei einem Punkt sind sie da. Gemessen: Deckung 97,5 % gegen 100 %. */
-    var RASTER  = 1;     // Kantenlaenge einer Zelle in Pixeln
+    /* Zwei Punkte Zellenabstand. Ein Punkt bildete die Wortmarke zwar genauer
+       ab — die Kerbe oben am P und der Anbiss am Punkt des ersten i kamen
+       sauber durch, Deckung 100 % statt 97,5 % —, aber die Kaesten wurden
+       dabei so klein, dass der Effekt seinen Charakter verlor. Die groebere
+       Koernung ist gewollt. */
+    var RASTER  = 2;     // Abstand zweier Zellenmitten in Pixeln
+    /* Anteil der Zelle, den der Kasten ausfuellt. Unter eins bleibt zwischen
+       den Kaesten Luft und der Hintergrund kommt durch — das Feld liest sich
+       dann als Raster und nicht als Flaeche. Die Kaesten bleiben dabei auf
+       ihren Zellenmitten, die Luecke verteilt sich also gleichmaessig. */
+    var FUELLUNG = 0.75;
     var RADIUS  = 50;    // Wirkradius des Zeigers
     var KRAFT   = 30;    // Staerke des Stosses
     var AUFBAU  = 1000;  // Millisekunden bis das Feld steht
@@ -315,8 +321,13 @@
          gemessen kam kein einziger Punkt voll deckend heraus, das Logo waere
          blasser als seine Vorlage. Gezeichnet wird deshalb unten auf dem
          Bildpunktgitter eingerastet. */
-      var zellD = Math.max(1, Math.round(RASTER * dpr));   // Kante in Bildpunkten
-      var kante = zellD / dpr, halb = kante / 2;
+      var zellD  = Math.max(1, Math.round(RASTER * dpr));         // Zellenabstand in Bildpunkten
+      var kastD  = Math.max(1, Math.round(zellD * FUELLUNG));     // Kastenkante in Bildpunkten
+      // Mindestens ein Bildpunkt Luft, sonst stossen die Kaesten trotz
+      // FUELLUNG wieder aneinander — bei kleinem Raster rundet sonst alles
+      // auf denselben Wert.
+      if (kastD >= zellD && zellD > 1) kastD = zellD - 1;
+      var kante = kastD / dpr, halb = kante / 2;
 
       var jetzt = window.performance ? performance.now() : Date.now();
       var dt = Math.min(64, Math.max(0, jetzt - (letzter === null ? jetzt : letzter)));
