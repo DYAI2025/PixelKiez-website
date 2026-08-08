@@ -18,7 +18,7 @@
    danebengelegt.
    ========================================================================= */
 
-import { readFile, writeFile, mkdir, rm, readdir, copyFile } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, rm, readdir, copyFile, stat } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { join, basename, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -143,9 +143,23 @@ async function baueEnglisch(cssMin, jsRoh, fontKarte, bildKarte) {
     };
     const uebersetzt = geh(daten);
     // Sprache und Adresse im strukturierten Datensatz mitziehen
-    const s = JSON.stringify(uebersetzt)
+    let s = JSON.stringify(uebersetzt)
       .replace(/"inLanguage":"de(-DE)?"/g, '"inLanguage":"en"')
       .replace(new RegExp(`"${DOMAIN}/"`, 'g'), `"${DOMAIN}/en/"`);
+
+    /* Seitenbezogene Kennungen muessen sich unterscheiden: die englische und
+       die deutsche Startseite sind zwei Dokumente. Truegen beide dieselbe
+       @id, waere fuer eine Suchmaschine unklar, welches gemeint ist.
+
+       Entitaetsbezogene Kennungen bleiben dagegen bewusst gleich —
+       Unternehmen, Gruender, Logo und die Leistungen sind auf beiden Seiten
+       dieselbe Sache, und genau diese Gleichheit verknuepft die Fassungen.
+
+       Der Austausch laeuft ueber die Zeichenkette und trifft damit die
+       Definition und jeden Verweis darauf in einem Zug. */
+    for (const anker of ['seite', 'pfad', 'faq', 'website']) {
+      s = s.split(`"${DOMAIN}/#${anker}"`).join(`"${DOMAIN}/en/#${anker}"`);
+    }
     if (offen.length) throw new Error(
       'JSON-LD enthaelt deutschen Text ohne Uebersetzung:\n    · ' +
       offen.slice(0, 5).map((x) => x.slice(0, 90)).join('\n    · '));
@@ -283,6 +297,50 @@ async function build() {
   } catch (e) {
     if (e.code !== 'ENOENT') throw e;   // Ordner darf fehlen, solange nichts darauf zeigt
   }
+
+  /* ---- 1c. Wurzeldateien: robots.txt, llms.txt, sitemap.xml -------------
+     Diese drei fragt eine Suchmaschine oder ein Agent als Erstes ab, noch
+     bevor er eine Seite laedt. Ohne Inhaltshash, denn ihre Namen sind
+     festgelegt, und ohne Umschreibung, denn sie enthalten keine Verweise
+     auf gehashte Mitteldateien. */
+  const WURZELDATEIEN = ['robots.txt', 'llms.txt'];
+  for (const datei of WURZELDATEIEN) {
+    await copyFile(join(QUELLE, datei), join(ZIEL, datei));
+  }
+
+  /* Die Sitemap nennt jede ausgelieferte Seite genau einmal und verknuepft
+     die beiden Sprachfassungen wechselseitig — einseitige Verweise wertet
+     Google nicht. lastmod kommt aus der Aenderungszeit der Quelldatei. */
+  const sitemapEintraege = [
+    { pfad: '/',                  quelle: 'index.html',       sprachen: true,  gewicht: '1.0' },
+    { pfad: '/en/',               quelle: 'index.html',       sprachen: true,  gewicht: '0.8' },
+    { pfad: '/impressum.html',    quelle: 'impressum.html',   sprachen: false, gewicht: '0.3' },
+    { pfad: '/datenschutz.html',  quelle: 'datenschutz.html', sprachen: false, gewicht: '0.3' },
+  ];
+  const alternates = [
+    `    <xhtml:link rel="alternate" hreflang="de" href="${DOMAIN}/"/>`,
+    `    <xhtml:link rel="alternate" hreflang="en" href="${DOMAIN}/en/"/>`,
+    `    <xhtml:link rel="alternate" hreflang="x-default" href="${DOMAIN}/"/>`,
+  ].join('\n');
+
+  const urls = [];
+  for (const e of sitemapEintraege) {
+    const { mtime } = await stat(join(QUELLE, e.quelle));
+    urls.push(
+      '  <url>\n' +
+      `    <loc>${DOMAIN}${e.pfad}</loc>\n` +
+      `    <lastmod>${mtime.toISOString().slice(0, 10)}</lastmod>\n` +
+      (e.sprachen ? alternates + '\n' : '') +
+      `    <priority>${e.gewicht}</priority>\n` +
+      '  </url>'
+    );
+  }
+  await writeFile(join(ZIEL, 'sitemap.xml'),
+    '<?xml version="1.0" encoding="UTF-8"?>\n' +
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"\n' +
+    '        xmlns:xhtml="http://www.w3.org/1999/xhtml">\n' +
+    urls.join('\n') + '\n</urlset>\n', 'utf8');
+  log(`Wurzel       robots.txt, llms.txt, sitemap.xml (${urls.length} Adressen)`);
 
   /* ---- 2. CSS: zusammenlegen, Pfade umschreiben, minifizieren ----------- */
   const fontsCss = await readFile(join(QUELLE, 'assets', 'css', 'fonts.css'), 'utf8');

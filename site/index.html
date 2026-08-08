@@ -3,23 +3,29 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Pixelkiez — Webseiten, die arbeiten. Für Praxen, Hotellerie, Bau, Gastronomie und Startups.</title>
-<meta name="description" content="Wir bauen Webseiten, die Anfragen filtern, Terminkalender füllen und Mitarbeiter gewinnen. Webdesign, Recruiting, SEO und Auffindbarkeit in KI-Suchen. Festpreis nach Diagnose, Antwort in einem Werktag.">
+<title>Webdesign Berlin — Websites mit Festpreis | Pixelkiez</title>
+<meta name="description" content="Webdesign aus Berlin für Arztpraxen, Hotellerie, Baubetriebe, Gastronomie und Startups. Verbindlicher Festpreis nach Diagnose, Antwort in einem Werktag.">
 <meta name="theme-color" content="#B6C7C4">
+<!-- max-snippet und max-image-preview entscheiden, wie viel Google in
+     AI Overviews zeigen darf. Ohne sie kuerzt Google auf einen Zweizeiler
+     und laesst das Bild weg. -->
+<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
 <link rel="canonical" href="https://pixelkiez.de/"><!-- TODO vor Livegang: finale Domain (BLOCKER B-02) -->
 
 <meta property="og:type" content="website">
 <meta property="og:locale" content="de_DE">
 <meta property="og:site_name" content="Pixelkiez">
-<meta property="og:title" content="Von der Webseite zum digitalen Geschäftssystem.">
-<meta property="og:description" content="Webseiten, die Anfragen filtern, Terminkalender füllen und Mitarbeiter gewinnen. Festpreis nach Diagnose. Antwort in einem Werktag.">
+<meta property="og:title" content="Webdesign aus Berlin — Pixelkiez">
+<meta property="og:description" content="Websites für Arztpraxen, Hotellerie, Baubetriebe, Gastronomie und Startups. Verbindlicher Festpreis nach Diagnose, Antwort in einem Werktag.">
 <meta property="og:url" content="https://pixelkiez.de/">
 <meta property="og:image" content="assets/img/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Pixelkiez">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Webdesign aus Berlin — Pixelkiez">
+<meta name="twitter:description" content="Websites für Arztpraxen, Hotellerie, Baubetriebe, Gastronomie und Startups. Verbindlicher Festpreis nach Diagnose, Antwort in einem Werktag.">
+<meta name="twitter:image" content="assets/img/og.png">
 
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23EC5D43'/%3E%3Crect x='2' y='2' width='3.6' height='3.6' fill='%23BBC9C9'/%3E%3C/svg%3E">
 
@@ -36,28 +42,88 @@
       "@type": "ProfessionalService",
       "@id": "https://pixelkiez.de/#organisation",
       "name": "Pixelkiez",
-      "description": "Digitalagentur aus Berlin für Websites als Geschäftssystem: Webdesign und Redesign, Recruiting über die eigene Website, SEO sowie Auffindbarkeit in KI-Suchen (GEO) und Agent-Readiness.",
+      "description": "Webdesign-Agentur aus Berlin für Websites als Geschäftssystem: Webdesign und Redesign, Recruiting über die eigene Website, SEO und Local SEO sowie Auffindbarkeit in KI-Suchen (GEO) und Agent-Readiness. Sitz in Berlin-Reinickendorf, Projekte deutschlandweit.",
       "url": "https://pixelkiez.de/",
       "email": "kontakt@pixelkiez.de",
-      "areaServed": {
-        "@type": "Country",
-        "name": "Deutschland"
-      },
+      "logo": { "@id": "https://pixelkiez.de/#logo" },
+      "image": { "@id": "https://pixelkiez.de/#logo" },
+      "founder": { "@id": "https://pixelkiez.de/#gruender" },
+      "availableLanguage": ["de", "en"],
+      "currenciesAccepted": "EUR",
+      "areaServed": [
+        { "@type": "City", "name": "Berlin" },
+        { "@type": "Country", "name": "Deutschland" }
+      ],
       "address": {
         "@type": "PostalAddress",
+        "streetAddress": "Edelhofdamm 74",
+        "postalCode": "13465",
         "addressLocality": "Berlin",
+        "addressRegion": "Berlin",
         "addressCountry": "DE"
       },
       "knowsAbout": [
         "Webdesign",
+        "Webdesign Berlin",
+        "Website erstellen lassen",
         "Website-Redesign",
         "Suchmaschinenoptimierung",
         "Local SEO",
         "Generative Engine Optimization",
         "Agent-Readiness",
         "Recruiting-Websites",
-        "Strukturierte Daten"
-      ]
+        "Strukturierte Daten",
+        "Barrierefreiheit im Web",
+        "Ladezeitoptimierung"
+      ],
+      "hasOfferCatalog": {
+        "@type": "OfferCatalog",
+        "name": "Leistungen",
+        "itemListElement": [
+          { "@type": "Offer", "itemOffered": { "@id": "https://pixelkiez.de/#service-1" } },
+          { "@type": "Offer", "itemOffered": { "@id": "https://pixelkiez.de/#service-2" } },
+          { "@type": "Offer", "itemOffered": { "@id": "https://pixelkiez.de/#service-3" } },
+          { "@type": "Offer", "itemOffered": { "@id": "https://pixelkiez.de/#service-4" } },
+          { "@type": "Offer", "itemOffered": { "@id": "https://pixelkiez.de/#service-5" } },
+          { "@type": "Offer", "itemOffered": { "@id": "https://pixelkiez.de/#service-6" } }
+        ]
+      }
+    },
+    {
+      "@type": "ImageObject",
+      "@id": "https://pixelkiez.de/#logo",
+      "url": "https://pixelkiez.de/assets/img/og.png",
+      "contentUrl": "https://pixelkiez.de/assets/img/og.png",
+      "width": 1200,
+      "height": 630,
+      "caption": "Pixelkiez"
+    },
+    {
+      "@type": "Person",
+      "@id": "https://pixelkiez.de/#gruender",
+      "name": "Vincent Schnetzer",
+      "jobTitle": "Gründer und Webentwickler",
+      "worksFor": { "@id": "https://pixelkiez.de/#organisation" },
+      "email": "kontakt@pixelkiez.de",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Berlin",
+        "addressCountry": "DE"
+      },
+      "knowsLanguage": ["de", "en"],
+      "knowsAbout": ["Webdesign", "Suchmaschinenoptimierung", "Generative Engine Optimization"]
+    },
+    {
+      "@type": "WebPage",
+      "@id": "https://pixelkiez.de/#seite",
+      "url": "https://pixelkiez.de/",
+      "name": "Webdesign Berlin — Websites mit Festpreis",
+      "description": "Webdesign aus Berlin für Arztpraxen, Hotellerie, Baubetriebe, Gastronomie und Startups. Verbindlicher Festpreis nach Diagnose, Antwort in einem Werktag.",
+      "isPartOf": { "@id": "https://pixelkiez.de/#website" },
+      "about": { "@id": "https://pixelkiez.de/#organisation" },
+      "primaryImageOfPage": { "@id": "https://pixelkiez.de/#logo" },
+      "mainEntity": { "@id": "https://pixelkiez.de/#faq" },
+      "inLanguage": "de-DE"
     },
     {
       "@type": "WebSite",

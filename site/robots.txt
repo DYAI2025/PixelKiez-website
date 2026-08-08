@@ -1,0 +1,76 @@
+# robots.txt — pixelkiez.de
+#
+# Grundhaltung: alles offen. Die Seite hat nichts zu verbergen, und jede
+# Sperre kostet Sichtbarkeit. Die einzelnen Crawler stehen trotzdem
+# ausgeschrieben da, weil "User-agent: *" allein nicht genuegt: mehrere
+# KI-Dienste werten nur einen Eintrag aus, der ihren Namen traegt.
+
+# --- Allgemein ------------------------------------------------------------
+User-agent: *
+Allow: /
+
+# --- Suchmaschinen --------------------------------------------------------
+User-agent: Googlebot
+Allow: /
+
+User-agent: Googlebot-Image
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+# --- KI-Suche: diese holen Seiten waehrend einer Antwort und nennen die
+#     Quelle. Genau hier entsteht die Sichtbarkeit bei Agenten. ------------
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+User-agent: meta-externalagent
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+# --- Sammelcrawler fuer Trainingsdaten ------------------------------------
+# CCBot speist Common Crawl, und daraus lernen viele Modelle. Wer dort
+# fehlt, existiert im Weltwissen der Modelle nicht — fuer eine junge Marke
+# ist das der teurere Fehler als die Preisgabe oeffentlicher Texte.
+User-agent: CCBot
+Allow: /
+
+Sitemap: https://pixelkiez.de/sitemap.xml

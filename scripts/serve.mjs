@@ -18,6 +18,14 @@ const TYPEN = {
   '.svg': 'image/svg+xml',
   '.ico': 'image/x-icon',
   '.txt': 'text/plain; charset=utf-8',
+  // Ohne diesen Eintrag ginge die Sitemap als application/octet-stream
+  // hinaus, und die Search Console weist sie ab. Caddy setzt den Typ im
+  // Betrieb selbst richtig; die Vorschau soll das nicht anders zeigen.
+  '.xml': 'application/xml; charset=utf-8',
+  '.png': 'image/png',
+  '.webp': 'image/webp',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
 };
 
 // Wie im Caddyfile: /api/* geht an den Formulardienst, alles andere kommt aus
