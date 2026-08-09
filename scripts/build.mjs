@@ -57,7 +57,7 @@ const HTML_OPTIONEN = {
 const kb = (n) => (n / 1024).toFixed(1).padStart(6) + ' KB';
 const log = (...a) => console.log(...a);
 
-const DOMAIN = 'https://www.pixelkiez.de';
+const DOMAIN = 'https://pixelkiez.de';
 
 /* -------------------------------------------------------------------------
    Sprachverweise. Beide Fassungen nennen sich gegenseitig und sich selbst —

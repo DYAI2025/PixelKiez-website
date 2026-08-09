@@ -73,4 +73,4 @@ Allow: /
 User-agent: CCBot
 Allow: /
 
-Sitemap: https://www.pixelkiez.de/sitemap.xml
+Sitemap: https://pixelkiez.de/sitemap.xml
