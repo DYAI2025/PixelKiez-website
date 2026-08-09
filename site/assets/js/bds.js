@@ -181,7 +181,7 @@
     var wert = 0, letzter = null, verborgen = true, rueckwaerts = false;
     var zx = -99999, zy = -99999, aktiv = false;
     var vorX = -99999, vorY = -99999, tempo = 0, glattX = -99999, glattY = -99999;
-    var raf = null, sichtbar = false;
+    var raf = null, sichtbar = false, letzteBreite = 0;
 
     /* Lage des Bildes INNERHALB der Leinwand. Die Leinwand spannt ueber den
        ganzen Hero, das Bild sitzt irgendwo darin — nur diesen Ausschnitt
@@ -428,6 +428,7 @@
 
     var anwerfen = function () {
       if (!messen()) return;               // Abtastung leer — Bild bleibt stehen
+      letzteBreite = Math.round(window.innerWidth);
       hero.dataset.drift = 'an';
       verborgen = false; rueckwaerts = false;
       if (sichtbar) start();
@@ -451,10 +452,27 @@
       if (document.hidden) halt(); else if (sichtbar) start();
     });
 
+    /* Neu abtasten nur bei echter Breitenaenderung.
+
+       Auf dem Telefon meldet der Browser bei jedem Scrollen eine
+       Groessenaenderung, weil die Adressleiste ein- und ausfaehrt. Nur die
+       Hoehe aendert sich dabei, nicht die Breite. Wurde darauf neu
+       abgetastet, begann der Anflug jedes Mal von vorn — der Aufbau gehoert
+       aber zum Seitenaufruf, nicht zum Scrollen.
+
+       Und selbst wenn die Breite sich wirklich aendert: das Feld springt
+       fertig aufgebaut an seinen neuen Platz, statt ein zweites Mal
+       hereinzufliegen. */
     var rt;
     window.addEventListener('resize', function () {
       clearTimeout(rt);
-      rt = setTimeout(function () { if (hero.dataset.drift === 'an') messen(); }, 200);
+      rt = setTimeout(function () {
+        if (hero.dataset.drift !== 'an') return;
+        var breite = Math.round(window.innerWidth);
+        if (breite === letzteBreite) return;
+        letzteBreite = breite;
+        if (messen()) { wert = 1; letzter = null; }
+      }, 200);
     });
   })();
 
