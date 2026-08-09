@@ -520,10 +520,13 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
 .hero[data-drift="an"] .hero__logo-drift{opacity:1}
 /* Der Satz unter der Wortmarke. Mono und gesperrt wie die uebrigen
    Auszeichnungen der Seite, damit er die Ueberschrift nicht bedraengt. */
+/* Die Fliesstextschrift der Seite, nicht die Schreibmaschine. Die Mono ist
+   fuer kurze Auszeichnungen gedacht — Nummern, Kleinschrift, Kennungen. Ein
+   ganzer Satz darin liest sich technisch und faellt aus dem Bild. */
 .hero__claim{
   margin:0;
-  font-family:var(--font-mono);font-size:clamp(.875rem,1.5vw,.9375rem);
-  letter-spacing:.1em;color:var(--ink-70);
+  font-family:var(--font-body);font-size:clamp(1rem,1.7vw,1.125rem);
+  line-height:1.5;color:var(--ink-70);
 }
 
 /* --- Portierung animated-hero.tsx: zentrierte Buehne ---------------------- */
