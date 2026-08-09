@@ -405,6 +405,10 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
 /* Auf schmalen Geraeten haetten Marke, CTA und Menue zusammen keinen Platz.
    Der Schnellkontakt bleibt ueber den Hero-Button und den Sticky erreichbar. */
 @media (max-width:599px){.header__act .btn--split{display:none}}
+/* Sobald der schwebende Knopf unten rechts erscheint, faellt der obere weg.
+   display:none statt Ausblenden: sonst bliebe eine Luecke im Kopf stehen.
+   Die uebrigen Knoepfe sind rechtsbuendig und wandern dabei nicht. */
+.header[data-cta="aus"] .header__act .btn--split{display:none}
 
 /* Ein einziges Menue statt einer vollen Leiste — auf jeder Breite gleich.
    Der Balken wird zum Kreuz, das Panel oeffnet als Raster unter dem Kopf. */

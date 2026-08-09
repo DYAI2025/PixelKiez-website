@@ -1013,7 +1013,12 @@
     var hero = $('.hero');
     var inHero = false, inKontakt = false;
     var syncSticky = function () {
-      sticky.dataset.hidden = (inHero || inKontakt) ? 'true' : 'false';
+      var aus = (inHero || inKontakt);
+      sticky.dataset.hidden = aus ? 'true' : 'false';
+      /* Der Knopf im Kopf und der schwebende Knopf fuehren zum selben
+         Formular. Sobald der schwebende erscheint, verschwindet der obere —
+         sonst stuenden zwei gleiche Angebote gleichzeitig auf dem Schirm. */
+      if (header) header.dataset.cta = aus ? 'an' : 'aus';
     };
     if ('IntersectionObserver' in window) {
       if (hero) new IntersectionObserver(function (e) {
