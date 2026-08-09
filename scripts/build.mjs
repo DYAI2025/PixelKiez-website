@@ -85,6 +85,12 @@ async function baueEnglisch(cssMin, jsRoh, fontKarte, bildKarte) {
   const tabJs   = JSON.parse(await readFile(join(QUELLE, 'i18n', 'en.js.json'), 'utf8'));
   let html = await readFile(join(QUELLE, 'index.html'), 'utf8');
 
+  /* Aenderungsdatum wie bei der deutschen Fassung — beide entstehen aus
+     derselben Quelldatei und sind damit gleich alt. */
+  const { mtime: geaendert } = await stat(join(QUELLE, 'index.html'));
+  html = html.replace(/"dateModified": "[^"]*"/g,
+    `"dateModified": "${geaendert.toISOString().slice(0, 10)}"`);
+
   /* --- Text --- */
   const t = uebersetze(html, tabHtml);
   if (t.fehlend.length) throw new Error(
@@ -386,6 +392,16 @@ async function build() {
   for (const seite of SEITEN) {
     let html = await readFile(join(QUELLE, seite), 'utf8');
     const vorher = Buffer.byteLength(html);
+
+    /* 4z. Aenderungsdatum aus der Quelldatei in die strukturierten Daten.
+           Von Hand gepflegt waere es nach der zweiten Aenderung falsch, und
+           ein falsches Datum ist schlechter als keines: Suchmaschinen wie
+           KI-Systeme werten Frische, und eine Seite, die seit Monaten
+           unveraendert behauptet, heute aktualisiert worden zu sein,
+           verliert genau diesen Kredit. */
+    const { mtime: geaendert } = await stat(join(QUELLE, seite));
+    html = html.replace(/"dateModified": "[^"]*"/g,
+      `"dateModified": "${geaendert.toISOString().slice(0, 10)}"`);
 
     /* 4a. Beide Stylesheet-Verweise durch einen <style>-Block ersetzen.
            fonts.css steht zuerst — die Reihenfolge bleibt erhalten, weil
