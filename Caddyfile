@@ -5,6 +5,20 @@
 	@fonts path /assets/fonts/*
 	@seiten not path /assets/* /api/*
 	@api path /api/*
+	@www host www.pixelkiez.de
+
+	# Eine Adresse, nicht zwei. Ohne diese Umleitung waeren pixelkiez.de und
+	# www.pixelkiez.de fuer eine Suchmaschine zwei Seiten mit demselben Text,
+	# und die Signale verteilten sich auf beide. 301 statt 302, damit die
+	# Umleitung als dauerhaft gilt und die Bewertung mit uebergeht. {uri}
+	# haengt Pfad und Abfrage an, damit Unterseiten nicht auf der Startseite
+	# landen.
+	#
+	# Greift erst, wenn www ueberhaupt bis hierher kommt: die Adresse muss auf
+	# Railway zeigen UND dort als eigene Domain eingetragen sein, sonst
+	# scheitert schon der TLS-Handschlag. Die Regel steht bereit, kostet
+	# nichts und wirkt in dem Moment, in dem der Platz dafuer da ist.
+	redir @www https://pixelkiez.de{uri} permanent
 
 	header {
 		X-Content-Type-Options nosniff
