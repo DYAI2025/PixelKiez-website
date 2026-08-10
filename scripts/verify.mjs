@@ -110,9 +110,27 @@ async function verify() {
         F(`${seite}: SVG-Attribut ${attr} kleingeschrieben`);
     }
 
+    /* --- vorgepackte Nachbarn ---
+       Fehlt die .br-Datei, liefert Caddy die Seite klaglos unverpackt aus.
+       Das faellt niemandem auf — die Seite ist ja da —, kostet aber bei
+       dieser Startseite rund 117 KB je Aufruf. Deshalb ein Fehler, kein
+       Hinweis. */
     const roh = Buffer.byteLength(html);
+    let brGroesse = 0;
+    for (const [endung, name] of [['.br', 'Brotli'], ['.gz', 'gzip']]) {
+      if (!(await existiert(pfad + endung))) {
+        F(`${seite}: ${name}-Fassung ${basename(seite) + endung} fehlt — ` +
+          'Caddy liefert die Seite dann unkomprimiert aus');
+        continue;
+      }
+      const { size } = await stat(pfad + endung);
+      if (size >= roh) F(`${seite}: ${name}-Fassung ist nicht kleiner als das Original`);
+      if (endung === '.br') brGroesse = size;
+    }
+
     const gz = gzipSync(Buffer.from(html), { level: 9 }).length;
-    console.log(`  ${seite.padEnd(20)} ${kb(roh).padStart(9)}  komprimiert ${kb(gz).padStart(9)}  ` +
+    console.log(`  ${seite.padEnd(20)} ${kb(roh).padStart(9)}  gzip ${kb(gz).padStart(9)}  ` +
+                `brotli ${kb(brGroesse).padStart(9)}  ` +
                 `${skripte.length} Skript, ${(html.match(/<style>/g) || []).length} Stilblock`);
   }
 

@@ -1,5 +1,9 @@
 :{$PORT:80} {
 	root * /srv
+
+	# Fuer alles, was nicht als fertig gepackte Datei bereitliegt — im Kern
+	# die Antworten des Formulardienstes. Die Seiten selbst holt sich
+	# file_server weiter unten aus den .br-/.gz-Nachbarn.
 	encode gzip zstd
 
 	@fonts path /assets/fonts/*
@@ -53,6 +57,15 @@
 	}
 
 	handle {
-		file_server
+		# Der Build legt neben jede Seite eine .br- und eine .gz-Fassung.
+		# Brotli zuerst: es packt dieses HTML rund 17 % kleiner als gzip und
+		# wird von jedem Browser verstanden, waehrend zstd bisher nur
+		# neueren Chrome- und Firefox-Fassungen bekannt ist.
+		#
+		# Fehlt der Nachbar — etwa bei einer Datei, die sich nicht lohnte —,
+		# liefert file_server stillschweigend das Original aus.
+		file_server {
+			precompressed br gzip
+		}
 	}
 }

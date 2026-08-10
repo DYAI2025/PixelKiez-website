@@ -78,6 +78,26 @@ createServer(async (req, res) => {
       ? 'public, max-age=31536000, immutable'
       : 'no-store');
 
+    /* Wie "file_server precompressed br gzip" in der Auslieferung: liegt ein
+       fertig gepackter Nachbar bereit und nimmt der Browser die Kodierung an,
+       geht dieser hinaus.
+
+       Das ist kein Beiwerk. Ohne Kompression sieht man hier ein voellig
+       anderes Bild als im Betrieb — die Startseite geht mit 144 KB statt 27 KB
+       ueber die Leitung, und eine Messung an dieser Vorschau haelt fuer einen
+       Engpass, was in Wirklichkeit keiner ist. */
+    const kodierungen = String(req.headers['accept-encoding'] || '');
+    for (const [endung, kodierung] of [['.br', 'br'], ['.gz', 'gzip']]) {
+      if (!kodierungen.includes(kodierung)) continue;
+      try {
+        const gepackt = await readFile(ziel + endung);
+        res.setHeader('Content-Encoding', kodierung);
+        res.setHeader('Vary', 'Accept-Encoding');
+        res.writeHead(200).end(gepackt);
+        return;
+      } catch { /* kein Nachbar — dann eben das Original */ }
+    }
+
     res.writeHead(200).end(inhalt);
   } catch {
     res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' }).end('404');

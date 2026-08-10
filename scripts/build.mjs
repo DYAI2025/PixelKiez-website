@@ -20,6 +20,7 @@
 
 import { readFile, writeFile, mkdir, rm, readdir, copyFile, stat } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
+import { brotliCompressSync, gzipSync, constants as zlibKonstanten } from 'node:zlib';
 import { join, basename, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as esbuild from 'esbuild';
@@ -469,6 +470,54 @@ async function build() {
   await writeFile(join(ZIEL, 'en', 'index.html'), enHtml, 'utf8');
   summeNachher += Buffer.byteLength(enHtml);
   log(`en/index.html        ${'—'.padStart(9)} → ${kb(Buffer.byteLength(enHtml))}   (aus der deutschen Quelle erzeugt)`);
+
+  /* ---- 4g. Vorkomprimierte Nachbarn ------------------------------------
+     Caddy kann Brotli nicht selbst erzeugen — "encode" beherrscht nur gzip
+     und zstd. zstd verstehen bisher nur neuere Chrome und Firefox; Safari
+     nicht. Brotli dagegen versteht jeder Browser, den diese Seite je sieht.
+
+     Deshalb wird hier zur Bauzeit einmal auf hoechster Stufe gepackt und
+     daneben abgelegt. "file_server precompressed br gzip" reicht die fertige
+     Datei durch, wenn der Browser sie annimmt. Das kostet in der Auslieferung
+     keine Rechenzeit — im Gegenteil, es spart die, die Caddy sonst je Anfrage
+     fuer gzip aufwendet — und ist gruendlicher, als es ein Server unter Zeit-
+     druck je waere: Stufe 11 statt der ueblichen 4 bis 6.
+
+     Die gzip-Fassung bleibt daneben liegen, fuer den Fall, dass ein Client
+     kein Brotli anbietet. Schriften und PNG sind bereits komprimiert und
+     werden ausgelassen — ein zweiter Durchgang macht sie nur groesser. */
+  const PACKBAR = /\.(html|css|js|txt|xml|json|svg)$/;
+  let vorherRoh = 0, nachherBr = 0, nachherGz = 0, gepackt = 0;
+
+  const packeVerzeichnis = async (verzeichnis) => {
+    for (const eintrag of await readdir(verzeichnis, { withFileTypes: true })) {
+      const pfad = join(verzeichnis, eintrag.name);
+      if (eintrag.isDirectory()) { await packeVerzeichnis(pfad); continue; }
+      if (!PACKBAR.test(eintrag.name)) continue;
+
+      const inhalt = await readFile(pfad);
+      const br = brotliCompressSync(inhalt, {
+        params: {
+          [zlibKonstanten.BROTLI_PARAM_QUALITY]: 11,
+          [zlibKonstanten.BROTLI_PARAM_SIZE_HINT]: inhalt.length,
+        },
+      });
+      const gz = gzipSync(inhalt, { level: 9 });
+
+      /* Nur ablegen, was sich lohnt. Bei sehr kleinen Dateien kann die
+         gepackte Fassung groesser sein als das Original — dann bleibt es
+         beim Original, und der Server liefert es unverpackt aus. */
+      if (br.length < inhalt.length) await writeFile(pfad + '.br', br);
+      if (gz.length < inhalt.length) await writeFile(pfad + '.gz', gz);
+      vorherRoh += inhalt.length; nachherBr += br.length; nachherGz += gz.length;
+      gepackt++;
+    }
+  };
+  await packeVerzeichnis(ZIEL);
+  log('─'.repeat(66));
+  log(`Vorgepackt   ${gepackt} Dateien   roh ${kb(vorherRoh)} → gzip ${kb(nachherGz)} → brotli ${kb(nachherBr)}`);
+  log(`             Brotli spart gegenueber gzip ${kb(nachherGz - nachherBr)} ` +
+      `(${(100 - nachherBr / nachherGz * 100).toFixed(1)} %)`);
 
   /* ---- 5. Bilanz -------------------------------------------------------- */
   log('─'.repeat(66));

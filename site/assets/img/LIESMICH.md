@@ -7,9 +7,21 @@ diesen Ordner mit Inhalts-Hash nach `dist/assets/img/`.
 
 | Datei | Format | Maße | Wofür | Stand |
 |---|---|---|---|---|
-| `logo.png` | PNG, Graustufe + Alpha | 980 × 240 | Kopf, Fußzeile, Auftakt, Rechtsseiten | liegt, aus `quelle/PixelKiez-2000.png` freigestellt |
+| `logo.webp` | WebP verlustfrei, Graustufe + Alpha | 980 × 240 | Kopf, Fußzeile, Auftakt, Rechtsseiten | liegt, aus `quelle/PixelKiez-2000.png` freigestellt |
 | `og.png` | PNG | 1200 × 630 | Vorschau, wenn jemand den Link verschickt | liegt, wird beim Logowechsel neu gesetzt |
-| `logo.svg` | SVG | beliebig | ersetzt `logo.png`, sobald vorhanden | **fehlt, wäre besser** |
+| `logo.svg` | SVG | beliebig | ersetzt `logo.webp`, sobald vorhanden | **fehlt, wäre besser** |
+
+Die Wortmarke lag bis August als PNG vor (14,2 KB). Verlustfrei nach WebP
+gepackt sind es 8,5 KB — dieselben Bildpunkte, derselbe Alphakanal (Punkt für
+Punkt nachgemessen), 39 % weniger Ladung. Verlustfrei ist hier keine
+Vorsicht, sondern Notwendigkeit: der Auftakt tastet den Alphakanal ab, um die
+Partikel zu setzen, und eine verlustbehaftete Fassung verschmierte die
+Kanten der Wortmarke zu Rauschen am Rand des Felds.
+
+Das Vorschaubild bleibt bewusst PNG. Nicht jeder Dienst, der eine
+Linkvorschau baut, versteht WebP, und ein fehlendes Vorschaubild fiele mehr
+ins Gewicht als die paar Kilobyte — geladen wird es ohnehin nie vom Besucher,
+sondern nur vom Vorschaudienst.
 
 Solange nur ein PNG vorliegt, begrenzt dessen echte Breite, wie groß der
 Schriftzug im Auftakt werden kann. Bei 980 Pixeln ist bei rund 680 CSS-Pixeln
@@ -35,9 +47,12 @@ nicht die richtige.
 
 **Neues Logo einsetzen:** Datei nach `quelle/` legen und Bescheid geben. Sie
 wird freigestellt, auf Graustufe mit Alpha gebracht und an allen vier Stellen
-verdrahtet. Direkt `logo.png` überschreiben geht auch, dann muss sie aber
+verdrahtet. Direkt `logo.webp` überschreiben geht auch, dann muss sie aber
 schon freigestellt und beschnitten sein, sonst stimmen die Maßangaben im
-Markup nicht mehr.
+Markup nicht mehr — und verlustfrei gepackt, sonst leidet die Abtastung im
+Auftakt:
+
+    cwebp -lossless -exact -z 9 neu.png -o logo.webp
 
 ## Warum das Vorschaubild bei Instagram weniger zählt
 

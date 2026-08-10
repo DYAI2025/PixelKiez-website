@@ -41,8 +41,16 @@
 
   /* --- 1. Header + Mobilnavigation -------------------------------------- */
   var header = $('.header');
+  /* Nur schreiben, wenn sich der Wert wirklich aendert. Ein Attribut bei jedem
+     Scrollereignis neu zu setzen — auch auf denselben Wert — laesst den Browser
+     jedes Mal die Stile des Kopfbereichs neu berechnen. Beim Scrollen sind das
+     etliche Male je Sekunde fuer nichts. */
+  var gescrollt = null;
   var onScroll = function () {
-    header.dataset.scrolled = window.scrollY > 8 ? 'true' : 'false';
+    var jetzt = window.scrollY > 8 ? 'true' : 'false';
+    if (jetzt === gescrollt) return;
+    gescrollt = jetzt;
+    header.dataset.scrolled = jetzt;
   };
   onScroll();
   window.addEventListener('scroll', onScroll, { passive: true });
@@ -336,7 +344,9 @@
       if (wert < ziel) wert = Math.min(ziel, wert + dt / AUFBAU);
       else if (wert > ziel) wert = Math.max(ziel, wert - dt / AUFBAU);
       if (rueckwaerts && wert <= 0) verborgen = true;
-      if (verborgen) return;
+      // Nichts zu zeigen — dann ist auch nichts zu rechnen. Die Schleife legt
+      // sich schlafen und wacht auf, sobald anwerfen() das Feld freigibt.
+      if (verborgen) return true;
 
       var baut = wert < 1;
       var anteil = wert;
@@ -355,6 +365,11 @@
       var b, i;
       for (b = 0; b < eimer.length; b++) eimer[b].length = 0;
 
+      /* Zwei Masse fuer den Stillstand, siehe Rueckgabewert unten.
+         regung  — groesste Lageaenderung in diesem Bild
+         restweg — groesste verbliebene Auslenkung ueberhaupt */
+      var regung = 0, restweg = 0;
+
       for (i = 0; i < anzahl; i++) {
         var oxi = ox[i], oyi = oy[i];
         if (baut) {
@@ -363,6 +378,7 @@
           eimer[farbe[i]].push(i);
           continue;
         }
+        var vorX2 = repX[i], vorY2 = repY[i];
         var inZone = false;
         if (wirkt) {
           var dx = oxi - glattX, dy = oyi - glattY;
@@ -376,7 +392,25 @@
             inZone = true;
           }
         }
-        if (!inZone) { repX[i] *= 0.97; repY[i] *= 0.97; }
+        if (!inZone) {
+          repX[i] *= 0.97; repY[i] *= 0.97;
+          /* Der Ruecklauf naehert sich der Null nur an, erreicht sie nie. Was
+             unter einem zwanzigstel Punkt liegt, ist auf keinem Bildschirm
+             mehr zu sehen — hier auf glatt null gesetzt, damit das Feld exakt
+             auf seiner Vorlage zur Ruhe kommt und nicht einen Bruchteil
+             daneben stehen bleibt. Erst dadurch ist der Ruhezustand wirklich
+             dasselbe Bild wie das unberuehrte Logo. */
+          if (repX[i] < 0.05 && repX[i] > -0.05) repX[i] = 0;
+          if (repY[i] < 0.05 && repY[i] > -0.05) repY[i] = 0;
+        }
+        var aX = repX[i] - vorX2; if (aX < 0) aX = -aX;
+        var aY = repY[i] - vorY2; if (aY < 0) aY = -aY;
+        if (aX > regung) regung = aX;
+        if (aY > regung) regung = aY;
+        var rX = repX[i] < 0 ? -repX[i] : repX[i];
+        var rY = repY[i] < 0 ? -repY[i] : repY[i];
+        if (rX > restweg) restweg = rX;
+        if (rY > restweg) restweg = rY;
         var wq = repX[i] * repX[i] + repY[i] * repY[i];
         if (wq > maxWeg * maxWeg) {
           var f = maxWeg / Math.sqrt(wq);
@@ -402,11 +436,37 @@
         }
       }
       ctx.globalAlpha = 1;
+
+      /* Steht das Feld? Der Aufbau muss durch sein und sich seit dem letzten
+         Bild nichts mehr geruehrt haben. Dazu je nach Lage:
+
+           Zeiger auf dem Hero — er kann still liegen, dann stehen die
+           Partikel ausgelenkt in ihrer Mulde. Das ist ein gueltiges Standbild,
+           das naechste Bild saehe genauso aus.
+
+           Zeiger fort — dann wird erst angehalten, wenn wirklich jeder
+           Partikel auf seinem Platz sitzt (restweg === 0, oben glatt
+           gesetzt). Sonst friere man das Feld einen Bruchteil neben der
+           Vorlage ein, und die Wortmarke stuende dauerhaft leicht unscharf. */
+      return !baut && regung < 0.01 && (aktiv || restweg === 0);
     };
 
-    var schleife = function () { zeichnen(); raf = requestAnimationFrame(schleife); };
+    /* Die Schleife laeuft nur, solange es etwas zu sehen gibt.
+       Vorher lief sie immer: im Ruhezustand wurden dieselben ~2700 Kaesten
+       sechzigmal je Sekunde neu gemalt — gemessen 245.000 fillRect und 41 ms
+       Hauptfadenzeit je Sekunde, dauerhaft, ohne dass jemand etwas tat. Auf
+       dem Telefon ist das ein Viertel des Hauptfadens und geht auf den Akku.
+       Jetzt haelt sie an, sobald sich nichts mehr ruehrt, und wird von
+       wecken() zurueckgeholt: Zeigerbewegung, Zeiger weg, Groessenaenderung,
+       Sichtbarkeit. Das Bild bleibt dabei stehen wie es ist. */
+    var schleife = function () {
+      if (zeichnen()) { raf = null; return; }        // fertig — kein weiteres Bild noetig
+      raf = requestAnimationFrame(schleife);
+    };
     var start = function () { if (raf === null) { letzter = null; raf = requestAnimationFrame(schleife); } };
     var halt  = function () { if (raf !== null) { cancelAnimationFrame(raf); raf = null; } };
+    // Wecken heisst: nur weitermachen, wenn der Hero ueberhaupt im Bild ist.
+    var wecken = function () { if (sichtbar) start(); };
 
     /* Der Zeiger wird am Hero abgefragt, nicht an der Leinwand. Haenge die
        Abfrage an der Leinwand, begaenne und endete die Wirkung an deren
@@ -421,8 +481,15 @@
         tempo = Math.sqrt(ddx * ddx + ddy * ddy);
       }
       vorX = mx; vorY = my; zx = mx; zy = my; aktiv = true;
+      wecken();
     });
-    var weg = function () { zx = -99999; zy = -99999; aktiv = false; vorX = -99999; vorY = -99999; };
+    // Auch beim Weggehen wecken: die Partikel muessen zurueckfliessen. Ohne
+    // das bliebe das Loch unter dem Zeiger stehen, wenn die Schleife gerade
+    // schlief.
+    var weg = function () {
+      zx = -99999; zy = -99999; aktiv = false; vorX = -99999; vorY = -99999;
+      wecken();
+    };
     hero.addEventListener('pointerleave', weg);
     hero.addEventListener('pointercancel', weg);
 
@@ -471,7 +538,7 @@
         var breite = Math.round(window.innerWidth);
         if (breite === letzteBreite) return;
         letzteBreite = breite;
-        if (messen()) { wert = 1; letzter = null; }
+        if (messen()) { wert = 1; letzter = null; wecken(); }
       }, 200);
     });
   })();
@@ -613,7 +680,9 @@
     var box = $('.pil');
     if (!box) return;
     var items = $$('.pil__i', box);
-    var wide = function () { return window.matchMedia('(min-width:900px)').matches; };
+    // Einmal anlegen: wide() haengt an mouseenter und laeuft damit oft.
+    var mqBreit = window.matchMedia('(min-width:900px)');
+    var wide = function () { return mqBreit.matches; };
 
     var open = function (item) {
       items.forEach(function (o) {
@@ -723,11 +792,14 @@
       };
 
       var wartet = false;
-      bahn.addEventListener('scroll', function () {
+      // Ein Aufruf je Bild genuegt — sync() misst jede Karte aus, das ist
+      // Layoutarbeit und darf nicht mehrfach je Bild anfallen.
+      var demnaechst = function () {
         if (wartet) return;
         wartet = true;
         window.requestAnimationFrame(function () { wartet = false; sync(); });
-      }, { passive: true });
+      };
+      bahn.addEventListener('scroll', demnaechst, { passive: true });
 
       // Tastatur: der Browser scrollt eine fokussierte Karte nur dann heran,
       // wenn sie voellig ausserhalb liegt. Angeschnittene Karten laesst er
@@ -748,7 +820,10 @@
         }
       });
 
-      window.addEventListener('resize', sync);
+      /* Auf dem Telefon meldet der Browser waehrend des Scrollens laufend
+         Groessenaenderungen, weil die Adressleiste ein- und ausfaehrt. Ohne
+         Drossel liefe die Kartenvermessung dabei bei jedem Ereignis. */
+      window.addEventListener('resize', demnaechst);
       sync();
     });
   })();
@@ -877,7 +952,10 @@
      mitgeschleppt und wieder versteckt werden muesste.
      ---------------------------------------------------------------------- */
   var fragen = $$('.pc__q');
-  var schmal = function () { return window.matchMedia('(max-width:899px)').matches; };
+  // Einmal anlegen, nicht bei jedem Aufruf: window.matchMedia() erzeugt jedes
+  // Mal ein neues Objekt, und schmal() wird je Frage einmal gefragt.
+  var mqSchmal = window.matchMedia('(max-width:899px)');
+  var schmal = function () { return mqSchmal.matches; };
 
   // Je Frage eine Zeile fuer die getroffene Wahl. Sie steht im zugeklappten
   // Zustand rechts neben der Nummer und ersetzt dort die Chipreihe.
@@ -930,11 +1008,18 @@
 
   // Beim Wechsel zwischen schmal und breit den Zustand nachziehen: auf dem
   // Desktop stehen alle drei Fragen nebeneinander und duerfen nicht zuklappen.
-  window.addEventListener('resize', function () {
+  //
+  // Am Medienabfrage-Objekt statt am resize-Ereignis: gebraucht wird das nur
+  // beim Ueberschreiten der Grenze. Am resize haengend lief zeigeSchritte()
+  // auf dem Telefon bei jedem Scrollen mit, weil die ein- und ausfahrende
+  // Adressleiste laufend Groessenaenderungen meldet.
+  var grenzwechsel = function () {
     if (!schmal()) offeneFrage = null;
     else if (!offeneFrage) offeneFrage = fragen[0];
     zeigeSchritte();
-  });
+  };
+  if (mqSchmal.addEventListener) mqSchmal.addEventListener('change', grenzwechsel);
+  else if (mqSchmal.addListener) mqSchmal.addListener(grenzwechsel);   // Safari < 14
 
   $$('[data-check]').forEach(function (btn) {
     btn.addEventListener('click', function () {
