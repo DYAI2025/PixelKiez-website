@@ -316,12 +316,24 @@ async function build() {
 
   /* Die Sitemap nennt jede ausgelieferte Seite genau einmal und verknuepft
      die beiden Sprachfassungen wechselseitig — einseitige Verweise wertet
-     Google nicht. lastmod kommt aus der Aenderungszeit der Quelldatei. */
+     Google nicht. lastmod kommt aus der Aenderungszeit der Quelldatei.
+
+     Die Reihenfolge innerhalb von <url> ist im Schema festgeschrieben:
+
+         loc, lastmod, changefreq, priority, <xsd:any namespace="##other">
+
+     Fremdelemente wie xhtml:link duerfen also erst GANZ ZULETZT stehen.
+     Standen sie zwischen lastmod und priority, brach die Folge, und die
+     Search Console wies die Sitemap als ungueltig zurueck.
+
+     priority ist ersatzlos raus: Google wertet es nach eigener Angabe nicht
+     aus, und je weniger Elemente, desto weniger kann in der falschen
+     Reihenfolge stehen. */
   const sitemapEintraege = [
-    { pfad: '/',                  quelle: 'index.html',       sprachen: true,  gewicht: '1.0' },
-    { pfad: '/en/',               quelle: 'index.html',       sprachen: true,  gewicht: '0.8' },
-    { pfad: '/impressum.html',    quelle: 'impressum.html',   sprachen: false, gewicht: '0.3' },
-    { pfad: '/datenschutz.html',  quelle: 'datenschutz.html', sprachen: false, gewicht: '0.3' },
+    { pfad: '/',                  quelle: 'index.html',       sprachen: true },
+    { pfad: '/en/',               quelle: 'index.html',       sprachen: true },
+    { pfad: '/impressum.html',    quelle: 'impressum.html',   sprachen: false },
+    { pfad: '/datenschutz.html',  quelle: 'datenschutz.html', sprachen: false },
   ];
   const alternates = [
     `    <xhtml:link rel="alternate" hreflang="de" href="${DOMAIN}/"/>`,
@@ -337,7 +349,6 @@ async function build() {
       `    <loc>${DOMAIN}${e.pfad}</loc>\n` +
       `    <lastmod>${mtime.toISOString().slice(0, 10)}</lastmod>\n` +
       (e.sprachen ? alternates + '\n' : '') +
-      `    <priority>${e.gewicht}</priority>\n` +
       '  </url>'
     );
   }
