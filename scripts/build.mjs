@@ -61,6 +61,35 @@ const log = (...a) => console.log(...a);
 const DOMAIN = 'https://pixelkiez.de';
 
 /* -------------------------------------------------------------------------
+   Bildverweise mit VOLLSTAENDIGER Adresse auf den gehashten Namen ziehen.
+
+   Die Umschreibung weiter unten fasst nur href-, src- und content-Attribute
+   mit relativem Pfad. Im JSON-LD stehen Bilder aber als absolute Adresse in
+   einem JSON-Feld — "url" und "contentUrl" —, und die fiel durchs Raster.
+
+   Folge war ein Verweis auf assets/img/og.png, eine Datei, die es unter
+   diesem Namen nie gibt: ausgeliefert wird sie mit Inhalts-Hash. Google holte
+   sich das Firmenlogo also von einer Adresse mit 404. Nichts daran sah man
+   der Seite an, sie war fehlerfrei — es fehlte nur still das Logo in allem,
+   was Suchmaschinen und KI-Systeme daraus bauen.
+
+   Bereits umgeschriebene Namen bleiben unangetastet, sonst suchte der zweite
+   Durchgang nach "og.4c5d9640.png" und fiele ueber seinen eigenen Vorgaenger.
+   ------------------------------------------------------------------------- */
+const HAT_HASH = /\.[0-9a-f]{8}\.[a-z0-9]+$/i;
+const DOMAIN_RE = DOMAIN.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+function absoluteBilder(html, bildKarte, seite) {
+  return html.replace(new RegExp(`${DOMAIN_RE}/assets/img/([A-Za-z0-9._-]+)`, 'g'),
+    (treffer, datei) => {
+      if (HAT_HASH.test(datei)) return treffer;
+      const neu = bildKarte.get(datei);
+      if (!neu) throw new Error(`${seite}: Verweis auf unbekanntes Bild assets/img/${datei}`);
+      return `${DOMAIN}/assets/img/${neu}`;
+    });
+}
+
+/* -------------------------------------------------------------------------
    Sprachverweise. Beide Fassungen nennen sich gegenseitig und sich selbst —
    ohne x-default weiss eine Suchmaschine nicht, welche sie Besuchern ohne
    passende Spracheinstellung zeigen soll.
@@ -196,6 +225,7 @@ async function baueEnglisch(cssMin, jsRoh, fontKarte, bildKarte) {
     const ziel = attr === 'content' ? `${DOMAIN}/assets/img/${n}` : `/assets/img/${n}`;
     return `${attr}="${ziel}"`;
   });
+  html = absoluteBilder(html, bildKarte, 'en/index.html');
   html = html.replace('<script src="assets/js/bds.js" defer></script>', () => `<script>${jsEn}</script>`);
 
   html = await minifyHtml(html, HTML_OPTIONEN);
@@ -442,6 +472,8 @@ async function build() {
       const ziel = attr === 'content' ? `${DOMAIN}/assets/img/${n}` : `/assets/img/${n}`;
       return `${attr}="${ziel}"`;
     });
+    // Danach die absoluten Adressen im JSON-LD, siehe absoluteBilder()
+    html = absoluteBilder(html, bildKarte, seite);
 
     /* 4c. Skript einbetten, an genau derselben Stelle */
     if (html.includes('<script src="assets/js/bds.js" defer></script>')) {

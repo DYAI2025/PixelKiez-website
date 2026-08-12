@@ -104,6 +104,18 @@ async function verify() {
         F('en/index.html: Umlaute im sichtbaren Text — vermutlich deutscher Rest');
     }
 
+    /* --- Bildverweise muessen auf eine vorhandene Datei zeigen ---
+       Bisher wurden nur Schriften geprueft. Dadurch blieb monatelang
+       unbemerkt, dass das Firmenlogo im JSON-LD auf assets/img/og.png zeigte
+       — eine Adresse, die es nie gab, weil ausgeliefert wird mit Inhalts-Hash.
+       Der Seite sah man nichts an; es fehlte nur das Logo in allem, was
+       Suchmaschinen daraus bauen. Genau diese Sorte Fehler gehoert in eine
+       Abnahme, weil sie sich sonst niemandem zeigt. */
+    for (const m of html.matchAll(/(?:https:\/\/[a-z0-9.-]+)?\/assets\/img\/([A-Za-z0-9._-]+)/g)) {
+      if (!(await existiert(join(ZIEL, 'assets', 'img', m[1]))))
+        F(`${seite}: Bildverweis zeigt ins Leere: assets/img/${m[1]}`);
+    }
+
     /* --- SVG-Attribute in Grossschreibung --- */
     for (const attr of ['viewBox', 'startOffset', 'preserveAspectRatio']) {
       if (html.includes(attr.toLowerCase() + '=') && !html.includes(attr + '='))
