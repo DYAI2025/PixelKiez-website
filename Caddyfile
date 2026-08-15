@@ -6,7 +6,7 @@
 	# file_server weiter unten aus den .br-/.gz-Nachbarn.
 	encode gzip zstd
 
-	@fonts path /assets/fonts/*
+	@statisch path /assets/*
 	@seiten not path /assets/* /api/*
 	@api path /api/*
 	@www host www.pixelkiez.de
@@ -31,10 +31,16 @@
 		-Server
 	}
 
-	# Schriften tragen seit dem Build einen Inhalts-Hash im Dateinamen. Aendert
-	# sich eine Schrift, aendert sich ihr Name — deshalb ist "immutable" hier
-	# gefahrlos und ein Jahr angemessen.
-	header @fonts Cache-Control "public, max-age=31536000, immutable"
+	# Schriften UND Bilder tragen seit dem Build einen Inhalts-Hash im
+	# Dateinamen. Aendert sich eine Datei, aendert sich ihr Name — deshalb ist
+	# "immutable" hier gefahrlos und ein Jahr angemessen.
+	#
+	# Vorher galt die Regel nur fuer /assets/fonts/*. Die Bilder gingen damit
+	# voellig ohne Cache-Control raus: das Logo steckt im Kopf, im Hero und in
+	# der Fusszeile und wurde bei jedem Besuch neu erfragt. Unter /assets/
+	# liegen nach dem Build ausschliesslich gehashte Dateien, der breitere
+	# Matcher ist also nicht nur erlaubt, sondern der richtige.
+	header @statisch Cache-Control "public, max-age=31536000, immutable"
 
 	# Die Seiten tragen CSS und JS eingebettet, es gibt also keine getrennten
 	# Mitteldateien mehr, die veralten koennten. Der Matcher deckt bewusst auch

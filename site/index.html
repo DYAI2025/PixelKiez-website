@@ -31,6 +31,12 @@
 
 <link rel="preload" href="assets/fonts/archivo-var-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/ibm-plex-sans-var-latin.woff2" as="font" type="font/woff2" crossorigin>
+<!-- Die Monoschrift traegt die Kopfzeile "WEBDESIGN BERLIN" und die
+     Abschnittsnummern, steht also im ersten Bild. Ohne Vorladung startet
+     sie erst nach dem Auswerten des CSS und ist gemessen 1167 ms fertig,
+     also nach dem ersten Textbild bei 1120 ms — der Kopf wird dann sichtbar
+     umgesetzt. Nur der Schnitt 500, der 400er steht weiter unten. -->
+<link rel="preload" href="assets/fonts/ibm-plex-mono-500-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="assets/css/fonts.css">
 <link rel="stylesheet" href="assets/css/bds.css">
 
