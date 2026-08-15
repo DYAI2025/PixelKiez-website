@@ -16,7 +16,13 @@
 /* Attribute, deren Inhalt sichtbar oder vorlesbar ist. */
 export const ATTRIBUTE = ['alt', 'title', 'aria-label', 'placeholder', 'content',
   /* Vorbelegung des Anliegen-Feldes — landet sichtbar im Formular */
-  'data-anliegen'];
+  'data-anliegen',
+  /* Die beiden Fassungen des Preisumschalters. Sie stehen im Markup und nicht
+     im Skript, damit sie durch dieselbe Uebersetzung laufen wie jeder andere
+     Text. Ohne diesen Eintrag stuenden sie auf der englischen Seite deutsch —
+     und zwar erst, nachdem jemand den Umschalter betaetigt, also genau dort,
+     wo es beim Durchsehen niemandem auffaellt. */
+  'data-projekt', 'data-care'];
 
 /* Nicht uebersetzen: Eigennamen, Zahlen, technische Werte. Der Vergleich
    laeuft nach trim() und Kleinschreibung. */

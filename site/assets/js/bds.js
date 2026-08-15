@@ -96,7 +96,13 @@
       });
     }, { rootMargin: '0px 0px -8% 0px', threshold: 0.06 });
     reveals.forEach(function (el, i) {
-      el.style.setProperty('--d', (i % 6) * 55 + 'ms');
+      /* Elemente mit eigener Ordnungszahl (--i, etwa die Schritte der
+         Zeitleiste) bestimmen ihre Reihenfolge selbst. Ohne das haenge die
+         Staffelung an der Dokumentposition modulo sechs — fuenf nebeneinander
+         stehende Schritte koennten dann in der Reihenfolge 4,5,1,2,3
+         erscheinen, also sichtbar durcheinander. */
+      var eigen = el.style.getPropertyValue('--i');
+      el.style.setProperty('--d', (eigen === '' ? i % 6 : +eigen) * 55 + 'ms');
       ro.observe(el);
     });
   }
@@ -828,68 +834,186 @@
     });
   })();
 
+  /* --- 7c. Preisumschalter ----------------------------------------------
+     Zwei Ansichten desselben Angebots: der einmalige Projektpreis und die
+     monatliche Betreuung. Beide Werte stehen im Markup, das Skript tauscht
+     nur, was sichtbar ist — dadurch braucht es keine Zeichenketten im Code
+     und die englische Fassung entsteht wie ueberall sonst aus der Quelle.
+
+     Faellt das Skript aus, bleibt der Projektpreis stehen. Das ist die
+     wichtigere der beiden Zahlen, insofern ist der Ausfall harmlos.
+     ---------------------------------------------------------------------- */
+  (function preisSchalter() {
+    var gruppe = $('.ps__gruppe');
+    if (!gruppe) return;
+    var optionen = $$('.ps__opt', gruppe);
+    var lauf = $('.ps__lauf', gruppe);
+    if (optionen.length < 2) return;
+
+    // Alles, was zwischen den beiden Ansichten wechselt, traegt data-swap und
+    // beide Fassungen als Attribut. Dadurch wechseln nicht nur die Zahlen,
+    // sondern auch Paketname, Leistungen und Fusszeile — Care besteht aus
+    // eigenen Paketen und nicht aus denselben Karten mit anderem Preis.
+    var wechsler = $$('[data-swap]');
+    var raster = $('.grid[data-preisart]');
+    var art = 'projekt';
+
+    // Die laufende Flaeche folgt dem aktiven Knopf. Gemessen statt gerechnet,
+    // damit sie auch stimmt, wenn die Beschriftungen unterschiedlich breit
+    // sind oder die Uebersetzung sie laenger macht.
+    var setzeLauf = function () {
+      var aktiv = optionen.filter(function (o) { return o.dataset.preisart === art; })[0];
+      if (!aktiv || !lauf) return;
+      lauf.style.setProperty('--ps-w', aktiv.offsetWidth + 'px');
+      lauf.style.setProperty('--ps-x', (aktiv.offsetLeft - optionen[0].offsetLeft) + 'px');
+    };
+
+    /* Der Wert geht nach oben weg, der neue kommt von unten nach. Zwei
+       Phasen, weil dazwischen der Text getauscht werden muss — waehrend die
+       alte Zahl noch sichtbar ist, waere der Tausch zu sehen. */
+    var tausche = function (el, neu) {
+      if (el.textContent === neu) return;
+      if (reduced) { el.textContent = neu; return; }
+      el.dataset.wechsel = 'raus';
+      window.setTimeout(function () {
+        el.textContent = neu;
+        el.dataset.wechsel = 'rein';
+        // Ein Bild abwarten, sonst fasst der Browser beide Zustaende zusammen
+        // und es gibt gar keine Bewegung.
+        window.requestAnimationFrame(function () {
+          window.requestAnimationFrame(function () { el.removeAttribute('data-wechsel'); });
+        });
+      }, 180);
+    };
+
+    var zeige = function (neueArt) {
+      art = neueArt;
+      optionen.forEach(function (o) {
+        o.setAttribute('aria-pressed', o.dataset.preisart === art ? 'true' : 'false');
+      });
+      wechsler.forEach(function (el) { tausche(el, el.dataset[art] || ''); });
+      if (raster) raster.dataset.preisart = art;
+      setzeLauf();
+    };
+
+    optionen.forEach(function (o) {
+      o.addEventListener('click', function () { zeige(o.dataset.preisart); });
+    });
+
+    setzeLauf();
+    whenFontsReady(setzeLauf);      // Breiten stimmen erst mit geladener Schrift
+    var rt;
+    window.addEventListener('resize', function () {
+      clearTimeout(rt); rt = setTimeout(setzeLauf, 160);
+    });
+  })();
+
   /* --- 8. Projekt-Check -------------------------------------------------- */
   var BRANCHEN = {
     praxis:   'Arztpraxen & ZMVZ',
     hotel:    'Hotellerie',
     bau:      'Baubetriebe & Handwerk',
     gastro:   'Gastronomie',
-    startup:  'Startups',
     andere:   'Andere Branche'
   };
 
-  var DREH = {
-    praxis:   'Anliegen-Triage vor dem Telefon, Ihr Buchungstool bleibt die Terminmaschine. Dazu Selbstzahlerseiten und MFA-Recruiting; für Psychotherapiepraxen die strukturierte Erstanfrage mit Kassensitz, Verfahren und Kapazitätsstatus.',
-    hotel:    'Direktbuchungspfad zur bestehenden Booking-Engine, dazu Event- und Tagungsanfragen mit Personenzahl und Budgetrahmen.',
-    bau:      'Projekt-Konfigurator mit Projektart, Größenordnung, Zeitfenster und Plan-Upload sowie getrennte Recruiting-Funnels für gewerbliche Rollen und Bauleitung.',
-    gastro:   'Eigene Reservierung, echte HTML-Speisekarte statt PDF sowie Event-, Catering- und Gutscheinstrecken.',
-    startup:  'Klares Nutzenversprechen statt Buzzwords, eine Landingpage je Zielgruppe und ein Anfragepfad, dessen Abschlussquote vom ersten Tag an messbar ist.',
-    andere:   'Im Erstgespräch prüfen wir ehrlich, ob unser Vorgehen zu Ihrem Engpass passt.'
+  /* --- Die Ableitung -------------------------------------------------------
+     Vorher hing das Ergebnis an genau einer der drei Antworten: das Thema
+     bestimmte alles, Branche und Zeitrahmen waren Beiwerk. Wer die Branche
+     wechselte, sah dasselbe Ergebnis — dann ist es keine Pruefung, sondern
+     ein Nachschlagewerk mit drei Klicks davor.
+
+     Jetzt tragen alle drei. Thema und Branche ergeben zusammen einen
+     Umfangswert, und der bestimmt die empfohlene Projektstufe. Die Branche
+     bringt zusaetzlich ihr eigenes Modul mit, der Zeitrahmen den naechsten
+     Schritt. Die Rechnung steht als Satz im Ergebnis — wer eine Empfehlung
+     bekommt, soll sehen, woraus sie entstanden ist.
+     ---------------------------------------------------------------------- */
+  var UMFANG = {
+    sichtbarkeit: 1, website: 1,
+    verwaltung: 2, filter: 2, recruiting: 2,
+    plattform: 3
+  };
+  var BRANCHENLAST = { praxis: 1, hotel: 1, bau: 1, gastro: 0, andere: 0 };
+
+  /* Welche der drei Aufgaben aus Abschnitt 01 bricht bei diesem Thema?
+     Das ist die eigentliche Diagnose — die Preisstufe folgt daraus, nicht
+     umgekehrt. "Zu viele unpassende Anfragen" ist bewusst keine Frage der
+     Erreichbarkeit, sondern der Klarheit: Wer passend gefragt wird, hat
+     vorher verstanden, was angeboten wird. */
+  var AUFGABEN = {
+    gefunden:   'Gefunden werden',
+    verstanden: 'Verstanden werden',
+    erreichbar: 'Erreichbar sein'
+  };
+  var AUFGABE_ZU = {
+    sichtbarkeit: 'gefunden',
+    website:      'verstanden',
+    filter:       'verstanden',
+    verwaltung:   'erreichbar',
+    recruiting:   'erreichbar',
+    plattform:    'erreichbar'
+  };
+
+  var BRANCHENMODUL = {
+    praxis:  'Anliegen-Triage vor dem Telefon',
+    hotel:   'Direktbuchungspfad zur bestehenden Engine',
+    bau:     'Projekt-Konfigurator mit Plan-Upload',
+    gastro:  'Eigene Reservierung statt Plattform',
+    andere:  ''
+  };
+
+  var STUFEN = [
+    { id: 'launch',      name: 'Launch',      preis: 'ab 995 €',
+      warum: 'Ihr Anliegen ist klar umrissen und kommt mit Standardfunktionen aus.' },
+    { id: 'business',    name: 'Business',    preis: 'ab 2.490 €',
+      warum: 'Ihr Anliegen betrifft mehrere Bereiche, und Ihre Branche bringt eigene Funktionen mit.' },
+    { id: 'individuell', name: 'Individuell', preis: 'ab 4.900 €',
+      warum: 'Thema und Branche verlangen eigene Abläufe und eine individuelle Struktur.' }
+  ];
+
+  var stufeFuer = function (thema, branche) {
+    var wert = (UMFANG[thema] || 1) + (BRANCHENLAST[branche] || 0);
+    return wert <= 2 ? STUFEN[0] : (wert === 3 ? STUFEN[1] : STUFEN[2]);
   };
 
   var THEMEN = {
     sichtbarkeit: {
       label: 'Wir werden nicht gefunden',
-      title: 'Sichtbarkeits-Paket',
-      mods: ['Website-Check bzw. Redesign', 'SEO-Ausbau', 'Local SEO', 'GEO-Setup'],
-      entry: 'Einstieg über das GEO-/Sichtbarkeits-Audit.',
+      mods: ['Website-Check bzw. Redesign', 'SEO-Ausbau', 'Local SEO'],
+      entry: 'Einstieg über das Sichtbarkeits-Audit.',
     },
     filter: {
       label: 'Zu viele unpassende Anfragen',
-      title: 'System-Website mit Anfrage-Filter',
-      mods: ['System-Website mit strukturierter Erstanfrage', 'Anliegen-Triage oder Projekt-Konfigurator', 'SEO-Fundament', 'GEO-Grundsetup'],
+      mods: ['Strukturierte Erstanfrage', 'SEO-Fundament'],
       entry: 'Einstieg über die Diagnose: Wir definieren die Filterlogik, bevor ein Angebot entsteht.',
     },
     recruiting: {
       label: 'Wir bekommen keine neuen Bewerber',
-      title: 'Recruiting-Paket',
-      mods: ['Recruiting-System', '60-Sekunden-Bewerbung', 'Google-for-Jobs-Setup', 'Recruiting-Begleitung'],
-      entry: 'Kostenloser Quick-Check im Erstgespräch: Wir testen Ihre aktuelle Bewerbungsstrecke live am Handy.',
+      mods: ['Recruiting-System', '60-Sekunden-Bewerbung', 'Google-for-Jobs-Setup'],
+      entry: 'Kostenloser Quick-Check im Erstgespräch: Wir testen Ihre Bewerbungsstrecke live am Handy.',
     },
     website: {
       label: 'Webseite ist alt oder es existiert noch keine',
-      title: 'Launch- & Redesign-Paket',
-      mods: ['One-Page- oder Business-Website bzw. Redesign', 'SEO-Fundament', 'GEO-Grundsetup', 'Google-Business-Profil'],
-      entry: 'Einstieg über die Diagnose im Erstgespräch, mit erster Analyse Ihres aktuellen Auftritts.',
+      mods: ['One-Page- oder Business-Website', 'SEO-Fundament', 'Google-Business-Profil'],
+      entry: 'Einstieg über die Diagnose im Erstgespräch, mit erster Analyse Ihres Auftritts.',
     },
     verwaltung: {
       label: 'Zu viel Telefon und Verwaltung',
-      title: 'System-Website mit Anliegen-Triage',
-      mods: ['System-Website mit Anliegen-Triage', 'Anbindung an Ihr Termin- oder Buchungssystem', 'Leistungs- bzw. Selbstzahlerseiten', 'SEO-Fundament'],
+      mods: ['Anbindung an Ihr Termin- oder Buchungssystem', 'Leistungsseiten', 'SEO-Fundament'],
       entry: 'Einstieg über die Diagnose: Welche Anliegen binden heute die meiste Zeit?',
     },
     plattform: {
       label: 'Zu abhängig von Plattformen',
-      title: 'System-Website mit eigenem Buchungspfad',
-      mods: ['System-Website mit Direktbuchungs- oder Reservierungspfad', 'Anbindung Ihrer bestehenden Engine', 'GEO-Setup & Agent-Readiness', 'Local SEO'],
-      entry: 'Einstieg über das GEO-/Sichtbarkeits-Audit.',
+      mods: ['Eigener Buchungs- oder Reservierungspfad', 'Sichtbarkeit bei Google und KI-Suchen', 'Local SEO'],
+      entry: 'Einstieg über das Sichtbarkeits-Audit.',
     }
   };
 
   var ZEIT = {
-    sofort:  { label: 'So schnell wie möglich', line: 'Kurzfristig, wir melden uns innerhalb eines Werktags mit Einschätzung und möglichen Startterminen.' },
-    quartal: { label: 'Im nächsten Quartal',    line: 'Nächstes Quartal, wir liefern die Diagnose jetzt, damit das Angebot zum Start bereitliegt.' },
-    offen:   { label: 'Wir orientieren uns',    line: 'Offener Zeitrahmen, Sie erhalten eine Einschätzung ohne Termindruck.' }
+    sofort:  { label: 'So schnell wie möglich', line: 'Kurzfristig: Antwort in einem Werktag, mit Einschätzung und möglichen Startterminen.' },
+    quartal: { label: 'Im nächsten Quartal',    line: 'Nächstes Quartal: Die Diagnose kommt jetzt, damit das Angebot zum Start bereitliegt.' },
+    offen:   { label: 'Wir orientieren uns',    line: 'Offener Zeitrahmen: Sie erhalten eine Einschätzung ohne Termindruck.' }
   };
 
   var pick = { branche: '', thema: '', zeit: '' };
@@ -909,31 +1033,70 @@
     var meter = '<span class="pc__meter" aria-hidden="true">' +
       [0, 1, 2].map(function (i) { return '<i class="' + (i < n ? 'on' : '') + '"></i>'; }).join('') + '</span>';
 
+    /* Der Ruhezustand zeigt bereits den Rahmen, nicht nur einen Hinweis:
+       welche drei Aufgaben geprueft werden, und welche Angabe noch fehlt.
+       Vorher stand hier eine Zeile Text — man sah dem Abschnitt nicht an,
+       was er ueberhaupt tut, bevor man ihn bedient hat. */
     if (n < 3) {
-      var missing = !pick.branche ? 'Branche' : (!pick.thema ? 'Ihr Thema' : 'Ihr Zeitrahmen');
-      out.innerHTML = '<div class="pc__wait">' + meter +
-        '<span class="pc__hint">Noch offen: <em class="q">' + missing +
-        '</em>, danach sehen Sie hier Ihr passendes System.</span></div>';
+      var offen = !pick.branche ? 'Branche' : (!pick.thema ? 'Ihr Thema' : 'Ihr Zeitrahmen');
+      var leer = '<span class="pc__ampel" aria-hidden="true"><i></i><i></i><i></i></span>';
+      out.innerHTML =
+        '<div class="pc__res pc__res--offen">' +
+          '<div>' + meter +
+            '<p class="kicker">Diagnose</p>' +
+            '<p class="pc__aufgabe">' + leer +
+              '<span>Geprüft werden drei Aufgaben</span></p>' +
+            '<ol class="pc__aufgaben">' +
+              '<li>Gefunden werden</li>' +
+              '<li>Verstanden werden</li>' +
+              '<li>Erreichbar sein</li>' +
+            '</ol>' +
+          '</div>' +
+          '<div class="pc__side">' +
+            /* Zwei eigenstaendige Absaetze statt eines zerschnittenen: nur
+               eine Zeichenkette, die mit einem oeffnenden Tag und Text
+               beginnt, erkennt der Pruefer als uebersetzbar. Das Bruchstueck
+               dazwischen lief sonst deutsch auf die englische Seite. */
+            '<p class="pc__note">Noch offen: <em class="q">' + offen + '</em></p>' +
+            '<p class="pc__note">Danach sehen Sie hier, welche der drei Aufgaben bei Ihnen bricht.</p>' +
+          '</div>' +
+        '</div>';
       return;
     }
 
     var t = THEMEN[pick.thema];
+    var stufe = stufeFuer(pick.thema, pick.branche);
+    var schluessel = AUFGABE_ZU[pick.thema];
+    var mods = t.mods.slice();
+    if (BRANCHENMODUL[pick.branche]) mods.unshift(BRANCHENMODUL[pick.branche]);
+
+    /* Drei Segmente, eines markiert: welche Aufgabe traegt gerade nicht.
+       Dieselbe Reihenfolge wie oben im Abschnitt, damit man den Bezug sieht. */
+    var reihe = ['gefunden', 'verstanden', 'erreichbar'];
+    var ampel = '<span class="pc__ampel" aria-hidden="true">' + reihe.map(function (k) {
+      return '<i class="' + (k === schluessel ? 'schwach' : '') + '"></i>';
+    }).join('') + '</span>';
+
     out.innerHTML =
       '<div class="pc__res">' +
         '<div>' + meter +
-          '<h3 class="h-md">' + esc(t.title) + '</h3>' +
-          '<p class="pc__hint">' + esc(DREH[pick.branche]) + '</p>' +
-          '<ul class="pc__mods">' + t.mods.map(function (m) {
-            return '<li>' + ICON_CHECK + '<span>' + esc(m) + '</span></li>';
-          }).join('') + '</ul>' +
+          '<p class="kicker">Diagnose</p>' +
+          '<p class="pc__aufgabe">' + ampel +
+            '<span>Schwächste Aufgabe: <strong>' + esc(AUFGABEN[schluessel]) + '</strong></span></p>' +
+          '<h3 class="h-md pc__stufe">' + esc(stufe.name) +
+            '<span class="pc__preis">' + esc(stufe.preis) + '</span></h3>' +
+          '<p class="pc__hint">' + esc(stufe.warum) + '</p>' +
         '</div>' +
         '<div class="pc__side">' +
+          '<p class="kicker">Enthalten</p>' +
+          '<ul class="pc__mods">' + mods.map(function (m) {
+            return '<li>' + ICON_CHECK + '<span>' + esc(m) + '</span></li>';
+          }).join('') + '</ul>' +
           '<p class="pc__note">' + esc(ZEIT[pick.zeit].line) + '</p>' +
           '<button type="button" class="btn btn--split btn--primary btn--sm" id="check-handoff">' +
             '<span class="btn__label">An Schnellkontakt übergeben</span>' +
             '<span class="btn__ico"><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg>' +
             '<svg aria-hidden="true"><use href="#i-arrow-ur"/></svg></span></button>' +
-          '<p class="pc__note">' + esc(t.entry) + '</p>' +
         '</div>' +
       '</div>';
 
@@ -1104,8 +1267,10 @@
     if (b && pick.branche) b.value = pick.branche;
     if (a) {
       var t = THEMEN[pick.thema];
+      var stufe = stufeFuer(pick.thema, pick.branche);
       a.value = 'Projekt-Check: ' + BRANCHEN[pick.branche] + ' · ' + t.label + ' · ' + ZEIT[pick.zeit].label +
-                '\nEmpfehlung: ' + t.title;
+                '\nSchwächste Aufgabe: ' + AUFGABEN[AUFGABE_ZU[pick.thema]] +
+                '\nEmpfehlung: ' + stufe.name + ' (' + stufe.preis + ')';
     }
     openContact();
   }
@@ -1126,6 +1291,10 @@
     if ('IntersectionObserver' in window) {
       if (hero) new IntersectionObserver(function (e) {
         inHero = e[0].isIntersecting; syncSticky();
+        /* Die Buehne bringt ihre eigene schwebende Navigation mit. Solange
+           sie im Bild ist, tritt der Kopfbereich zurueck — zwei Navigationen
+           uebereinander waeren eine Frage zu viel. Er kommt zurueck, sobald
+           man die Buehne verlaesst, und bleibt fuer den Rest der Seite. */
       }, { threshold: 0.25 }).observe(hero);
       if (section) new IntersectionObserver(function (e) {
         inKontakt = e[0].isIntersecting; syncSticky();

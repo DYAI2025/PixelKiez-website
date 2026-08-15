@@ -34,8 +34,25 @@
   --sp-section:clamp(72px,9vw,136px);
   --radius:14px;
   --radius-sm:10px;
-  --ease:cubic-bezier(.22,.61,.36,1);
+  /* --- Bewegung ------------------------------------------------------------
+     Drei Kurven statt einer, weil drei verschiedene Dinge passieren:
+
+     --ease         Etwas kommt oder geht. Startet schnell, laeuft weich aus.
+                    Die Bewegung ist sofort sichtbar, und genau darauf schaut
+                    das Auge im ersten Moment. Deutlich staerker gezogen als
+                    die vorige Kurve — dieselbe Dauer wirkt dadurch flinker.
+     --ease-morph   Etwas bewegt sich AUF dem Schirm von A nach B: die
+                    Saeulen im Betreuungsabschnitt, der Kartenstapel. Hier
+                    gehoert Anfahren und Abbremsen dazu, sonst ruckt es an.
+     --ease-press   Druckfeedback. Kurz und trocken, ohne Nachwippen.
+
+     Kein ease-in irgendwo: es verzoegert den Anfang, und ein verzoegerter
+     Anfang fuehlt sich langsam an, egal wie kurz die Dauer ist. */
+  --ease:cubic-bezier(.23,1,.32,1);
+  --ease-morph:cubic-bezier(.77,0,.175,1);
+  --ease-press:cubic-bezier(.2,0,.2,1);
   --dur:220ms;
+  --dur-press:150ms;
 
   --z-header:30;
   --z-sticky:40;
@@ -272,6 +289,11 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
 .btn svg{flex:none;width:17px;height:17px}
 .btn--primary{--btn-bg:var(--accent);--btn-fg:var(--on-accent);--btn-bd:var(--accent)}
 .btn--primary:hover{--btn-bg:var(--ink);--btn-bd:var(--ink);--btn-fg:var(--paper)}
+/* Auf der orangen Flaeche faellt der Hauptknopf mit sich selbst zusammen:
+   --accent und --ink sind dort beide nahezu Schwarz, --on-accent und
+   --paper beide Orange. Ruhe- und Hoverzustand waeren identisch, der Knopf
+   wirkte beim Ueberfahren tot. Hier dreht er deshalb um. */
+.sec--orange .btn--primary:hover{--btn-bg:var(--paper);--btn-fg:var(--ink);--btn-bd:var(--ink)}
 .btn--ghost:hover{--btn-bd:var(--ink);--btn-bg:var(--ink);--btn-fg:var(--paper)}
 .btn--sm{padding:10px 16px;min-height:40px;font-size:.875rem}
 .btn[disabled]{opacity:.55;cursor:not-allowed}
@@ -289,9 +311,14 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
 .btn--split .btn__ico{
   background:var(--btn-bg);color:var(--btn-fg);
   border:1px solid var(--btn-bd);border-radius:999px;
-  transition:background-color 500ms ease-in-out,
-             color 500ms ease-in-out,
-             border-color 500ms ease-in-out;
+  /* Vorher 500ms ease-in-out. Eine halbe Sekunde ist fuer einen Farbwechsel
+     unter dem Zeiger zu lang, und ease-in-out laesst sie noch laenger wirken,
+     weil der Anfang verzoegert ist. Am wichtigsten Knopf der Seite faellt
+     genau das auf. 200ms reichen; die Farbe ist da, bevor man darueber
+     nachdenkt. */
+  transition:background-color 200ms ease,
+             color 200ms ease,
+             border-color 200ms ease;
 }
 .btn--split .btn__label{
   display:flex;align-items:center;
@@ -304,21 +331,55 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
 .btn--split .btn__ico svg{
   position:absolute;left:50%;top:50%;
   width:18px;height:18px;margin:-9px 0 0 -9px;
-  transition:transform 500ms ease-in-out;
+  /* Der Pfeil wandert durch, das ist Bewegung AUF dem Schirm — also die
+     Morph-Kurve. 260ms statt 500ms: man soll den Durchlauf sehen, aber nicht
+     auf ihn warten. */
+  transition:transform 260ms var(--ease-morph);
 }
 .btn--split .btn__ico svg:nth-of-type(2){transform:translateX(-46px)}
-.btn--split:hover .btn__ico svg:nth-of-type(1){transform:translateX(46px)}
-.btn--split:hover .btn__ico svg:nth-of-type(2){transform:translateX(0)}
+
+/* Zeigergesteuertes nur dort, wo es wirklich einen Zeiger gibt. Auf einem
+   Tippgeraet loest eine Beruehrung :hover aus und laesst ihn danach stehen —
+   der Knopf sieht dann dauerhaft ueberfahren aus. */
+@media (hover:hover) and (pointer:fine){
+  .btn--split:hover .btn__ico svg:nth-of-type(1){transform:translateX(46px)}
+  .btn--split:hover .btn__ico svg:nth-of-type(2){transform:translateX(0)}
+}
 
 /* Der Fokusring gehoert um den ganzen Button, nicht um die Teilflaechen */
 .btn--split:focus-visible{outline:2px solid var(--accent-ink);outline-offset:3px}
+
+/* --- Druckfeedback -------------------------------------------------------
+   Bisher gab es keins: zwischen Antippen und der Reaktion der Seite lag
+   nichts. Der Knopf sah aus, als haette er nichts gehoert, und man tippt ein
+   zweites Mal.
+
+   Das Feedback haengt am Druck, nicht am Loslassen — es muss in dem Moment
+   da sein, in dem der Finger aufsetzt. Drei Prozent Verkleinerung reichen;
+   mehr wirkt wie ein Spielzeug. 150ms, trockene Kurve, kein Nachwippen.
+
+   scale() nimmt die Kinder mit, Beschriftung und Symbol werden also
+   mitverkleinert — genau das, was ein gedruecktes Element tut. */
+.btn,.chip,.pil__btn,.dialog__x,.burger,.lang,[data-dots] button{
+  transition:transform var(--dur-press) var(--ease-press);
+}
+.btn:active,.chip:active,.pil__btn:active,
+.dialog__x:active,.burger:active,.lang:active,[data-dots] button:active{
+  transform:scale(.97);
+}
+/* Die kleinen runden Schalter vertragen etwas mehr, sonst sieht man nichts */
+.dialog__x:active,.burger:active,.lang:active,[data-dots] button:active{
+  transform:scale(.93);
+}
 
 .btn--split.btn--sm .btn__label{padding:10px 18px;min-height:40px;font-size:.875rem}
 .btn--split.btn--sm .btn__ico{width:40px;height:40px}
 .btn--split.btn--sm .btn__ico svg{width:15px;height:15px;margin:-7.5px 0 0 -7.5px}
 .btn--split.btn--sm .btn__ico svg:nth-of-type(2){transform:translateX(-38px)}
-.btn--split.btn--sm:hover .btn__ico svg:nth-of-type(1){transform:translateX(38px)}
-.btn--split.btn--sm:hover .btn__ico svg:nth-of-type(2){transform:translateX(0)}
+@media (hover:hover) and (pointer:fine){
+  .btn--split.btn--sm:hover .btn__ico svg:nth-of-type(1){transform:translateX(38px)}
+  .btn--split.btn--sm:hover .btn__ico svg:nth-of-type(2){transform:translateX(0)}
+}
 
 .btn--split[disabled]{opacity:.55}
 
@@ -359,6 +420,12 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
   border-bottom:1px solid transparent;
   transition:border-color var(--dur) var(--ease);
 }
+/* Zurueckgetreten, solange die Buehne mit ihrer eigenen Navigation im Bild
+   ist. Nicht display:none — der Kopf muss messbar bleiben, damit die klebende
+   Positionierung beim Verlassen ohne Sprung greift. */
+.header{transition:opacity 260ms var(--ease),transform 260ms var(--ease),
+        border-color var(--dur) var(--ease),background-color var(--dur) var(--ease)}
+
 .header[data-scrolled="true"]{border-bottom-color:var(--line)}
 .header__in{
   display:flex;align-items:center;justify-content:space-between;gap:24px;
@@ -467,7 +534,7 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
 .menu{
   display:grid;grid-template-rows:0fr;
   border-top:1px solid transparent;
-  transition:grid-template-rows 340ms var(--ease),border-color var(--dur) var(--ease);
+  transition:grid-template-rows 340ms var(--ease-morph),border-color var(--dur) var(--ease);
 }
 .menu[data-open="true"]{grid-template-rows:1fr;border-top-color:var(--line)}
 .menu__in{overflow:hidden;display:grid;gap:0}
@@ -489,107 +556,115 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
   letter-spacing:.12em;color:var(--ink-45);flex:none;
 }
 
-/* ---------- 7. Hero ------------------------------------------------------ */
-.hero{position:relative;padding-block:clamp(40px,5vw,64px) clamp(40px,5vw,64px)}
-
-/* Wortmarke ueber der Ueberschrift. Deutlich groesser als im Kopf, aber
-   unter der Breite der Vorlage (980px), damit sie scharf bleibt. */
-.hero__logo-buehne{
-  display:block;position:relative;
-  width:min(76vw,520px);margin-inline:auto;
+/* ---------- 7. Hero ------------------------------------------------------
+   Grosse abgerundete Buehne, die fast den ganzen Schirm fuellt. Die
+   Komposition ist bewusst asymmetrisch: Wortmarke unten links, Aussage unten
+   rechts, Navigation schwebend oben. Der Partikelaufbau bleibt unangetastet,
+   er zeichnet weiter die Logodatei nach — nur an anderer Stelle.
+   ------------------------------------------------------------------------- */
+/* Der klebende Kopfbereich belegt seine Hoehe im Fluss, auch wenn er ueber
+   der Buehne zurueckgetreten ist. Diese Hoehe holt der negative Aussenabstand
+   zurueck — die Buehne beginnt dadurch ganz oben statt darunter. */
+.hero{
+  position:relative;
+  padding:clamp(8px,1vw,14px) clamp(12px,1.6vw,24px) 0;
 }
-.hero__logo{display:block;width:100%;height:auto}
-/* Die Leinwand spannt ueber den GANZEN Hero, randlos bis zum Bildschirmrand.
-   Nur so koennen die Partikel von weit draussen hereinfliegen. Waere sie so
-   gross wie das Logo, tauchten sie an ihrer Kante auf, und genau das saehe
-   man als Rechteck.
 
-   Breite und Hoehe ausgeschrieben, weil canvas ein ersetztes Element ist und
-   sich nicht allein durch inset dehnt. max-width:none, weil die Grundregel
-   img,svg,canvas sonst auf 100% deckelt.
+.hero__buehne{
+  position:relative;isolation:isolate;overflow:hidden;
+  min-height:min(92vh,980px);
+  border-radius:clamp(20px,2.6vw,44px);
+  background:var(--paper-2);
+  display:grid;grid-template-rows:1fr;
+  padding:clamp(14px,1.8vw,22px);
+}
+/* Die Leinwand liegt ueber der ganzen Buehne, nicht nur ueber dem Logo:
+   die Partikel starten ausserhalb und fliegen herein.
 
-   pointer-events:none — die Leinwand hoert selbst nicht zu, der Zeiger wird
-   am Hero abgefragt. Sonst begaenne und endete die Wirkung an ihrer Kante. */
+   Sie liegt UEBER dem Logo, nicht darunter. Das Bild bleibt die Quelle der
+   Wahrheit und steht da, solange kein Skript laeuft, bei reduzierter Bewegung
+   oder wenn die Abtastung scheitert. Sobald das Partikelfeld steht, tauschen
+   die beiden die Deckkraft — dieselbe Form, nur aus Kaesten gebaut.
+
+   Liegt die Leinwand darunter, zeichnet der Effekt weiter, ist aber vom
+   scharfen Bild vollstaendig verdeckt. Genau das war hier passiert. */
 .hero__logo-drift{
-  position:absolute;top:0;left:50%;
-  margin-left:-50vw;width:100vw;height:100%;
-  max-width:none;z-index:2;
-  display:block;opacity:0;pointer-events:none;
+  position:absolute;left:50%;top:0;
+  margin-left:-50vw;width:100vw;height:100%;max-width:none;
+  z-index:2;pointer-events:none;
+  display:block;opacity:0;
+  transition:opacity 260ms var(--ease);
 }
 .hero[data-drift="an"] .hero__logo{opacity:0}
 .hero[data-drift="an"] .hero__logo-drift{opacity:1}
-/* Der Satz unter der Wortmarke. Mono und gesperrt wie die uebrigen
-   Auszeichnungen der Seite, damit er die Ueberschrift nicht bedraengt. */
-/* Die Fliesstextschrift der Seite, nicht die Schreibmaschine. Die Mono ist
-   fuer kurze Auszeichnungen gedacht — Nummern, Kleinschrift, Kennungen. Ein
-   ganzer Satz darin liest sich technisch und faellt aus dem Bild. */
-.hero__claim{
-  margin:0;
-  font-family:var(--font-body);font-size:clamp(1rem,1.7vw,1.125rem);
-  line-height:1.5;color:var(--ink-70);
+.hero__logo{transition:opacity 260ms var(--ease)}
+
+/* --- Schwebende Pillennavigation --- */
+/* --- Untere Komposition --- */
+.hero__unten{
+  position:relative;z-index:1;align-self:end;
+  display:grid;gap:clamp(20px,3vw,48px);align-items:end;
+  padding-block:clamp(24px,4vw,56px);
+}
+@media (min-width:900px){
+  .hero__unten{grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr)}
 }
 
-/* --- Portierung animated-hero.tsx: zentrierte Buehne ---------------------- */
-.hero__stage{
-  position:relative;z-index:1;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:clamp(20px,2.4vw,32px);
-  padding-block:clamp(28px,4.4vw,68px) clamp(36px,4.4vw,64px);
-  text-align:center;
+/* Die Wortmarke. Sie ist ein Bild, keine Schrift — deshalb waechst sie ueber
+   die Breite und nicht ueber font-size. Genau dieses Bild tastet der
+   Partikeleffekt ab. */
+.hero__logo-buehne{display:block;width:100%}
+.hero__logo{display:block;width:100%;height:auto;max-width:none}
+
+.hero__block{max-width:46ch;justify-self:start}
+@media (min-width:900px){.hero__block{justify-self:end;padding-bottom:6px}}
+.hero__h1{
+  font-family:var(--font-display);font-weight:600;
+  font-size:clamp(1.6rem,3.1vw,2.6rem);line-height:1.12;letter-spacing:-.03em;
+  color:var(--ink);margin:0;
+}
+.hero__h1 em{font-style:italic;color:var(--accent-ink)}
+.hero__text{
+  margin-top:clamp(12px,1.4vw,18px);max-width:44ch;
+  font-size:clamp(.9375rem,1.05vw,1.0625rem);line-height:1.6;color:var(--ink-70);
 }
 
-/* align-items:center wuerde die Kinder auf Inhaltsbreite schrumpfen —
-   Headline und Lead brauchen die volle Buehnenbreite, sonst bricht der Rotator um. */
-.hero__h1{align-self:stretch;max-width:none;margin:0}
-.hero__cta{justify-content:center;gap:12px}
+.hero__block .btn-row,.hero__block .btn{margin-top:clamp(18px,2vw,26px)}
 
-/* Rotierende Headline — Spring-Charakteristik der Vorlage (stiffness 50) */
-.rotwrap{display:block}
-.rotwrap__lead{display:block}
-.rot{
-  position:relative;display:block;overflow:hidden;
-  /* eigene Skala: auf schmalen Viewports muss die laengste Phrase einzeilig passen */
-  font-size:clamp(1.55rem,5.4vw,5.2rem);
-  height:1.14em;margin-top:.06em;
+/* --- Vertrauensleiste --- */
+.vertrauen{
+  display:grid;gap:1px;background:var(--line);
+  margin:clamp(12px,1.6vw,24px) 0 0;
+  border-block:1px solid var(--line);
 }
-.rot__item{
-  position:absolute;inset:0;
-  display:flex;align-items:center;justify-content:center;
-  white-space:nowrap;
-  color:var(--ink);font-weight:700;
-  opacity:0;transform:translate3d(0,115%,0);
-  /* Abgehende Phrase blendet schnell weg, ankommende erst danach ein —
-     sonst sind zwei Zeilen gleichzeitig lesbar. */
-  transition:opacity 190ms var(--ease),
-             transform 680ms cubic-bezier(.34,1.4,.5,1);   /* Ueberschwinger wie beim Spring */
+/* Vier Spalten erst, wenn vier kurze Aussagen nebeneinander wirklich lesbar
+   sind. Auf dem Tablet stehen sie als 2x2 — vier gequetschte Spalten waeren
+   zwar formal vier, aber niemand liest sie. */
+@media (min-width:900px){.vertrauen{grid-template-columns:repeat(4,1fr)}}
+@media (min-width:420px) and (max-width:899px){.vertrauen{grid-template-columns:repeat(2,1fr)}}
+.vertrauen li{
+  display:flex;align-items:center;gap:10px;
+  padding:clamp(16px,1.8vw,22px) clamp(14px,1.6vw,24px);
+  background:var(--paper);
+  font-family:var(--font-mono);font-size:.75rem;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--ink-70);line-height:1.4;
 }
-.rot__item.is-active{
-  opacity:1;transform:none;
-  transition:opacity 300ms var(--ease) 150ms,
-             transform 680ms cubic-bezier(.34,1.4,.5,1);
-}
-.rot__item.is-past{opacity:0;transform:translate3d(0,-115%,0)}
+.vertrauen svg{width:14px;height:14px;color:var(--accent);flex:none}
 
-/* Barrierefreie Fassung: unter reduced-motion ersetzt sie den Rotator */
-.h1-a11y{
-  position:absolute;width:1px;height:1px;padding:0;margin:-1px;
-  overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;
+/* Auf schmalen Ansichten steht die Aussage ueber der Wortmarke — sie traegt
+   die Botschaft, die Marke traegt nur den Namen. */
+@media (max-width:899px){
+  .hero__buehne{min-height:min(86vh,760px)}
+  .hero__unten{display:flex;flex-direction:column;align-items:stretch}
+  .hero__block{order:1}
+  .hero__logo-buehne{order:2}
 }
-
-/* Der Anfrage-Filter steht jetzt als Beleg-Streifen unter der Buehne */
-
-.facts{
-  position:relative;z-index:1;
-  display:flex;flex-wrap:wrap;gap:10px 28px;
-  margin-top:clamp(40px,5vw,60px);padding-top:22px;
-  border-top:1px solid var(--line);
+@media (max-width:520px){
+  .hero__buehne{min-height:78vh}
+  .hero__nav{gap:2px;padding:5px;overflow-x:auto;scrollbar-width:none}
+  .hero__nav::-webkit-scrollbar{display:none}
+  .hero__nav a,.hero__nav-cta{padding-inline:13px;font-size:.875rem}
 }
-.facts li{
-  display:flex;align-items:center;gap:9px;
-  font-family:var(--font-mono);font-size:.75rem;letter-spacing:.05em;
-  color:var(--ink-70);
-}
-.facts svg{width:14px;height:14px;color:var(--accent);flex:none}
 
 /* ---------- 9. Leistungen ------------------------------------------------ */
 
@@ -621,6 +696,17 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
 }
 .pv__cap span:last-child{color:var(--accent-ink);text-align:right}
 
+/* Abschlusszeile unter den Problemkarten und Fussbereich unter Preisen bzw.
+   Care. Nur Abstand und Stapelrichtung — kein eigener Rahmen, keine eigene
+   Bewegung. Die enthaltenen Elemente tragen data-reveal und laufen damit in
+   derselben gestaffelten Einblendung wie der Rest des Abschnitts. */
+.pl-schluss{margin-top:clamp(26px,3.2vw,44px)}
+.sek-fuss{
+  display:grid;gap:clamp(16px,2vw,24px);justify-items:start;
+  margin-top:clamp(26px,3.2vw,44px);
+}
+.sek-fuss .small{max-width:62ch}
+
 .pl{display:grid;gap:clamp(26px,3.2vw,48px)}
 @media (min-width:820px){.pl{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .pl__list{display:grid;gap:2px;margin-top:16px;border-top:1px solid var(--line)}
@@ -628,6 +714,79 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
 .pl__list .small{margin-top:6px}
 .pl__col--fix .pl__list{border-top-color:var(--accent)}
 .pl__col--fix .h-sm{color:var(--accent-ink)}
+
+/* --- Abschnitt 01: die Kette ---------------------------------------------
+   Drei Stationen statt drei gleichrangiger Karten. Die Reihenfolge ist die
+   Aussage: gefunden, verstanden, erreichbar. Deshalb eine <ol> und eine
+   durchlaufende Linie, keine losen Kaesten.
+   ------------------------------------------------------------------------- */
+.weg{
+  display:grid;gap:clamp(30px,3.6vw,44px);
+  margin:clamp(30px,4vw,56px) 0 0;padding:0;list-style:none;
+}
+@media (min-width:900px){
+  .weg{grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(24px,2.6vw,40px)}
+}
+.weg__st{
+  position:relative;padding-top:clamp(20px,2.2vw,28px);
+  border-top:1px solid color-mix(in srgb,var(--ink) 22%,transparent);
+}
+/* Die Station, die im Bild ist, zieht ihre Kante durch. Kein Effekt um des
+   Effekts willen — er markiert, wo man gerade liest. */
+.weg__st::after{
+  content:"";position:absolute;left:0;top:-1px;height:1px;width:0;
+  background:var(--ink);
+  transition:width 620ms var(--ease) 120ms;
+}
+.weg__st.in::after{width:100%}
+
+.weg__n{
+  display:block;font-family:var(--font-mono);font-size:.6875rem;
+  letter-spacing:.16em;color:var(--accent-ink);
+}
+
+/* Das Raster traegt dieselbe Aussage wie der Text: zerstreut, teilgeordnet,
+   vollstaendig. Sechs mal drei Zellen, feste Kantenlaenge, damit alle drei
+   Stationen exakt gleich gross sind — nur die Fuellung unterscheidet sie. */
+.weg__raster{
+  display:grid;grid-template-columns:repeat(6,1fr);gap:4px;
+  width:clamp(108px,11vw,138px);margin:clamp(16px,1.8vw,22px) 0;
+}
+.weg__raster i{
+  aspect-ratio:1;border-radius:2px;
+  background:color-mix(in srgb,var(--ink) 12%,transparent);
+  opacity:0;transform:scale(.4);
+}
+.weg__raster i.on{background:var(--ink)}
+.weg__st.in .weg__raster i{
+  animation:wegZelle 420ms var(--ease) forwards;
+  animation-delay:calc(var(--n) * 26ms);
+}
+@keyframes wegZelle{to{opacity:1;transform:scale(1)}}
+
+.weg__t{
+  font-family:var(--font-display);font-weight:600;
+  font-size:clamp(1.0625rem,1.5vw,1.25rem);letter-spacing:-.022em;
+  margin:0 0 8px;
+}
+.weg__ist{font-size:.9375rem;line-height:1.6;color:var(--ink)}
+/* Die Antwort abgesetzt, nicht als zweiter Absatz: sonst liest man zweimal
+   dasselbe Gewicht und der Unterschied zwischen Problem und Loesung geht
+   verloren. */
+.weg__soll{
+  margin-top:10px;padding-top:10px;
+  border-top:1px solid color-mix(in srgb,var(--ink) 14%,transparent);
+  font-size:.9375rem;line-height:1.6;color:var(--accent-ink);font-weight:500;
+}
+.weg__schluss{
+  margin:clamp(30px,3.6vw,48px) 0 0;max-width:56ch;
+  font-size:clamp(1rem,1.2vw,1.125rem);line-height:1.6;color:var(--ink);
+}
+
+@media (prefers-reduced-motion:reduce){
+  .weg__st::after{width:100%;transition:none}
+  .weg__raster i{opacity:1;transform:none;animation:none}
+}
 
 /* --- Leistungsfelder: Curtain Reveal (Portierung card-curtain-reveal) -----
    Zwei Ebenen uebereinander. Unten die Ruheansicht, darueber der Vorhang:
@@ -732,86 +891,9 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
   .crc__open{position:static;clip-path:none}
 }
 
-/* ---------- 10. Branchen: Karten-Stapel ----------------------------------
-   Aufbau nach cards-stack (ContainerScroll / CardSticky): linke Spalte klebt,
-   rechts klebt jede Karte mit wachsendem top-Offset — so schiebt sich der
-   Stapel beim Scrollen zusammen. Ohne Bibliothek, reines position:sticky.
-   ------------------------------------------------------------------------- */
-.branchen{display:grid;gap:clamp(28px,3.4vw,52px)}
-@media (min-width:900px){
-  .branchen{grid-template-columns:minmax(0,.82fr) minmax(0,1.18fr);align-items:start}
-  .branchen__intro{position:sticky;top:calc(68px + clamp(24px,3vw,48px));align-self:start}
-}
-.branchen__intro .lead{max-width:44ch}
-
-.cstack{display:grid;gap:clamp(14px,1.6vw,20px)}
-.cstack__card{
-  border:1px solid var(--line);border-radius:var(--radius);
-  background:var(--paper);
-  /* color muss hier stehen, nicht nur der Token: vom body geerbtes color ist
-     bereits berechnet und wuerde die Rampe der Karte ignorieren. */
-  color:var(--ink);
-  padding:clamp(22px,2.6vw,32px);
-  transition:border-color var(--dur) var(--ease);
-}
-.cstack__card:hover{border-color:var(--ink-45)}
-@media (min-width:900px){
-  .cstack__card{
-    position:sticky;
-    /* CardSticky: top = Kopfhoehe + index * incrementY */
-    top:calc(68px + clamp(18px,2vw,34px) + var(--i) * 15px);
-    z-index:calc(var(--i) + 1);
-    box-shadow:0 -1px 0 var(--line), 0 16px 34px -26px rgba(14,20,19,.36);
-  }
-}
-
-/* --- Markenfarben je Karte -----------------------------------------------
-   Genutzt von Branchen- wie Leistungskarten. Jede Farbe bringt ihre eigene
-   Schriftrampe mit, damit der Text auf jedem Grund 4,5:1 haelt. color muss
-   mitgesetzt werden: vom body geerbtes color ist bereits berechnet.
-   ------------------------------------------------------------------------- */
-.tone{background:var(--paper);color:var(--ink)}
-.tone--weiss{
-  --paper:#FFFFFF;--paper-2:#F4F7F6;
-  --line:#DCE3E1;--line-soft:#EAEFEE;--line-strong:#5A706C;
-}
-.tone--blau{
-  /* Hauptfarbe = Seitenhintergrund, deshalb eine sichtbare Kante */
-  --paper:#B6C7C4;--paper-2:#C6D4D1;
-  --line:#7E918D;--line-soft:#93A8A4;--line-strong:#5A706C;
-}
-.tone--orange{
-  --paper:#EC5D43;--paper-2:#EF7059;
-  --ink:#0E1413;--ink-70:#151B19;--ink-45:#1A211F;   /* 5,5 / 5,2 / 4,9:1 */
-  --line:#C8462F;--line-soft:#D45139;--line-strong:#0E1413;
-  --accent:#0E1413;--accent-ink:#0E1413;--on-accent:#EC5D43;
-}
-.tone--schwarz{
-  --paper:#0E1413;--paper-2:#18201E;
-  --ink:#B6C7C4;--ink-70:#93A29E;--ink-45:#7C8A86;
-  --line:#2B3634;--line-soft:#222B29;--line-strong:#566360;
-  --accent:#EC5D43;--accent-ink:#EC5D43;--on-accent:#0E1413;
-}
-
-.cstack__head{
-  display:flex;align-items:baseline;justify-content:space-between;gap:18px;
-}
-.cstack__sub{
-  margin-top:7px;margin-bottom:16px;
-  font-size:.9375rem;color:var(--accent-ink);font-weight:500;
-}
-.cstack__card .prose + .prose{margin-top:.85em}
-.cstack__foot{
-  display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;
-  gap:16px;margin-top:20px;padding-top:18px;border-top:1px solid var(--line);
-}
-.cstack__foot .small{max-width:46ch}
-
-/* ---------- 10b. Karussell auf schmalen Ansichten ------------------------
-   Auf dem Desktop bleibt alles, wie es ist: Branchen ein klebender Stapel,
-   Leistungen ein 2x2-Raster. Darunter waren beide nur noch eine lange
-   Spalte — sechs Branchenkarten allein kosteten 4331px, ein Viertel der
-   gesamten Seitenhoehe. Hier werden sie zu waagerechten Bahnen mit
+/* ---------- 10. Karussell auf schmalen Ansichten -------------------------
+   Auf dem Desktop bleiben die Leistungen ein 2x2-Raster. Darunter waren sie
+   nur noch eine lange Spalte. Hier werden sie zu einer waagerechten Bahn mit
    Einrastpunkten: eine Karte fuellt den Bildschirm, die naechste schaut
    angeschnitten herein und laedt zum Wischen ein.
 
@@ -819,42 +901,6 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
    ohne JavaScript laesst sich trotzdem wischen.
    ------------------------------------------------------------------------- */
 .carou__dots{display:none}
-
-@media (max-width:899px){
-  .cstack{
-    display:flex;
-    overflow-x:auto;
-    scroll-snap-type:x mandatory;
-    overscroll-behavior-x:contain;
-    gap:12px;
-    /* Bis an den Rand ziehen: sonst endet die Bahn am Textsatzspiegel und
-       die angeschnittene Karte waere nicht zu sehen. */
-    margin-inline:calc(var(--gutter) * -1);
-    padding-inline:var(--gutter);
-    scroll-padding-inline:var(--gutter);
-    scrollbar-width:none;
-  }
-  .cstack::-webkit-scrollbar{display:none}
-  .cstack__card{
-    flex:0 0 min(90%,380px);
-    scroll-snap-align:start;
-    scroll-snap-stop:always;
-    /* In der Bahn ist die Karte schmaler als in der Spalte zuvor, der Text
-       bricht also haeufiger um. Ohne engeren Satz wuerde eine Karte hoeher
-       als der Bildschirm — man muesste senkrecht und waagerecht zugleich
-       scrollen. Deshalb hier ein eigener, dichterer Satz. */
-    padding:20px 18px;
-  }
-  .cstack__card .prose{font-size:.9375rem;line-height:1.5}
-  .cstack__card .prose + .prose{margin-top:.7em}
-  .cstack__card .h-md{font-size:1.125rem}
-  .cstack__sub{margin-top:5px;margin-bottom:12px;font-size:.875rem}
-  .cstack__foot{margin-top:16px;padding-top:14px;gap:12px}
-  /* Nicht kleiner als am Schreibtisch: das hier sind Kennzahlen, die gelesen
-     werden, keine Beschriftung. Enger Zeilenabstand genuegt zum Platzsparen. */
-  .cstack__foot .small{font-size:.875rem;line-height:1.5}
-  .carou__dots--cstack{display:flex}
-}
 
 @media (max-width:819px){
   .crc-grid{
@@ -906,6 +952,44 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
 }
 .carou__dots button:hover::before{opacity:.7}
 .carou__dots button.on:hover::before{opacity:1}
+
+/* --- Markenfarben je Karte -----------------------------------------------
+   Genutzt von den Leistungskarten und der Care-Fusskarte. Jede Farbe bringt
+   ihre eigene Schriftrampe mit, damit der Text auf jedem Grund 4,5:1 haelt.
+   color muss mitgesetzt werden: vom body geerbtes color ist bereits berechnet.
+   ------------------------------------------------------------------------- */
+.tone{background:var(--paper);color:var(--ink)}
+.tone--weiss{
+  --paper:#FFFFFF;--paper-2:#F4F7F6;
+  --line:#DCE3E1;--line-soft:#EAEFEE;--line-strong:#5A706C;
+}
+.tone--blau{
+  /* Hauptfarbe = Seitenhintergrund, deshalb eine sichtbare Kante */
+  --paper:#B6C7C4;--paper-2:#C6D4D1;
+  --line:#7E918D;--line-soft:#93A8A4;--line-strong:#5A706C;
+}
+.tone--orange{
+  --paper:#EC5D43;--paper-2:#EF7059;
+  --ink:#0E1413;--ink-70:#151B19;--ink-45:#1A211F;   /* 5,5 / 5,2 / 4,9:1 */
+  --line:#C8462F;--line-soft:#D45139;--line-strong:#0E1413;
+  --accent:#0E1413;--accent-ink:#0E1413;--on-accent:#EC5D43;
+}
+.tone--schwarz{
+  --paper:#0E1413;--paper-2:#18201E;
+  --ink:#B6C7C4;--ink-70:#93A29E;--ink-45:#7C8A86;
+  --line:#2B3634;--line-soft:#222B29;--line-strong:#566360;
+  --accent:#EC5D43;--accent-ink:#EC5D43;--on-accent:#0E1413;
+}
+
+/* Auf der orangen Flaeche faellt eine orange Karte mit dem Untergrund
+   zusammen: gleiche Fuellung, und --line ist dort ebenfalls das dunkle
+   Orange, also nicht einmal eine sichtbare Kante. Sie bekommt hier den
+   helleren Ton der Rampe und einen schwarzen Rand, damit sie als Flaeche
+   auf der Flaeche liegt statt darin zu verschwinden. */
+.sec--orange .tone--orange{--paper:#EF7059;--line:#0E1413}
+.sec--orange .pil__i[data-open="true"].pil__i--orange{
+  background:#EF7059;border-color:#0E1413;
+}
 
 /* ---------- 11. Projekt-Check -------------------------------------------
    Ein Bedienfeld statt zweier Spalten: drei Fragen nebeneinander, das
@@ -991,6 +1075,47 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
   .pc__res{grid-template-columns:minmax(0,1.35fr) minmax(0,.65fr);align-items:start}
 }
 .pc__res h3{margin:8px 0 6px}
+/* Stufe und Preis in einer Zeile: die Empfehlung ist erst vollstaendig, wenn
+   die Budgetgroesse danebensteht. Der Preis ist bewusst leiser gesetzt — er
+   ordnet ein, er ist nicht die Botschaft. */
+/* Die Diagnose steht vor der Empfehlung — erst was fehlt, dann was hilft. */
+.pc__aufgabe{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  margin:10px 0 14px;font-size:.9375rem;
+}
+.pc__aufgabe strong{font-weight:600}
+/* Drei Segmente in der Reihenfolge des ersten Abschnitts. Das markierte ist
+   die Aufgabe, die gerade nicht traegt — kein Ampelrot, die Akzentfarbe
+   genuegt und bleibt in der Markenwelt. */
+.pc__ampel{display:flex;gap:4px;flex:none}
+.pc__ampel i{
+  width:20px;height:3px;border-radius:2px;
+  background:color-mix(in srgb,currentColor 22%,transparent);
+  transition:background-color 240ms var(--ease);
+}
+.pc__ampel i.schwach{background:var(--accent)}
+
+/* Die drei Aufgaben im Ruhezustand — nummeriert wie oben im Abschnitt. */
+.pc__aufgaben{
+  display:grid;gap:7px;margin:0;padding:0;list-style:none;
+  counter-reset:pcauf;
+}
+.pc__aufgaben li{
+  display:flex;align-items:baseline;gap:11px;
+  font-size:.9375rem;color:var(--ink-70);
+}
+.pc__aufgaben li::before{
+  counter-increment:pcauf;content:"0" counter(pcauf);
+  font-family:var(--font-mono);font-size:.6875rem;letter-spacing:.12em;
+  color:var(--accent-ink);flex:none;
+}
+.pc__res--offen .pc__side{justify-content:flex-start}
+
+.pc__stufe{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.pc__preis{
+  font-family:var(--font-mono);font-weight:400;
+  font-size:.8125rem;letter-spacing:.08em;color:var(--accent-ink);
+}
 .pc__mods{display:flex;flex-wrap:wrap;gap:6px 8px;margin-top:12px}
 .pc__mods li{
   display:flex;align-items:center;gap:7px;
@@ -1013,6 +1138,161 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
   display:flex;gap:10px;font-size:.9375rem;color:var(--ink-70);line-height:1.5;
 }
 .pack ul svg{width:15px;height:15px;color:var(--accent);flex:none;margin-top:4px}
+/* --- Preisumschalter -----------------------------------------------------
+   Zwei Zustaende, kein Kippschalter: ein Kippschalter sagt an/aus, hier
+   stehen aber zwei gleichrangige Ansichten nebeneinander. Die laufende
+   Flaeche darunter zeigt, welche gilt — sie wandert, statt zu springen,
+   damit der Zusammenhang zwischen den beiden erhalten bleibt. */
+.preis-schalter{
+  display:flex;flex-direction:column;align-items:center;gap:12px;
+  margin-bottom:clamp(28px,3.4vw,44px);
+}
+.ps__gruppe{
+  position:relative;display:inline-flex;padding:4px;
+  border:1px solid var(--line);border-radius:999px;background:var(--paper-2);
+}
+.ps__opt{
+  position:relative;z-index:1;
+  padding:9px 22px;border-radius:999px;
+  font-family:var(--font-mono);font-size:.6875rem;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--ink-45);white-space:nowrap;
+  transition:color 200ms var(--ease);
+}
+.ps__opt[aria-pressed="true"]{color:var(--ink)}
+.ps__lauf{
+  position:absolute;z-index:0;top:4px;bottom:4px;left:4px;
+  width:var(--ps-w,50%);transform:translateX(var(--ps-x,0));
+  border-radius:999px;background:var(--paper);
+  border:1px solid var(--line);
+  /* Morph-Kurve: die Flaeche bewegt sich AUF dem Schirm von A nach B */
+  transition:transform 320ms var(--ease-morph),width 320ms var(--ease-morph);
+}
+.ps__hinweis{font-size:.8125rem;color:var(--ink-45);text-align:center;margin:0}
+
+/* --- Preiszeile ----------------------------------------------------------
+   Beim Umschalten wechselt die Zahl. Sie tauscht nicht hart, sondern geht
+   nach oben weg und die neue kommt von unten nach — dieselbe Richtung wie
+   der Umschalter selbst, damit die Bewegung erklaert, was passiert ist.
+
+   Bewusst kein rollendes Ziffernwerk wie in der Vorlage: bei "individuell"
+   gibt es keine Ziffern zu rollen, und ein Effekt, der bei einem von drei
+   Faellen aussetzt, wirkt kaputt statt fein. */
+.pack__preis{
+  display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;
+  font-family:var(--font-display);font-weight:600;
+  font-size:clamp(1.5rem,2.6vw,2rem);letter-spacing:-.028em;line-height:1.1;
+}
+.pack__wert{display:inline-block;transition:opacity 180ms var(--ease),transform 180ms var(--ease)}
+.pack__wert[data-wechsel="raus"]{opacity:0;transform:translateY(-45%)}
+.pack__wert[data-wechsel="rein"]{opacity:0;transform:translateY(45%)}
+.pack__einheit{
+  font-family:var(--font-mono);font-weight:400;
+  font-size:.6875rem;letter-spacing:.11em;text-transform:uppercase;
+  color:var(--ink-45);
+}
+
+/* Die empfohlene Karte hebt sich ab — ueber den Rahmen, nicht ueber Groesse.
+   Eine groessere Karte bricht das Raster, ein kraeftigerer Rand nicht. */
+.pack--empfohlen{border-color:var(--accent);position:relative}
+
+/* Die empfohlene Karte steht etwas groesser da. Bewusst NICHT ueber
+   transform:scale() — das rechnet Schrift und Haarlinien weich, und bei
+   1,04 sieht man es genau dort, wo es weh tut: an den Ziffern des Preises.
+   Stattdessen echte Hoehe ueber Innenabstand, nach oben und unten aus der
+   Reihe gezogen. Alles bleibt gerastert und scharf.
+
+   Erst ab 900px, denn darunter stehen die Karten untereinander — dort gibt
+   es keine Mitte, die sich abheben koennte. */
+/* Ab 760px — dort schaltet das Raster auf drei Spalten, dort gibt es
+   ueberhaupt erst eine Mitte. */
+@media (min-width:760px){
+  .pack--empfohlen{
+    /* height:auto ist der entscheidende Teil: .pack traegt height:100% und
+       waere damit exakt zeilenhoch, der negative Aussenabstand wuerde die
+       Karte nur verschieben statt vergroessern. Ohne die feste Hoehe rechnet
+       das Raster zeilenhoehe + 2x Aussenabstand — die Karte wird wirklich
+       groesser, oben und unten gleich viel. */
+    height:auto;
+    margin-block:calc(-1 * clamp(12px,1.4vw,20px));
+    padding-block:calc(clamp(22px,2.6vw,32px) + clamp(12px,1.4vw,20px));
+  }
+  /* Der Preis traegt die Aufwertung mit, sonst wirkt die Karte nur leerer. */
+  .pack--empfohlen .pack__wert{font-size:clamp(1.7rem,3vw,2.3rem)}
+}
+
+/* In der Betreuungsansicht steht an dieser Stelle Care Plus. Empfohlen ist
+   laut Angebotsmodell aber Care Core, also die erste Karte — die Auszeichnung
+   waere dort schlicht falsch und wird deshalb ausgeblendet, statt sie
+   wandern zu lassen. Ein springendes Schild lenkt mehr ab, als es hilft. */
+.grid[data-preisart="care"] .pack--empfohlen{border-color:var(--line)}
+.grid[data-preisart="care"] .pack__badge{opacity:0;pointer-events:none}
+.pack__badge{transition:opacity 180ms var(--ease)}
+.pack__badge{
+  position:absolute;top:0;right:clamp(22px,2.6vw,32px);
+  transform:translateY(-50%);
+  padding:5px 12px;border-radius:999px;
+  background:var(--accent);color:#0E1413;
+  font-family:var(--font-mono);font-size:.625rem;letter-spacing:.12em;
+  text-transform:uppercase;
+}
+/* --- Bewegung der Preiskarten -------------------------------------------
+   Dieselbe Sprache wie die Stationen in Abschnitt 01: eine Kante zieht durch,
+   wenn die Karte ins Bild kommt. Danach laufen die Merkmale gestaffelt ein.
+   Kein neues Vokabular — dieselbe Geste an einer zweiten Stelle liest sich
+   als System, drei verschiedene Gesten als Sammelsurium.
+
+   Die Kante sitzt um den Eckradius eingerueckt. Ueber die volle Breite liefe
+   sie an den Rundungen ins Leere, und "overflow:hidden" ist hier keine Option:
+   das Empfohlen-Schild ragt absichtlich ueber die Oberkante hinaus. */
+.pack{position:relative}
+.pack::before{
+  content:"";position:absolute;top:0;left:var(--radius);
+  height:2px;width:0;max-width:calc(100% - var(--radius) * 2);
+  background:var(--line-strong);border-radius:2px;
+  transition:width 620ms var(--ease) 160ms;
+}
+.pack.in::before{width:100%}
+.pack--empfohlen::before{background:var(--accent)}
+
+/* Die Merkmale kommen einzeln, nicht als Block. 45ms Abstand: genug, dass man
+   die Reihenfolge wahrnimmt, zu wenig, um darauf zu warten. */
+.pack ul li{opacity:0;transform:translate3d(-6px,0,0)}
+.pack.in ul li{animation:packMerkmal 380ms var(--ease) forwards}
+.pack.in ul li:nth-child(1){animation-delay:240ms}
+.pack.in ul li:nth-child(2){animation-delay:285ms}
+.pack.in ul li:nth-child(3){animation-delay:330ms}
+.pack.in ul li:nth-child(4){animation-delay:375ms}
+@keyframes packMerkmal{to{opacity:1;transform:none}}
+
+/* Das Schild kommt zuletzt und aus 0.8 — nicht aus dem Nichts, sondern aus
+   etwas, das schon da war. */
+.pack__badge{opacity:0;transform:translateY(-50%) scale(.8)}
+.pack.in .pack__badge{
+  animation:packSchild 320ms var(--ease) 520ms forwards;
+}
+@keyframes packSchild{to{opacity:1;transform:translateY(-50%) scale(1)}}
+
+/* Anheben beim Ueberfahren. Nur mit echtem Zeiger — auf dem Telefon bliebe
+   die angetippte Karte sonst angehoben stehen. */
+@media (hover:hover) and (pointer:fine){
+  .pack{transition:transform 260ms var(--ease),border-color var(--dur) var(--ease),
+                   box-shadow 260ms var(--ease)}
+  .pack:hover{
+    transform:translateY(-5px);
+    border-color:var(--ink-45);
+    box-shadow:0 20px 44px -32px rgba(14,20,19,.55);
+  }
+  .pack--empfohlen:hover{border-color:var(--accent)}
+  .pack:hover .pack__wert{color:var(--accent-ink)}
+}
+.pack__wert{transition:color 220ms var(--ease)}
+
+@media (prefers-reduced-motion:reduce){
+  .pack::before{width:100%;transition:none}
+  .pack ul li{opacity:1;transform:none;animation:none}
+  .pack__badge{opacity:1;transform:translateY(-50%);animation:none}
+}
+
 .pack__foot{
   margin-top:auto;padding-top:16px;border-top:1px solid var(--line);
   font-size:.875rem;color:var(--ink-45);line-height:1.55;
@@ -1024,40 +1304,119 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
   color:var(--ink);line-height:1.5;
 }
 
-.steps{counter-reset:s;display:grid;gap:0}
-.step-row{
-  display:grid;gap:6px 24px;padding-block:clamp(20px,2.2vw,26px);
-  border-bottom:1px solid var(--line);
-  grid-template-columns:auto 1fr;
-  /* Die Zeile hebt sich beim Ueberfahren kurz ab. Nur Farbe und Verschiebung,
-     damit nichts umbricht. */
-  margin-inline:calc(-1 * clamp(10px,1.2vw,18px));
-  padding-inline:clamp(10px,1.2vw,18px);
-  border-radius:var(--radius-sm);
-  transition:background-color 200ms var(--ease),transform 240ms var(--ease);
+/* ---------- Ablauf: waagerechte Zeitleiste --------------------------------
+   Die Schritte laufen von links nach rechts. Jeder sitzt mit einem Punkt auf
+   einer Linie, die sich von Punkt zu Punkt weiterzieht — dieselbe Idee wie
+   eine Zeitleiste, aber im Vokabular dieser Seite: Haarlinie, Monoziffern,
+   Akzentpunkt, kein Rahmen.
+
+   Die Linie ist nicht durchgezogen, sondern in Stuecke geteilt: jeder Schritt
+   traegt das Stueck zu seinem Nachfolger. Deshalb kann sie sich beim
+   Hereinscrollen Abschnitt fuer Abschnitt aufbauen — erst zieht die Linie,
+   dann setzt sich der Punkt. Dieselbe zeichnende Geste wie in Abschnitt 01
+   und bei den Preiskarten; das dritte Vorkommen macht sie zum System.
+   ------------------------------------------------------------------------- */
+.lauf{
+  --luecke:clamp(16px,1.8vw,28px);
+  --punkt:15px;
+  display:grid;gap:clamp(26px,3vw,34px);
+  margin:clamp(32px,4vw,52px) 0 0;padding:0;list-style:none;
 }
-.step-row:hover{background:var(--paper-2);transform:translateX(6px)}
-.step-row:hover .step-row__gate{color:var(--ink)}
-.step-row:first-child{border-top:1px solid var(--line)}
-.step-row__n{
-  font-family:var(--font-mono);font-size:.75rem;letter-spacing:.12em;
-  color:var(--accent-ink);padding-top:5px;
+.lauf__st{position:relative}
+
+/* Der Punkt. Er sitzt in der Kopfzeile des Schritts und traegt die Linie. */
+.lauf__punkt{
+  position:absolute;
+  width:var(--punkt);height:var(--punkt);border-radius:50%;
+  background:var(--paper);border:1px solid var(--line-strong);
+  transform:scale(.35);opacity:0;
+  transition:transform 420ms var(--ease),opacity 300ms var(--ease),
+             background-color 240ms var(--ease),border-color 240ms var(--ease);
+  transition-delay:calc(var(--i) * 130ms);
 }
-.step-row__gate{
-  grid-column:2;font-family:var(--font-mono);font-size:.75rem;
-  color:var(--ink-45);display:flex;align-items:center;gap:9px;
-}
-.step-row__gate svg{width:13px;height:13px;color:var(--accent);flex:none}
-@media (min-width:860px){
-  .step-row{grid-template-columns:auto minmax(0,.62fr) minmax(0,1fr) auto}
-  .step-row__gate{grid-column:4;justify-content:flex-end;text-align:right}
-  .step-row p{grid-column:3}
+.lauf__st.in .lauf__punkt{transform:scale(1);opacity:1}
+/* Der letzte Schritt ist optional — hohl statt gefuellt, damit man sieht,
+   dass der Weg auch vorher enden darf. */
+.lauf__st.in:not(:last-child) .lauf__punkt{background:var(--accent);border-color:var(--accent)}
+
+/* Das Linienstueck zum naechsten Schritt. Zeichnet sich nach dem eigenen
+   Punkt und vor dem naechsten — dadurch laeuft die Bewegung sichtbar von
+   links nach rechts durch. */
+.lauf__st:not(:last-child)::before{
+  content:"";position:absolute;background:var(--line);
+  transform:scaleX(0);transform-origin:left center;
+  transition:transform 520ms var(--ease);
+  transition-delay:calc(var(--i) * 130ms + 200ms);
 }
 
+@media (min-width:900px){
+  .lauf{grid-template-columns:repeat(5,minmax(0,1fr));gap:var(--luecke)}
+  /* Spalte statt Block, damit das Ergebnis unten haftet: die fuenf
+     Trennlinien liegen dadurch auf einer Hoehe, auch wenn die Beschreibungen
+     unterschiedlich lang sind. Ungleich hohe Trenner lesen sich als
+     Unaufmerksamkeit, obwohl niemand sagen koennte, woran es liegt. */
+  .lauf__st{display:flex;flex-direction:column;padding-top:calc(var(--punkt) + 13px)}
+  /* Zwei Zeilen Platz reservieren, auch wenn nur eine gebraucht wird: dann
+     liegen die fuenf Trennlinien auf einer Hoehe. Ohne die Reserve haengt
+     jede Linie an der Laenge ihres eigenen Ergebnisses und die Reihe wirkt
+     unsortiert — bei bodenbuendigem Satz faellt genau das auf. */
+  .lauf .lauf__erg{margin-top:auto;min-height:calc(10px + 2.9em)}
+  .lauf__punkt{left:0;top:0}
+  .lauf__st:not(:last-child)::before{
+    top:calc(var(--punkt) / 2);height:1px;
+    left:calc(var(--punkt) + 6px);right:calc(-1 * var(--luecke));
+  }
+}
 
+/* Unter 900px senkrecht: fuenf Spalten nebeneinander waeren auf dem Telefon
+   unlesbar, und eine Wischbahn versteckt Schritte, die man alle sehen soll.
+   Die Linie kippt mit, die Punkte bleiben darauf. */
+@media (max-width:899px){
+  .lauf{padding-left:calc(var(--punkt) + 16px)}
+  .lauf__punkt{left:calc(-1 * (var(--punkt) + 16px));top:5px}
+  .lauf__st:not(:last-child)::before{
+    left:calc(-1 * (var(--punkt) + 16px) + (var(--punkt) - 1px) / 2);width:1px;
+    top:calc(5px + var(--punkt) + 6px);
+    bottom:calc(-1 * clamp(26px,3vw,34px) - 5px);
+    transform:scaleY(0);transform-origin:center top;
+  }
+  .lauf__st.in:not(:last-child)::before{transform:scaleY(1)}
+}
+@media (min-width:900px){
+  .lauf__st.in:not(:last-child)::before{transform:scaleX(1)}
+}
+
+.lauf__n{
+  display:block;font-family:var(--font-mono);font-size:.6875rem;
+  letter-spacing:.16em;color:var(--accent-ink);margin-bottom:9px;
+}
+.lauf__t{
+  font-family:var(--font-display);font-weight:600;
+  font-size:clamp(1rem,1.25vw,1.0625rem);letter-spacing:-.02em;
+  line-height:1.25;margin:0 0 8px;text-wrap:balance;
+}
+.lauf__was{font-size:.875rem;line-height:1.55;color:var(--ink-70);margin:0;text-wrap:pretty}
+.lauf__erg{
+  display:flex;align-items:flex-start;gap:7px;
+  margin-top:12px;padding-top:10px;
+  border-top:1px solid var(--line);
+  font-family:var(--font-mono);font-size:.6875rem;letter-spacing:.06em;
+  line-height:1.45;color:var(--ink-45);
+}
+.lauf__erg svg{width:12px;height:12px;color:var(--accent);flex:none;margin-top:2px}
+
+@media (hover:hover) and (pointer:fine){
+  .lauf__st:hover .lauf__punkt{transform:scale(1.3);transition-delay:0ms}
+  .lauf__st:hover .lauf__erg{color:var(--ink)}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .lauf__punkt{transform:scale(1);opacity:1;transition:none}
+  .lauf__st:not(:last-child)::before{transform:none;transition:none}
+}
 
 /* --- Im Detail: waagerechte Saeulen ---------------------------------------
-   Sechs Saeulen nebeneinander. Ein Klick zieht eine auf und draengt die
+   Vier Saeulen nebeneinander. Ein Klick zieht eine auf und draengt die
    anderen zur Seite; die geoeffnete nimmt ihre Markenfarbe an. Unter 900 px
    stapeln sie senkrecht — quer waeren sie dort unbedienbar.
    ------------------------------------------------------------------------- */
@@ -1096,7 +1455,7 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
      draengt die uebrigen zusammen. Hover fuehrt, der Klick bleibt fuer
      Tastatur und Touch — deshalb stehen die Hover-Regeln zuletzt. */
   .pil{
-    grid-template-columns:repeat(6,minmax(0,1fr));
+    grid-template-columns:repeat(4,minmax(0,1fr));
     height:clamp(430px,44vw,540px);
     transition:grid-template-columns 480ms var(--ease);
   }
@@ -1113,12 +1472,10 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
   }
   .pil__inner{overflow-y:auto;max-height:100%;padding:0 20px 22px}
 
-  .pil:has(.pil__i:nth-child(1)[data-open="true"]){grid-template-columns:5fr 1fr 1fr 1fr 1fr 1fr}
-  .pil:has(.pil__i:nth-child(2)[data-open="true"]){grid-template-columns:1fr 5fr 1fr 1fr 1fr 1fr}
-  .pil:has(.pil__i:nth-child(3)[data-open="true"]){grid-template-columns:1fr 1fr 5fr 1fr 1fr 1fr}
-  .pil:has(.pil__i:nth-child(4)[data-open="true"]){grid-template-columns:1fr 1fr 1fr 5fr 1fr 1fr}
-  .pil:has(.pil__i:nth-child(5)[data-open="true"]){grid-template-columns:1fr 1fr 1fr 1fr 5fr 1fr}
-  .pil:has(.pil__i:nth-child(6)[data-open="true"]){grid-template-columns:1fr 1fr 1fr 1fr 1fr 5fr}
+  .pil:has(.pil__i:nth-child(1)[data-open="true"]){grid-template-columns:5fr 1fr 1fr 1fr}
+  .pil:has(.pil__i:nth-child(2)[data-open="true"]){grid-template-columns:1fr 5fr 1fr 1fr}
+  .pil:has(.pil__i:nth-child(3)[data-open="true"]){grid-template-columns:1fr 1fr 5fr 1fr}
+  .pil:has(.pil__i:nth-child(4)[data-open="true"]){grid-template-columns:1fr 1fr 1fr 5fr}
 
 
   .pil__i[data-open="true"] .pil__btn{flex-direction:row;height:auto;padding-bottom:6px}
@@ -1279,8 +1636,40 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
   padding:0;border:1px solid var(--line);border-radius:var(--radius);
   background:var(--paper);color:var(--ink);
   margin:auto;overflow:visible;
+
+  /* Der Dialog erschien bisher schlagartig. Ein Fenster, das ohne Uebergang
+     dasteht, liest sich als Sprung, nicht als Oeffnen — und man sucht kurz,
+     was sich geraendert hat.
+
+     Von 0.96 statt von 0: nichts in der Welt entsteht aus dem Nichts. Ein
+     Rest an Groesse muss schon da sein, sonst wirkt es wie hereingezaubert.
+
+     Mittig verankert, absichtlich. Ein Menue oder eine Sprechblase soll aus
+     ihrem Ausloeser wachsen; ein Modal gehoert keinem Knopf, es gehoert dem
+     Bildschirm.
+
+     allow-discrete laesst display und overlay mitanimieren — ohne das
+     verschwindet das Fenster beim Schliessen sofort und nur der Hintergrund
+     blendet weg. */
+  opacity:0;transform:scale(.96);
+  transition:opacity 200ms var(--ease),transform 200ms var(--ease),
+             overlay 200ms allow-discrete,display 200ms allow-discrete;
 }
-.dialog::backdrop{background:rgba(14,20,19,.6);backdrop-filter:blur(3px)}
+.dialog[open]{opacity:1;transform:scale(1)}
+@starting-style{
+  .dialog[open]{opacity:0;transform:scale(.96)}
+}
+
+.dialog::backdrop{
+  background:rgba(14,20,19,.6);backdrop-filter:blur(3px);
+  opacity:0;
+  transition:opacity 200ms var(--ease),
+             overlay 200ms allow-discrete,display 200ms allow-discrete;
+}
+.dialog[open]::backdrop{opacity:1}
+@starting-style{
+  .dialog[open]::backdrop{opacity:0}
+}
 .dialog__in{max-height:inherit;overflow-y:auto;padding:clamp(22px,3vw,32px);overscroll-behavior:contain}
 .dialog__head{
   display:flex;align-items:flex-start;justify-content:space-between;gap:18px;
@@ -1310,7 +1699,9 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
 .footer{padding-block:clamp(56px,6vw,84px) 34px;border-top:1px solid var(--line)}
 .footer__grid{display:grid;gap:clamp(28px,4vw,44px)}
 @media (min-width:820px){
-  .footer__grid{grid-template-columns:minmax(0,1.4fr) repeat(3,minmax(0,1fr))}
+  /* Marke plus zwei Linklisten. Vorher waren es drei; ohne Anpassung bliebe
+     rechts eine leere Spalte stehen und die Fusszeile haenge schief. */
+  .footer__grid{grid-template-columns:minmax(0,1.4fr) repeat(2,minmax(0,1fr))}
 }
 .footer h4{
   font-family:var(--font-mono);font-size:.6875rem;letter-spacing:.14em;
@@ -1328,9 +1719,9 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
   transition:color var(--dur) var(--ease);width:fit-content;
 }
 .footer nav a:hover{color:var(--accent-ink)}
-/* Schmal: vier untereinander gestapelte Spalten kosteten 1115px fuer
-   55 Woerter. Marke und Kontakt bleiben breit — die Adresse braucht die
-   Zeile —, die beiden Linklisten stehen nebeneinander. */
+/* Schmal: untereinander gestapelte Spalten kosten zu viel Hoehe fuer wenige
+   Woerter. Marke und Kontakt bleiben breit — die Adresse braucht die Zeile —,
+   die Leistungsliste steht daneben. */
 @media (max-width:819px){
   .footer__grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:30px 20px}
   .footer__grid > :first-child,
@@ -1372,10 +1763,23 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
 .todo b{letter-spacing:.08em}
 
 /* ---------- 17. Reveal & Motion ------------------------------------------ */
-[data-reveal]{opacity:0;transform:translate3d(0,14px,0)}
+/* Einblenden beim Scrollen.
+
+   Vorher 620ms. Das ist laenger, als man beim Scrollen warten mag: der
+   Abschnitt ist schon im Bild, waehrend sein Inhalt noch ankommt, und die
+   Seite wirkt dadurch schwerfaellig. 420ms mit der staerker gezogenen Kurve
+   ist die Bewegung durch, bevor das Auge sie sucht — und wirkt dabei nicht
+   gehetzt, weil die Kurve weich auslaeuft.
+
+   Der Versatz waechst leicht von 14 auf 18 Punkte. Klingt gegenlaeufig, ist
+   es nicht: kuerzere Dauer bei gleicher Strecke sieht nach nichts aus. Etwas
+   mehr Weg in weniger Zeit liest sich als Zug, nicht als Hast.
+
+   Die Staffelung (--d, 55ms je Element) bleibt, wie sie war. */
+[data-reveal]{opacity:0;transform:translate3d(0,18px,0)}
 [data-reveal].in{
   opacity:1;transform:none;
-  transition:opacity 620ms var(--ease),transform 620ms var(--ease);
+  transition:opacity 420ms var(--ease),transform 420ms var(--ease);
   transition-delay:var(--d,0ms);
 }
 
