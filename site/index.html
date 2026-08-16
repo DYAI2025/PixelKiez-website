@@ -2,7 +2,13 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- viewport-fit=cover laesst die Flaeche bis in die Ecken laufen, statt das
+     Geraet quer gehalten schwarze Balken neben die Seite setzen zu lassen.
+     Bedingung dafuer ist, dass die Sicherheitszonen im CSS beruecksichtigt
+     werden — ohne cover liefert env(safe-area-inset-*) ueberall null, mit
+     cover die echten Werte. Beides gehoert zusammen: Innenrand, schwebender
+     Knopf und Fusszeile rechnen die Zonen bereits ein. -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Pixelkiez · Webdesign Berlin | Websites mit Festpreis</title>
 <meta name="description" content="Webdesign aus Berlin für Arztpraxen, Hotellerie, Baubetriebe und Gastronomie. Verbindlicher Festpreis nach Diagnose, Antwort in einem Werktag.">
 <meta name="theme-color" content="#B6C7C4">

@@ -71,8 +71,53 @@
     burger.addEventListener('click', function () {
       setNav(menu.dataset.open !== 'true');
     });
+    /* --- Der Sprung aus dem Menue ------------------------------------------
+       Das Panel liegt im Fluss, nicht darueber: offen schiebt es den ganzen
+       Seiteninhalt um seine Hoehe nach unten. Beim Klick auf einen Punkt
+       passieren dann zwei Dinge gleichzeitig — das Menue klappt zu, und der
+       Browser springt zur Sprungmarke.
+
+       Der Browser rechnet sein Ziel aber aus der Lage VOR dem Zuklappen. Kaum
+       ist er dort, faellt das Panel zusammen, alles darunter rutscht um dessen
+       Hoehe nach oben, und man steht gemessene 441 Punkte zu weit unten: die
+       angesteuerte Ueberschrift ist bereits aus dem Bild heraus. Auf dem
+       Telefon ist das Menue der einzige Weg durch die Seite, es betraf also
+       jeden der acht Punkte.
+
+       Deshalb wird hier selbst gescrollt. Die Hoehe, die das Panel gleich
+       freigibt, ist bekannt — es ist seine eigene — und wird direkt
+       herausgerechnet. Damit muss niemand auf das Ende der Klappbewegung
+       warten; das Scrollen beginnt im selben Moment wie sie.
+
+       Ohne Sprungziel (etwa ein Verweis auf eine andere Seite) bleibt alles
+       beim Alten und der Browser macht seine Arbeit selbst. */
     $$('a', menu).forEach(function (a) {
-      a.addEventListener('click', function () { setNav(false); });
+      a.addEventListener('click', function (e) {
+        var href = a.getAttribute('href') || '';
+        var ziel = href.charAt(0) === '#' && href.length > 1
+          ? document.getElementById(href.slice(1)) : null;
+        if (!ziel) { setNav(false); return; }
+
+        e.preventDefault();
+        /* Alle drei Masse VOR dem Zuklappen nehmen. Wird die Lage des Ziels
+           erst danach gemessen, ist die Klappbewegung bereits ein Bild weit
+           gelaufen und der Wert stimmt weder mit dem offenen noch mit dem
+           geschlossenen Zustand ueberein — gemessene 28 Punkte daneben, und
+           zwar bei jedem Aufruf um einen anderen Betrag, weil es davon
+           abhaengt, wann der naechste Bildaufbau faellt. Zusammen gemessen
+           beziehen sich alle drei auf denselben Augenblick, und die Rechnung
+           geht auf. */
+        var panel = menu.getBoundingClientRect().height;            // faellt gleich weg
+        var kopf  = header.getBoundingClientRect().height - panel;  // bleibt stehen
+        var oben  = ziel.getBoundingClientRect().top;
+        setNav(false);
+
+        var y = window.scrollY + oben - panel - kopf - 12;
+        window.scrollTo({ top: Math.max(0, y), behavior: reduced ? 'auto' : 'smooth' });
+        // Die Adresszeile soll die Marke trotzdem tragen — ohne den Sprung
+        // ein zweites Mal auszuloesen, den preventDefault gerade verhindert hat.
+        if (window.history && history.replaceState) history.replaceState(null, '', href);
+      });
     });
     // ESC schliesst, ausserdem ein Klick ausserhalb des Kopfbereichs
     document.addEventListener('keydown', function (e) {
@@ -870,12 +915,36 @@
 
     /* Der Wert geht nach oben weg, der neue kommt von unten nach. Zwei
        Phasen, weil dazwischen der Text getauscht werden muss — waehrend die
-       alte Zahl noch sichtbar ist, waere der Tausch zu sehen. */
+       alte Zahl noch sichtbar ist, waere der Tausch zu sehen.
+
+       Der Wechsel muss mitten in der Bewegung umkehrbar sein. Vorher war er
+       das nicht, und das war kein Schoenheitsfehler: Wer innerhalb der 180 ms
+       zurueckschaltete, traf auf den Vergleich mit dem SICHTBAREN Text — der
+       stand noch auf dem alten Wert, also brach die Funktion ab. Das Zeitglied
+       des ersten Klicks lief danach trotzdem durch und schrieb den Preis der
+       anderen Ansicht hinein. Der Schalter sagte "Projekt", die Karte zeigte
+       Care.
+
+       Zwei Aenderungen beheben das. Verglichen wird mit dem zuletzt
+       ANGEPEILTEN Wert, nicht mit dem sichtbaren — waehrend der Bewegung sind
+       das zwei verschiedene Dinge. Und ein laufender Wechsel wird abgebrochen,
+       bevor der neue zielt. Die Zahl ist zu dem Zeitpunkt ohnehin schon nach
+       oben ausgeblendet; sie bleibt es und kommt mit dem richtigen Wert
+       zurueck. */
+    var laeuft = new WeakMap();          // el -> { t: Zeitglied, ziel: angepeilter Wert }
     var tausche = function (el, neu) {
-      if (el.textContent === neu) return;
-      if (reduced) { el.textContent = neu; return; }
+      var lauf = laeuft.get(el);
+      if ((lauf ? lauf.ziel : el.textContent) === neu) return;
+      if (lauf) window.clearTimeout(lauf.t);
+      if (reduced) {
+        laeuft.delete(el);
+        el.textContent = neu;
+        el.removeAttribute('data-wechsel');
+        return;
+      }
       el.dataset.wechsel = 'raus';
-      window.setTimeout(function () {
+      laeuft.set(el, { ziel: neu, t: window.setTimeout(function () {
+        laeuft.delete(el);
         el.textContent = neu;
         el.dataset.wechsel = 'rein';
         // Ein Bild abwarten, sonst fasst der Browser beide Zustaende zusammen
@@ -883,7 +952,7 @@
         window.requestAnimationFrame(function () {
           window.requestAnimationFrame(function () { el.removeAttribute('data-wechsel'); });
         });
-      }, 180);
+      }, 180) });
     };
 
     var zeige = function (neueArt) {
