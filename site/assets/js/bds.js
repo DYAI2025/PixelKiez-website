@@ -879,131 +879,42 @@
     });
   })();
 
-  /* --- 7c. Preisumschalter ----------------------------------------------
-     Zwei Ansichten desselben Angebots: der einmalige Projektpreis und die
-     monatliche Betreuung. Beide Werte stehen im Markup, das Skript tauscht
-     nur, was sichtbar ist — dadurch braucht es keine Zeichenketten im Code
-     und die englische Fassung entsteht wie ueberall sonst aus der Quelle.
-
-     Faellt das Skript aus, bleibt der Projektpreis stehen. Das ist die
-     wichtigere der beiden Zahlen, insofern ist der Ausfall harmlos.
-     ---------------------------------------------------------------------- */
-  (function preisSchalter() {
-    var gruppe = $('.ps__gruppe');
-    if (!gruppe) return;
-    var optionen = $$('.ps__opt', gruppe);
-    var lauf = $('.ps__lauf', gruppe);
-    if (optionen.length < 2) return;
-
-    // Alles, was zwischen den beiden Ansichten wechselt, traegt data-swap und
-    // beide Fassungen als Attribut. Dadurch wechseln nicht nur die Zahlen,
-    // sondern auch Paketname, Leistungen und Fusszeile — Care besteht aus
-    // eigenen Paketen und nicht aus denselben Karten mit anderem Preis.
-    var wechsler = $$('[data-swap]');
-    var raster = $('.grid[data-preisart]');
-    var art = 'projekt';
-
-    // Die laufende Flaeche folgt dem aktiven Knopf. Gemessen statt gerechnet,
-    // damit sie auch stimmt, wenn die Beschriftungen unterschiedlich breit
-    // sind oder die Uebersetzung sie laenger macht.
-    var setzeLauf = function () {
-      var aktiv = optionen.filter(function (o) { return o.dataset.preisart === art; })[0];
-      if (!aktiv || !lauf) return;
-      lauf.style.setProperty('--ps-w', aktiv.offsetWidth + 'px');
-      lauf.style.setProperty('--ps-x', (aktiv.offsetLeft - optionen[0].offsetLeft) + 'px');
-    };
-
-    /* Der Wert geht nach oben weg, der neue kommt von unten nach. Zwei
-       Phasen, weil dazwischen der Text getauscht werden muss — waehrend die
-       alte Zahl noch sichtbar ist, waere der Tausch zu sehen.
-
-       Der Wechsel muss mitten in der Bewegung umkehrbar sein. Vorher war er
-       das nicht, und das war kein Schoenheitsfehler: Wer innerhalb der 180 ms
-       zurueckschaltete, traf auf den Vergleich mit dem SICHTBAREN Text — der
-       stand noch auf dem alten Wert, also brach die Funktion ab. Das Zeitglied
-       des ersten Klicks lief danach trotzdem durch und schrieb den Preis der
-       anderen Ansicht hinein. Der Schalter sagte "Projekt", die Karte zeigte
-       Care.
-
-       Zwei Aenderungen beheben das. Verglichen wird mit dem zuletzt
-       ANGEPEILTEN Wert, nicht mit dem sichtbaren — waehrend der Bewegung sind
-       das zwei verschiedene Dinge. Und ein laufender Wechsel wird abgebrochen,
-       bevor der neue zielt. Die Zahl ist zu dem Zeitpunkt ohnehin schon nach
-       oben ausgeblendet; sie bleibt es und kommt mit dem richtigen Wert
-       zurueck. */
-    var laeuft = new WeakMap();          // el -> { t: Zeitglied, ziel: angepeilter Wert }
-    var tausche = function (el, neu) {
-      var lauf = laeuft.get(el);
-      if ((lauf ? lauf.ziel : el.textContent) === neu) return;
-      if (lauf) window.clearTimeout(lauf.t);
-      if (reduced) {
-        laeuft.delete(el);
-        el.textContent = neu;
-        el.removeAttribute('data-wechsel');
-        return;
-      }
-      el.dataset.wechsel = 'raus';
-      laeuft.set(el, { ziel: neu, t: window.setTimeout(function () {
-        laeuft.delete(el);
-        el.textContent = neu;
-        el.dataset.wechsel = 'rein';
-        // Ein Bild abwarten, sonst fasst der Browser beide Zustaende zusammen
-        // und es gibt gar keine Bewegung.
-        window.requestAnimationFrame(function () {
-          window.requestAnimationFrame(function () { el.removeAttribute('data-wechsel'); });
-        });
-      }, 180) });
-    };
-
-    var zeige = function (neueArt) {
-      art = neueArt;
-      optionen.forEach(function (o) {
-        o.setAttribute('aria-pressed', o.dataset.preisart === art ? 'true' : 'false');
-      });
-      wechsler.forEach(function (el) { tausche(el, el.dataset[art] || ''); });
-      if (raster) raster.dataset.preisart = art;
-      setzeLauf();
-    };
-
-    optionen.forEach(function (o) {
-      o.addEventListener('click', function () { zeige(o.dataset.preisart); });
-    });
-
-    setzeLauf();
-    whenFontsReady(setzeLauf);      // Breiten stimmen erst mit geladener Schrift
-    var rt;
-    window.addEventListener('resize', function () {
-      clearTimeout(rt); rt = setTimeout(setzeLauf, 160);
-    });
-  })();
+  /* Der Preisabschnitt zeigt nur noch die einmalige Umsetzung. Der frueher
+     hier stehende Umschalter zwischen Projektpreis und monatlicher Betreuung
+     ist entfallen — mit ihm das Skript, das die Werte tauschte, und die beiden
+     Fassungen im Markup. Die Preise stehen jetzt als gewoehnlicher Text in den
+     Karten und stehen damit auch ohne Skript. */
 
   /* --- 8. Projekt-Check -------------------------------------------------- */
-  var BRANCHEN = {
-    praxis:   'Arztpraxen & ZMVZ',
-    hotel:    'Hotellerie',
-    bau:      'Baubetriebe & Handwerk',
-    gastro:   'Gastronomie',
-    andere:   'Andere Branche'
+  var AUSGANG = {
+    keine:      'Noch keine Website',
+    alt:        'Website ist veraltet',
+    unsichtbar: 'Website vorhanden, aber unsichtbar',
+    relaunch:   'Relaunch ist geplant'
   };
 
   /* --- Die Ableitung -------------------------------------------------------
      Vorher hing das Ergebnis an genau einer der drei Antworten: das Thema
-     bestimmte alles, Branche und Zeitrahmen waren Beiwerk. Wer die Branche
-     wechselte, sah dasselbe Ergebnis — dann ist es keine Pruefung, sondern
-     ein Nachschlagewerk mit drei Klicks davor.
+     bestimmte alles, Ausgangspunkt und Zeitrahmen waren Beiwerk. Wer die
+     erste Antwort wechselte, sah dasselbe Ergebnis — dann ist es keine
+     Pruefung, sondern ein Nachschlagewerk mit drei Klicks davor.
 
-     Jetzt tragen alle drei. Thema und Branche ergeben zusammen einen
-     Umfangswert, und der bestimmt die empfohlene Projektstufe. Die Branche
-     bringt zusaetzlich ihr eigenes Modul mit, der Zeitrahmen den naechsten
-     Schritt. Die Rechnung steht als Satz im Ergebnis — wer eine Empfehlung
-     bekommt, soll sehen, woraus sie entstanden ist.
+     Jetzt tragen alle drei. Thema und Ausgangspunkt ergeben zusammen einen
+     Umfangswert, und der bestimmt die empfohlene Projektstufe. Der
+     Ausgangspunkt bringt zusaetzlich seine eigene Aufgabe mit, der Zeitrahmen
+     den naechsten Schritt. Die Rechnung steht als Satz im Ergebnis — wer eine
+     Empfehlung bekommt, soll sehen, woraus sie entstanden ist.
      ---------------------------------------------------------------------- */
   var UMFANG = {
     sichtbarkeit: 1, website: 1,
     verwaltung: 2, filter: 2, recruiting: 2,
     plattform: 3
   };
-  var BRANCHENLAST = { praxis: 1, hotel: 1, bau: 1, gastro: 0, andere: 0 };
+  /* Was der Ausgangspunkt zusaetzlich kostet. Eine bestehende, aber unsichtbare
+     Website ist der guenstigste Fall — Struktur und Inhalte sind da, es fehlt
+     die Auffindbarkeit. Neubau, Ersatz und geplanter Relaunch bringen jeweils
+     eine eigene Aufgabe mit. */
+  var AUSGANGSLAST = { keine: 1, alt: 1, unsichtbar: 0, relaunch: 1 };
 
   /* Welche der drei Aufgaben aus Abschnitt 01 bricht bei diesem Thema?
      Das ist die eigentliche Diagnose — die Preisstufe folgt daraus, nicht
@@ -1024,32 +935,36 @@
     plattform:    'erreichbar'
   };
 
-  var BRANCHENMODUL = {
-    praxis:  'Anliegen-Triage vor dem Telefon',
-    hotel:   'Direktbuchungspfad zur bestehenden Engine',
-    bau:     'Projekt-Konfigurator mit Plan-Upload',
-    gastro:  'Eigene Reservierung statt Plattform',
-    andere:  ''
+  /* Die Aufgabe, die allein aus dem Ausgangspunkt folgt. Beim Neubau gibt es
+     keine — dort ist nichts zu uebernehmen, zu erhalten oder zu pruefen. */
+  var AUSGANGSMODUL = {
+    keine:      '',
+    alt:        'Weiterleitungskonzept für bestehende Rankings',
+    unsichtbar: 'Bestandsanalyse vor dem Eingriff',
+    relaunch:   'Inhalts-Migration aus dem Bestand'
   };
 
   var STUFEN = [
     { id: 'launch',      name: 'Launch',      preis: 'ab 995 €',
       warum: 'Ihr Anliegen ist klar umrissen und kommt mit Standardfunktionen aus.' },
     { id: 'business',    name: 'Business',    preis: 'ab 2.490 €',
-      warum: 'Ihr Anliegen betrifft mehrere Bereiche, und Ihre Branche bringt eigene Funktionen mit.' },
+      warum: 'Ihr Anliegen betrifft mehrere Bereiche, und Ihr Ausgangspunkt bringt eigene Aufgaben mit.' },
     { id: 'individuell', name: 'Individuell', preis: 'ab 4.900 €',
-      warum: 'Thema und Branche verlangen eigene Abläufe und eine individuelle Struktur.' }
+      warum: 'Thema und Ausgangspunkt verlangen eigene Abläufe und eine individuelle Struktur.' }
   ];
 
-  var stufeFuer = function (thema, branche) {
-    var wert = (UMFANG[thema] || 1) + (BRANCHENLAST[branche] || 0);
+  var stufeFuer = function (thema, ausgangspunkt) {
+    var wert = (UMFANG[thema] || 1) + (AUSGANGSLAST[ausgangspunkt] || 0);
     return wert <= 2 ? STUFEN[0] : (wert === 3 ? STUFEN[1] : STUFEN[2]);
   };
 
   var THEMEN = {
     sichtbarkeit: {
       label: 'Wir werden nicht gefunden',
-      mods: ['Website-Check bzw. Redesign', 'SEO-Ausbau', 'Local SEO'],
+      /* Neutral formuliert, weil Frage 01 jetzt den Ausgangspunkt abfragt:
+         "Website-Check bzw. Redesign" widersprach der Antwort "noch keine
+         Website" — man kann nicht pruefen, was es nicht gibt. */
+      mods: ['Aufbau oder Überarbeitung der Website', 'SEO-Ausbau', 'Local SEO'],
       entry: 'Einstieg über das Sichtbarkeits-Audit.',
     },
     filter: {
@@ -1063,7 +978,7 @@
       entry: 'Kostenloser Quick-Check im Erstgespräch: Wir testen Ihre Bewerbungsstrecke live am Handy.',
     },
     website: {
-      label: 'Webseite ist alt oder es existiert noch keine',
+      label: 'Der Auftritt passt nicht zum Unternehmen',
       mods: ['One-Page- oder Business-Website', 'SEO-Fundament', 'Google-Business-Profil'],
       entry: 'Einstieg über die Diagnose im Erstgespräch, mit erster Analyse Ihres Auftritts.',
     },
@@ -1085,7 +1000,7 @@
     offen:   { label: 'Wir orientieren uns',    line: 'Offener Zeitrahmen: Sie erhalten eine Einschätzung ohne Termindruck.' }
   };
 
-  var pick = { branche: '', thema: '', zeit: '' };
+  var pick = { ausgangspunkt: '', thema: '', zeit: '' };
   var out = $('#check-result');
 
   var ICON_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
@@ -1098,7 +1013,7 @@
 
   var render = function () {
     if (!out) return;
-    var n = (pick.branche ? 1 : 0) + (pick.thema ? 1 : 0) + (pick.zeit ? 1 : 0);
+    var n = (pick.ausgangspunkt ? 1 : 0) + (pick.thema ? 1 : 0) + (pick.zeit ? 1 : 0);
     var meter = '<span class="pc__meter" aria-hidden="true">' +
       [0, 1, 2].map(function (i) { return '<i class="' + (i < n ? 'on' : '') + '"></i>'; }).join('') + '</span>';
 
@@ -1107,7 +1022,7 @@
        Vorher stand hier eine Zeile Text — man sah dem Abschnitt nicht an,
        was er ueberhaupt tut, bevor man ihn bedient hat. */
     if (n < 3) {
-      var offen = !pick.branche ? 'Branche' : (!pick.thema ? 'Ihr Thema' : 'Ihr Zeitrahmen');
+      var offen = !pick.ausgangspunkt ? 'Ihr Ausgangspunkt' : (!pick.thema ? 'Ihr Thema' : 'Ihr Zeitrahmen');
       var leer = '<span class="pc__ampel" aria-hidden="true"><i></i><i></i><i></i></span>';
       out.innerHTML =
         '<div class="pc__res pc__res--offen">' +
@@ -1134,10 +1049,10 @@
     }
 
     var t = THEMEN[pick.thema];
-    var stufe = stufeFuer(pick.thema, pick.branche);
+    var stufe = stufeFuer(pick.thema, pick.ausgangspunkt);
     var schluessel = AUFGABE_ZU[pick.thema];
     var mods = t.mods.slice();
-    if (BRANCHENMODUL[pick.branche]) mods.unshift(BRANCHENMODUL[pick.branche]);
+    if (AUSGANGSMODUL[pick.ausgangspunkt]) mods.unshift(AUSGANGSMODUL[pick.ausgangspunkt]);
 
     /* Drei Segmente, eines markiert: welche Aufgabe traegt gerade nicht.
        Dieselbe Reihenfolge wie oben im Abschnitt, damit man den Bezug sieht. */
@@ -1332,12 +1247,12 @@
   });
 
   function handoff() {
-    var b = $('#f-branche'), a = $('#f-anliegen');
-    if (b && pick.branche) b.value = pick.branche;
+    var b = $('#f-ausgangspunkt'), a = $('#f-anliegen');
+    if (b && pick.ausgangspunkt) b.value = pick.ausgangspunkt;
     if (a) {
       var t = THEMEN[pick.thema];
-      var stufe = stufeFuer(pick.thema, pick.branche);
-      a.value = 'Projekt-Check: ' + BRANCHEN[pick.branche] + ' · ' + t.label + ' · ' + ZEIT[pick.zeit].label +
+      var stufe = stufeFuer(pick.thema, pick.ausgangspunkt);
+      a.value = 'Projekt-Check: ' + AUSGANG[pick.ausgangspunkt] + ' · ' + t.label + ' · ' + ZEIT[pick.zeit].label +
                 '\nSchwächste Aufgabe: ' + AUFGABEN[AUFGABE_ZU[pick.thema]] +
                 '\nEmpfehlung: ' + stufe.name + ' (' + stufe.preis + ')';
     }
@@ -1393,13 +1308,13 @@
       if (!form.reportValidity()) return;
 
       var payload = {
-        name:     String(data.get('name') || '').trim(),
-        kontakt:  String(data.get('kontakt') || '').trim(),
-        branche:  BRANCHEN[data.get('branche')] || String(data.get('branche') || ''),
-        anliegen: String(data.get('anliegen') || '').trim(),
-        consent:  data.get('consent') === 'on',
-        ts:       new Date().toISOString(),
-        quelle:   window.location.pathname + (pick.thema ? ' · projekt-check' : '')
+        name:          String(data.get('name') || '').trim(),
+        kontakt:       String(data.get('kontakt') || '').trim(),
+        ausgangspunkt: AUSGANG[data.get('ausgangspunkt')] || String(data.get('ausgangspunkt') || ''),
+        anliegen:      String(data.get('anliegen') || '').trim(),
+        consent:       data.get('consent') === 'on',
+        ts:            new Date().toISOString(),
+        quelle:        window.location.pathname + (pick.thema ? ' · projekt-check' : '')
       };
 
       var label = $('[data-label]', submit);   // nur die Beschriftung tauschen, Icon bleibt stehen
@@ -1422,7 +1337,7 @@
           '&body=' + encodeURIComponent(
             'Name: '     + payload.name +
             '\nKontakt: '  + payload.kontakt +
-            '\nBranche: '  + (payload.branche || 'keine Angabe') +
+            '\nAusgangspunkt: '  + (payload.ausgangspunkt || 'keine Angabe') +
             '\n\nAnliegen:\n' + (payload.anliegen || 'keine Angabe') +
             '\n\nGesendet über das Kontaktformular'
           );

@@ -1229,53 +1229,22 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
   display:flex;gap:10px;font-size:.9375rem;color:var(--ink-70);line-height:1.5;
 }
 .pack ul svg{width:15px;height:15px;color:var(--accent);flex:none;margin-top:4px}
-/* --- Preisumschalter -----------------------------------------------------
-   Zwei Zustaende, kein Kippschalter: ein Kippschalter sagt an/aus, hier
-   stehen aber zwei gleichrangige Ansichten nebeneinander. Die laufende
-   Flaeche darunter zeigt, welche gilt — sie wandert, statt zu springen,
-   damit der Zusammenhang zwischen den beiden erhalten bleibt. */
-.preis-schalter{
-  display:flex;flex-direction:column;align-items:center;gap:12px;
-  margin-bottom:clamp(28px,3.4vw,44px);
+/* --- Hinweis ueber den Preiskarten ---------------------------------------
+   Stand hier bis August unter einem Umschalter zwischen Projektpreis und
+   monatlicher Betreuung. Der Abschnitt zeigt jetzt nur die einmalige
+   Umsetzung, der Satz bleibt — er sagt, was die Zahlen darunter sind. */
+.preis-hinweis{
+  font-size:.8125rem;color:var(--ink-45);text-align:center;
+  margin:0 0 clamp(28px,3.4vw,44px);
 }
-.ps__gruppe{
-  position:relative;display:inline-flex;padding:4px;
-  border:1px solid var(--line);border-radius:999px;background:var(--paper-2);
-}
-.ps__opt{
-  position:relative;z-index:1;
-  padding:9px 22px;border-radius:999px;
-  font-family:var(--font-mono);font-size:.6875rem;letter-spacing:.11em;
-  text-transform:uppercase;color:var(--ink-45);white-space:nowrap;
-  transition:color 200ms var(--ease);
-}
-.ps__opt[aria-pressed="true"]{color:var(--ink)}
-.ps__lauf{
-  position:absolute;z-index:0;top:4px;bottom:4px;left:4px;
-  width:var(--ps-w,50%);transform:translateX(var(--ps-x,0));
-  border-radius:999px;background:var(--paper);
-  border:1px solid var(--line);
-  /* Morph-Kurve: die Flaeche bewegt sich AUF dem Schirm von A nach B */
-  transition:transform 320ms var(--ease-morph),width 320ms var(--ease-morph);
-}
-.ps__hinweis{font-size:.8125rem;color:var(--ink-45);text-align:center;margin:0}
 
-/* --- Preiszeile ----------------------------------------------------------
-   Beim Umschalten wechselt die Zahl. Sie tauscht nicht hart, sondern geht
-   nach oben weg und die neue kommt von unten nach — dieselbe Richtung wie
-   der Umschalter selbst, damit die Bewegung erklaert, was passiert ist.
-
-   Bewusst kein rollendes Ziffernwerk wie in der Vorlage: bei "individuell"
-   gibt es keine Ziffern zu rollen, und ein Effekt, der bei einem von drei
-   Faellen aussetzt, wirkt kaputt statt fein. */
+/* --- Preiszeile --------------------------------------------------------- */
 .pack__preis{
   display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;
   font-family:var(--font-display);font-weight:600;
   font-size:clamp(1.5rem,2.6vw,2rem);letter-spacing:-.028em;line-height:1.1;
 }
-.pack__wert{display:inline-block;transition:opacity 180ms var(--ease),transform 180ms var(--ease)}
-.pack__wert[data-wechsel="raus"]{opacity:0;transform:translateY(-45%)}
-.pack__wert[data-wechsel="rein"]{opacity:0;transform:translateY(45%)}
+.pack__wert{display:inline-block}
 .pack__einheit{
   font-family:var(--font-mono);font-weight:400;
   font-size:.6875rem;letter-spacing:.11em;text-transform:uppercase;
@@ -1311,13 +1280,6 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
   .pack--empfohlen .pack__wert{font-size:clamp(1.7rem,3vw,2.3rem)}
 }
 
-/* In der Betreuungsansicht steht an dieser Stelle Care Plus. Empfohlen ist
-   laut Angebotsmodell aber Care Core, also die erste Karte — die Auszeichnung
-   waere dort schlicht falsch und wird deshalb ausgeblendet, statt sie
-   wandern zu lassen. Ein springendes Schild lenkt mehr ab, als es hilft. */
-.grid[data-preisart="care"] .pack--empfohlen{border-color:var(--line)}
-.grid[data-preisart="care"] .pack__badge{opacity:0;pointer-events:none}
-.pack__badge{transition:opacity 180ms var(--ease)}
 .pack__badge{
   position:absolute;top:0;right:clamp(22px,2.6vw,32px);
   transform:translateY(-50%);

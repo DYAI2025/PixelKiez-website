@@ -8,8 +8,60 @@ diesen Ordner mit Inhalts-Hash nach `dist/assets/img/`.
 | Datei | Format | Maße | Wofür | Stand |
 |---|---|---|---|---|
 | `logo.webp` | WebP verlustfrei, Graustufe + Alpha | 980 × 240 | Kopf, Fußzeile, Auftakt, Rechtsseiten | liegt, aus `quelle/PixelKiez-2000.png` freigestellt |
+| `logo-suche.png` | PNG | 2000 × 2000 | Firmenlogo für Google, im JSON-LD als `#logo` | Übergangsfassung, siehe unten |
 | `og.png` | PNG | 1200 × 630 | Vorschau, wenn jemand den Link verschickt | liegt, wird beim Logowechsel neu gesetzt |
+| `favicon-32x32.png` | PNG | 32 × 32 | Browser-Tab und Suchergebnis | liegt, **für Google zu klein**, siehe unten |
 | `logo.svg` | SVG | beliebig | ersetzt `logo.webp`, sobald vorhanden | **fehlt, wäre besser** |
+
+## Das Logo, das Google rechts anzeigt
+
+Zuständig ist der Knoten `#logo` im JSON-LD von `index.html` — ein
+`ImageObject` mit `url`, `contentUrl`, `width`, `height`. Google holt das Bild
+dort und setzt es rechts ins Wissensfeld, sofern zu dieser Domain überhaupt
+eines entsteht. Das Markup ist die Voraussetzung, nicht die Garantie: ob ein
+Wissensfeld erscheint, entscheidet Google anhand der Entität. Der praktische
+Weg dorthin führt über ein bestätigtes Google-Unternehmensprofil mit
+identischer Anschrift und Adresse — die steht dafür sichtbar in der Fußzeile
+und nicht nur im Impressum.
+
+Bedingungen an die Datei:
+
+- **frei abrufbar und crawlbar.** Kein Login, kein Signed-URL mit Ablauf. Wird
+  die Datei aus einem Bucket ausgeliefert, muss die `robots.txt` **dieser
+  Hostadresse** den Abruf erlauben — die von `pixelkiez.de` gilt dort nicht.
+- **mindestens 112 × 112 Pixel**, besser deutlich mehr.
+- **möglichst quadratisch.** Das Wissensfeld schneidet quadratisch zu. Eine
+  breite Wortmarke verliert dabei entweder die Enden oder steht in einem
+  Rahmen, der oben und unten leer bleibt.
+- Rasterformat. SVG wird dort nicht angezeigt.
+
+**Was gebraucht wird:** ein quadratisches Zeichen, keine Wortmarke — ein
+Monogramm oder das Pixelmotiv, das den Rahmen wirklich füllt. Die Wortmarke
+ist 4,1 : 1 breit; im Quadrat bleiben rechnerisch 60 % der Höhe leer, ganz
+egal wie groß man sie zieht.
+
+**Übergangsfassung.** `logo-suche.png` trug die Wortmarke bis August in
+Originalgröße mitten auf einer 2000er Fläche — sie füllte 49 % der Breite und
+12 % der Höhe, das Bild wirkte klein und leer. Jetzt ist sie auf 86 % der
+Breite gezogen. Das ist das Maximum, das mit einer Wortmarke geht, und bleibt
+ein Behelf, bis ein quadratisches Zeichen vorliegt.
+
+**Aus einem Railway-Bucket ausliefern:** im Knoten `#logo` `url` und
+`contentUrl` auf die öffentliche Bucket-Adresse setzen, `width` und `height`
+auf die echten Maße. Der Build lässt fremde Adressen unangetastet; nur
+Adressen unter `pixelkiez.de/assets/img/` bekommen einen Inhalts-Hash. Zwei
+Dinge dabei im Blick behalten: die Bucket-Adresse ändert sich, wenn der Bucket
+neu angelegt wird, und die `robots.txt` des Bucket-Hosts liegt nicht in
+eigener Hand. Bricht die Adresse weg, fällt das Logo still aus — der Seite
+sieht man davon nichts an.
+
+## Das Favicon ist für Google zu klein
+
+Neben dem Suchergebnis steht nicht das Firmenlogo, sondern das Favicon. Google
+verlangt dafür **48 × 48 Pixel oder ein Vielfaches davon** (96, 144, 192).
+`favicon-32x32.png` liegt darunter und wird deshalb möglicherweise ignoriert —
+dann steht dort ein grauer Platzhalter. Sobald das neue Logo vorliegt, gehört
+daraus ein Favicon in 192 × 192 abgeleitet und zusätzlich verdrahtet.
 
 Die Wortmarke lag bis August als PNG vor (14,2 KB). Verlustfrei nach WebP
 gepackt sind es 8,5 KB — dieselben Bildpunkte, derselbe Alphakanal (Punkt für

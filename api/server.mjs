@@ -96,7 +96,7 @@ const TROCKENLAUF = NICHT_KONFIGURIERT;
    Alles, was von aussen kommt, bekommt eine Obergrenze. Ohne die waere ein
    einzelner Aufruf mit ein paar Megabyte genug, um den Dienst lahmzulegen. */
 const MAX_BODY   = 16 * 1024;          // 16 KB reichen fuer jedes Formular
-const MAX_FELD   = { name: 120, kontakt: 160, branche: 120, anliegen: 4000, quelle: 200 };
+const MAX_FELD   = { name: 120, kontakt: 160, ausgangspunkt: 120, anliegen: 4000, quelle: 200 };
 const FENSTER_MS = 10 * 60 * 1000;     // Ratenbegrenzung: Zeitfenster
 const MAX_PRO_IP = 5;                  // und erlaubte Anfragen darin
 
@@ -251,7 +251,10 @@ const server = createServer((req, res) => {
 
     const name     = einzeilig(d.name, MAX_FELD.name);
     const kontakt  = einzeilig(d.kontakt, MAX_FELD.kontakt);
-    const branche  = einzeilig(d.branche, MAX_FELD.branche);
+    /* Das Feld hiess bis August "branche". Beide Namen werden gelesen, damit
+       ein noch nicht neu ausgeliefertes Frontend nicht still ein leeres Feld
+       schickt — Dienst und Website werden getrennt deployt. */
+    const ausgangspunkt = einzeilig(d.ausgangspunkt ?? d.branche, MAX_FELD.ausgangspunkt);
     const quelle   = einzeilig(d.quelle, MAX_FELD.quelle);
     const anliegen = mehrzeilig(d.anliegen, MAX_FELD.anliegen);
 
@@ -262,11 +265,11 @@ const server = createServer((req, res) => {
     const text =
       'Neue Anfrage über die Website\n' +
       '─────────────────────────────\n\n' +
-      'Name:      ' + name + '\n' +
-      'Kontakt:   ' + kontakt + '\n' +
-      'Branche:   ' + (branche || 'keine Angabe') + '\n' +
-      'Herkunft:  ' + (quelle || '—') + '\n' +
-      'Eingang:   ' + new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin' }) + '\n\n' +
+      'Name:          ' + name + '\n' +
+      'Kontakt:       ' + kontakt + '\n' +
+      'Ausgangspunkt: ' + (ausgangspunkt || 'keine Angabe') + '\n' +
+      'Herkunft:      ' + (quelle || '—') + '\n' +
+      'Eingang:       ' + new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin' }) + '\n\n' +
       'Anliegen:\n' + (anliegen || '—') + '\n\n' +
       '─────────────────────────────\n' +
       'Einwilligung zur Kontaktaufnahme wurde erteilt.\n' +
@@ -283,7 +286,7 @@ const server = createServer((req, res) => {
       return antwort(req, res, 503, { ok: false, fehler: 'Versand nicht eingerichtet' });
     }
 
-    const betreff = 'Website-Anfrage: ' + name + (branche ? ' · ' + branche : '');
+    const betreff = 'Website-Anfrage: ' + name + (ausgangspunkt ? ' · ' + ausgangspunkt : '');
 
     /* Der Absender traegt den Interessenten im ANZEIGENAMEN, die Adresse
        bleibt die eigene.

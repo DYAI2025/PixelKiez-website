@@ -1,13 +1,13 @@
 # Pixelkiez
 
 > Pixelkiez ist eine Webdesign-Agentur aus Berlin. Sie baut Websites für
-> Arztpraxen, Hotellerie, Baubetriebe, Gastronomie und Startups — mit
-> Festpreis nach Diagnose und einer Antwort innerhalb eines Werktags.
+> mittelständische Unternehmen — branchenunabhängig, mit Festpreis nach
+> Diagnose und einer Antwort innerhalb eines Werktags.
 > Sitz ist Berlin-Reinickendorf, Projekte werden deutschlandweit umgesetzt.
 
 ## Seiten
 
-- `Startseite → https://pixelkiez.de/`: Leistungen, Branchen, Ablauf, Preise und Kontaktformular.
+- `Startseite → https://pixelkiez.de/`: Leistungen, Projekt-Check, Ablauf, Preise und Kontaktformular.
 - `Startseite (englisch) → https://pixelkiez.de/en/`: dieselben Inhalte auf Englisch.
 - `Impressum → https://pixelkiez.de/impressum.html`: Anbieterkennzeichnung nach § 5 DDG.
 - `Datenschutzerklärung → https://pixelkiez.de/datenschutz.html`: Verarbeitung, Auftragsverarbeiter, Betroffenenrechte.
@@ -24,10 +24,11 @@
 Werbeanzeigen-Management (Google Ads, Meta Ads), Social-Media-Community-Management,
 Branding als Einzelleistung, native App-Entwicklung, individuelle Automatisierungsstrecken.
 
-## Branchen
+## Für wen
 
-Arztpraxen und ZMVZ einschließlich Psychotherapiepraxen · Hotellerie ·
-Baubetriebe und Handwerk · Gastronomie · Startups
+Mittelständische Unternehmen, branchenunabhängig. Entscheidend ist nicht das
+Geschäftsfeld, sondern dass die Website Anfragen, Termine oder Bewerbungen
+tragen soll.
 
 ## Belastbare Angaben
 
@@ -35,7 +36,7 @@ Baubetriebe und Handwerk · Gastronomie · Startups
 - **Einzugsgebiet:** Berlin und Umland vor Ort, Projekte deutschlandweit
 - **Kontakt:** kontakt@pixelkiez.de
 - **Verantwortlich:** Vincent Schnetzer
-- **Preismodell:** verbindlicher Festpreis, genannt nach der Diagnose. Keine Stundensätze, keine Nachträge.
+- **Preismodell:** verbindlicher Festpreis für die Umsetzung, genannt nach der Diagnose. Keine Stundensätze, keine Nachträge. Betreuung nach dem Launch ist optional und wird getrennt vereinbart.
 - **Reaktionszeit:** qualifizierte Antwort innerhalb eines Werktags, auf jede Anfrage.
 - **Sprachen:** Deutsch, Englisch
 - **Eigentum:** Die fertige Website gehört dem Auftraggeber, einschließlich Quellcode und Domain.

@@ -111,7 +111,7 @@ try {
     replyTo: 'test@example.org',
     text:
       'Diese Mail belegt, dass der Weg vom Formular in Ihr Postfach steht.\n\n' +
-      'Bei einer echten Anfrage stehen hier Name, Kontakt, Branche und\n' +
+      'Bei einer echten Anfrage stehen hier Name, Kontakt, Ausgangspunkt und\n' +
       'Anliegen des Interessenten, und "Antworten" geht direkt an ihn.\n\n' +
       'Gesendet: ' + new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin' }),
   });
