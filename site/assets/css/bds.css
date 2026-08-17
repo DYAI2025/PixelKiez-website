@@ -601,19 +601,15 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
    rechts, Navigation schwebend oben. Der Partikelaufbau bleibt unangetastet,
    er zeichnet weiter die Logodatei nach — nur an anderer Stelle.
    ------------------------------------------------------------------------- */
-/* Der klebende Kopfbereich belegt seine Hoehe im Fluss, auch wenn er ueber
-   der Buehne zurueckgetreten ist. Diese Hoehe holt der negative Aussenabstand
-   zurueck — die Buehne beginnt dadurch ganz oben statt darunter. */
-.hero{
-  position:relative;
-  /* Die Buehne bekommt seitlich denselben Zuschlag wie der Satzspiegel: quer
-     gehalten laege ihre gerundete Ecke sonst unter der Kameraaussparung, und
-     die Wortmarke darin gleich mit. */
-  padding:clamp(8px,1vw,14px)
-          calc(clamp(12px,1.6vw,24px) +
-               max(env(safe-area-inset-left,0px), env(safe-area-inset-right,0px)))
-          0;
-}
+/* Full bleed: die Buehne laeuft ohne Aussenrand bis an alle Kanten, die
+   Vertrauensleiste darunter ebenso. Kein Aussenabstand, keine Rundung, damit
+   auch keine Ecke, die sich mit der rechtwinkligen Leiste darunter streitet.
+
+   Der Sicherheitsabstand fuer Kameraaussparung und abgerundete Geraeteecken
+   sitzt dadurch nicht mehr hier aussen, sondern innen an der Buehne: eine
+   FLAECHE darf unter die Aussparung laufen, ein Text nicht. --gutter traegt
+   die env()-Zuschlaege bereits. */
+.hero{position:relative}
 
 /* --- Warum svh und nicht vh -----------------------------------------------
    vh misst am GROSSEN Viewport, also so, als waere die Adressleiste bereits
@@ -636,10 +632,14 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
   position:relative;isolation:isolate;overflow:hidden;
   min-height:min(92vh,980px);
   min-height:min(92svh,980px);
-  border-radius:clamp(20px,2.6vw,44px);
   background:var(--paper-2);
   display:grid;grid-template-rows:1fr;
-  padding:clamp(14px,1.8vw,22px);
+  /* Senkrecht wie vorher. Waagerecht jetzt der Satzspiegel der uebrigen
+     Seite: die Flaeche haelt den Text nicht mehr von der Schirmkante weg,
+     also muss die Buehne es tun — und zwar mit demselben Mass, mit dem jeder
+     Abschnitt darunter einrueckt. Vorher standen Wortmarke und Aussage bei
+     26 bis 46 Punkten, also deutlich enger als der Rest der Seite. */
+  padding:clamp(14px,1.8vw,22px) var(--gutter);
 }
 /* Die Leinwand liegt ueber der ganzen Buehne, nicht nur ueber dem Logo:
    die Partikel starten ausserhalb und fliegen herein.
@@ -695,9 +695,14 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
 .hero__block .btn-row,.hero__block .btn{margin-top:clamp(18px,2vw,26px)}
 
 /* --- Vertrauensleiste --- */
+/* Sitzt bei full bleed flach unter der Buehne statt mit Abstand darunter.
+   Der Abstand war die Luecke, in der die gerundete Buehne ueber der eckigen
+   Leiste schwebte; ohne Rundung braucht es ihn nicht mehr. Die obere Linie
+   ist jetzt die Kante zwischen den beiden Toenen und laeuft ueber die ganze
+   Breite. */
 .vertrauen{
   display:grid;gap:1px;background:var(--line);
-  margin:clamp(12px,1.6vw,24px) 0 0;
+  margin:0;
   border-block:1px solid var(--line);
 }
 /* Vier Spalten erst, wenn vier kurze Aussagen nebeneinander wirklich lesbar
