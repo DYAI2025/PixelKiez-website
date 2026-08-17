@@ -340,56 +340,41 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
 .btn--sm{padding:10px 16px;min-height:40px;font-size:.875rem}
 .btn[disabled]{opacity:.55;cursor:not-allowed}
 
-/* --- Geteilter Button (Portierung aero-hero-3 demo) ----------------------
-   Textpille + eigener Icon-Kreis. Beim Hover kehren beide die Farbe um und
-   zwei Pfeile laufen durch den Kreis: der erste raus, der zweite nach.
-   Zeiten wie in der Vorlage: 500 ms ease-in-out.
+/* --- Knopf mit durchlaufendem Pfeil -------------------------------------
+   Eine Pille, Beschriftung und Pfeil darin. Vorher waren es zwei getrennte
+   Flaechen — Textpille plus eigener Icon-Kreis; das las sich wie zwei
+   Schaltflaechen mit zwei Zielen, obwohl es immer nur eine Aktion war.
+   Jetzt traegt der Knopf selbst Rand, Flaeche und Radius (alles aus .btn),
+   und rechts sitzt nur noch ein schmales Fenster, durch das beim Hover zwei
+   Pfeile laufen: der erste raus, der zweite nach.
    ------------------------------------------------------------------------ */
-.btn--split{
-  padding:0;min-height:0;gap:4px;
-  background:none;border:0;border-radius:999px;
-}
-.btn--split .btn__label,
-.btn--split .btn__ico{
-  background:var(--btn-bg);color:var(--btn-fg);
-  border:1px solid var(--btn-bd);border-radius:999px;
-  /* Vorher 500ms ease-in-out. Eine halbe Sekunde ist fuer einen Farbwechsel
-     unter dem Zeiger zu lang, und ease-in-out laesst sie noch laenger wirken,
-     weil der Anfang verzoegert ist. Am wichtigsten Knopf der Seite faellt
-     genau das auf. 200ms reichen; die Farbe ist da, bevor man darueber
-     nachdenkt. */
-  transition:background-color 200ms ease,
-             color 200ms ease,
-             border-color 200ms ease;
-}
-.btn--split .btn__label{
-  display:flex;align-items:center;
-  padding:14px 24px;min-height:48px;
-}
+.btn--split .btn__label{display:flex;align-items:center}
+/* Das Fenster ist genau so gross wie ein Pfeil. overflow:hidden schneidet
+   den durchlaufenden Pfeil an seinen Kanten ab, sonst wanderte er ueber die
+   Beschriftung und aus der Pille heraus. */
 .btn--split .btn__ico{
   position:relative;overflow:hidden;flex:none;
-  width:48px;height:48px;
+  width:18px;height:18px;
 }
 .btn--split .btn__ico svg{
   position:absolute;left:50%;top:50%;
   width:18px;height:18px;margin:-9px 0 0 -9px;
   /* Der Pfeil wandert durch, das ist Bewegung AUF dem Schirm — also die
-     Morph-Kurve. 260ms statt 500ms: man soll den Durchlauf sehen, aber nicht
-     auf ihn warten. */
+     Morph-Kurve. 260ms: man soll den Durchlauf sehen, aber nicht auf ihn
+     warten. */
   transition:transform 260ms var(--ease-morph);
 }
-.btn--split .btn__ico svg:nth-of-type(2){transform:translateX(-46px)}
+/* Der Weg ist etwas laenger als das Fenster breit ist, damit der Pfeil
+   vollstaendig draussen steht und nicht als Kante stehen bleibt. */
+.btn--split .btn__ico svg:nth-of-type(2){transform:translateX(-22px)}
 
 /* Zeigergesteuertes nur dort, wo es wirklich einen Zeiger gibt. Auf einem
    Tippgeraet loest eine Beruehrung :hover aus und laesst ihn danach stehen —
    der Knopf sieht dann dauerhaft ueberfahren aus. */
 @media (hover:hover) and (pointer:fine){
-  .btn--split:hover .btn__ico svg:nth-of-type(1){transform:translateX(46px)}
+  .btn--split:hover .btn__ico svg:nth-of-type(1){transform:translateX(22px)}
   .btn--split:hover .btn__ico svg:nth-of-type(2){transform:translateX(0)}
 }
-
-/* Der Fokusring gehoert um den ganzen Button, nicht um die Teilflaechen */
-.btn--split:focus-visible{outline:2px solid var(--accent-ink);outline-offset:3px}
 
 /* --- Druckfeedback -------------------------------------------------------
    Bisher gab es keins: zwischen Antippen und der Reaktion der Seite lag
@@ -414,16 +399,13 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
   transform:scale(.93);
 }
 
-.btn--split.btn--sm .btn__label{padding:10px 18px;min-height:40px;font-size:.875rem}
-.btn--split.btn--sm .btn__ico{width:40px;height:40px}
+.btn--split.btn--sm .btn__ico{width:15px;height:15px}
 .btn--split.btn--sm .btn__ico svg{width:15px;height:15px;margin:-7.5px 0 0 -7.5px}
-.btn--split.btn--sm .btn__ico svg:nth-of-type(2){transform:translateX(-38px)}
+.btn--split.btn--sm .btn__ico svg:nth-of-type(2){transform:translateX(-19px)}
 @media (hover:hover) and (pointer:fine){
-  .btn--split.btn--sm:hover .btn__ico svg:nth-of-type(1){transform:translateX(38px)}
+  .btn--split.btn--sm:hover .btn__ico svg:nth-of-type(1){transform:translateX(19px)}
   .btn--split.btn--sm:hover .btn__ico svg:nth-of-type(2){transform:translateX(0)}
 }
-
-.btn--split[disabled]{opacity:.55}
 
 .btn-row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
 
