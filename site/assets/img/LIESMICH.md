@@ -7,11 +7,60 @@ diesen Ordner mit Inhalts-Hash nach `dist/assets/img/`.
 
 | Datei | Format | Maße | Wofür | Stand |
 |---|---|---|---|---|
-| `logo.webp` | WebP verlustfrei, Graustufe + Alpha | 980 × 240 | Kopf, Fußzeile, Auftakt, Rechtsseiten | liegt, aus `quelle/PixelKiez-2000.png` freigestellt |
+| `logo.webp` | WebP verlustfrei, Graustufe + Alpha | 2006 × 465 | **nur der Auftakt** | liegt, aus `quelle/PK_logo-2172.png` |
+| `logo-klein.webp` | WebP verlustfrei, Graustufe + Alpha | 480 × 111 | Kopf, Fußzeile, Rechtsseiten | liegt, aus derselben Quelle |
 | `logo-suche.png` | PNG | 2000 × 2000 | Firmenlogo für Google, im JSON-LD als `#logo` | Übergangsfassung, siehe unten |
 | `og.png` | PNG | 1200 × 630 | Vorschau, wenn jemand den Link verschickt | liegt, wird beim Logowechsel neu gesetzt |
 | `favicon-32x32.png` | PNG | 32 × 32 | Browser-Tab und Suchergebnis | liegt, **für Google zu klein**, siehe unten |
-| `logo.svg` | SVG | beliebig | ersetzt `logo.webp`, sobald vorhanden | **fehlt, wäre besser** |
+| `logo.svg` | SVG | beliebig | ersetzt beide WebP, sobald vorhanden | **fehlt, wäre besser** |
+
+## Warum die Wortmarke in zwei Größen liegt
+
+Gemessen wird sie an zwei sehr verschiedenen Stellen:
+
+| Stelle | gerendert | braucht nativ (2×) |
+|---|---|---|
+| Auftakt, 1920er Schirm | 934 CSS-px | ~1870 |
+| Auftakt, 1440er Schirm | 686 CSS-px | ~1370 |
+| Kopf und Fußzeile | 95 CSS-px | ~190 |
+
+Eine gemeinsame Datei müsste sich am Auftakt orientieren. Dann lüde jede
+Rechtsseite 52 KB, um eine 95 px breite Marke zu zeigen. Deshalb zwei
+Dateien: der Auftakt bekommt die große, alles andere die kleine.
+
+Die große kostet 52 KB und das ist der Preis für echte Schärfe: Bei 980 px
+Quellbreite stand der Auftakt auf einem 1920er Schirm bei Faktor 1,05 —
+also hochgerechnet und sichtbar weich. Mit 2006 px sind es 2,15.
+
+`near_lossless` spart hier 10 KB, quantisiert aber den Alphakanal von 240
+auf 67 Stufen. Genau diesen Kanal tastet der Partikeleffekt ab. Nicht wert.
+
+**Beide neu erzeugen**, wenn sich die Wortmarke ändert:
+
+    magick quelle/PK_logo-2172.png -trim +repage -colorspace Gray \
+      -channel A -level 3%,97% +channel /tmp/wm.png
+    cwebp -lossless -exact -z 9 /tmp/wm.png -o logo.webp
+    magick /tmp/wm.png -resize 480x -channel A -level 3%,97% +channel /tmp/wm-klein.png
+    cwebp -lossless -exact -z 9 /tmp/wm-klein.png -o logo-klein.webp
+
+Das `-level 3%,97%` ist kein Feinschliff, sondern nötig: die Lieferung vom
+17. August hatte in der deckenden Innenfläche Alphawerte zwischen 252 und
+255 statt durchgehend 255. Unsichtbar, aber jeder Punkt unterschied sich
+vom Nachbarn — verlustfrei gepackt waren das 83 KB statt 53 KB.
+
+Danach die Bildmaße im Markup nachziehen: `width`/`height` an allen fünf
+`<img>`-Stellen (`index.html` 3×, `impressum.html`, `datenschutz.html`).
+Stimmen sie nicht, rechnet der Browser den Platzhalter falsch und das
+Layout springt beim Laden.
+
+## Warum der Auftakt nicht aus einem Bucket kommen darf
+
+Der Partikeleffekt zeichnet `logo.webp` in eine Leinwand und liest sie mit
+`getImageData()` wieder aus (`bds.js`, Abschnitt 3b). Käme das Bild von
+einer fremden Adresse ohne CORS-Kopfzeilen, wäre die Leinwand verdorben und
+der Aufruf würfe einen Sicherheitsfehler. Ein `try` fängt ihn ab, der Effekt
+bliebe aber ersatzlos aus. Die Wortmarke gehört deshalb ins Repo, nicht in
+einen Bucket. Für das Google-Logo gilt das nicht, das liest kein Skript.
 
 ## Das Logo, das Google rechts anzeigt
 
@@ -63,22 +112,20 @@ verlangt dafür **48 × 48 Pixel oder ein Vielfaches davon** (96, 144, 192).
 dann steht dort ein grauer Platzhalter. Sobald das neue Logo vorliegt, gehört
 daraus ein Favicon in 192 × 192 abgeleitet und zusätzlich verdrahtet.
 
-Die Wortmarke lag bis August als PNG vor (14,2 KB). Verlustfrei nach WebP
-gepackt sind es 8,5 KB — dieselben Bildpunkte, derselbe Alphakanal (Punkt für
-Punkt nachgemessen), 39 % weniger Ladung. Verlustfrei ist hier keine
-Vorsicht, sondern Notwendigkeit: der Auftakt tastet den Alphakanal ab, um die
-Partikel zu setzen, und eine verlustbehaftete Fassung verschmierte die
-Kanten der Wortmarke zu Rauschen am Rand des Felds.
+Verlustfrei ist hier keine Vorsicht, sondern Notwendigkeit: der Auftakt
+tastet den Alphakanal ab, um die Partikel zu setzen, und eine
+verlustbehaftete Fassung verschmierte die Kanten der Wortmarke zu Rauschen
+am Rand des Felds.
 
 Das Vorschaubild bleibt bewusst PNG. Nicht jeder Dienst, der eine
 Linkvorschau baut, versteht WebP, und ein fehlendes Vorschaubild fiele mehr
 ins Gewicht als die paar Kilobyte — geladen wird es ohnehin nie vom Besucher,
 sondern nur vom Vorschaudienst.
 
-Solange nur ein PNG vorliegt, begrenzt dessen echte Breite, wie groß der
-Schriftzug im Auftakt werden kann. Bei 980 Pixeln ist bei rund 680 CSS-Pixeln
-Schluss, darüber wird nur noch weichgerechnet. Mit einem SVG fiele diese
-Grenze weg.
+Solange nur ein Rasterbild vorliegt, begrenzt dessen echte Breite, wie groß
+der Schriftzug im Auftakt werden kann. Bei 2006 Pixeln reicht es bis rund
+1000 CSS-Pixel bei doppelter Punktdichte — das deckt jeden gängigen Schirm.
+Mit einem SVG fiele die Grenze ganz weg, und beide WebP entfielen.
 
 ## Die Wortmarke trägt feine Gestaltungsdetails
 
@@ -97,14 +144,13 @@ Deckung 97,5 % gegen 100 %).
 nicht** — dort sind P und i-Punkt geschlossen. Das ist die überholte Fassung,
 nicht die richtige.
 
-**Neues Logo einsetzen:** Datei nach `quelle/` legen und Bescheid geben. Sie
-wird freigestellt, auf Graustufe mit Alpha gebracht und an allen vier Stellen
-verdrahtet. Direkt `logo.webp` überschreiben geht auch, dann muss sie aber
-schon freigestellt und beschnitten sein, sonst stimmen die Maßangaben im
-Markup nicht mehr — und verlustfrei gepackt, sonst leidet die Abtastung im
-Auftakt:
+Die aktuelle Quelle ist `quelle/PK_logo-2172.png` (Lieferung vom 17. August,
+2172 × 724 mit transparentem Rand, Inhalt 2006 × 465). Beide Details sind
+darin vorhanden und wurden gegen die Vorgängerfassung nachgemessen.
 
-    cwebp -lossless -exact -z 9 neu.png -o logo.webp
+**Neues Logo einsetzen:** Datei nach `quelle/` legen und Bescheid geben. Die
+beiden WebP entstehen daraus mit den Befehlen weiter oben, danach die
+Bildmaße im Markup nachziehen.
 
 ## Warum das Vorschaubild bei Instagram weniger zählt
 
