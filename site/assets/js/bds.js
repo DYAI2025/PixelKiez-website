@@ -545,16 +545,47 @@
     hero.addEventListener('pointercancel', weg);
 
     var anwerfen = function () {
-      if (!messen()) return;               // Abtastung leer — Bild bleibt stehen
+      if (!messen()) return false;         // Abtastung leer — Bild bleibt stehen
       letzteBreite = Math.round(window.innerWidth);
       hero.dataset.drift = 'an';
       verborgen = false; rueckwaerts = false;
       if (sichtbar) start();
+      return true;
     };
 
-    // Erst wenn das Bild wirklich da ist, sonst tastet man eine leere Flaeche ab
-    if (bild.complete && bild.naturalWidth) anwerfen();
-    else bild.addEventListener('load', anwerfen);
+    /* Der Effekt braucht ein DEKODIERTES Bild, nicht nur ein geladenes.
+
+       "load" sagt allein, dass die Bytes angekommen sind. Ob der Browser das
+       Bild schon in eine Bitmap uebersetzt hat, sagt es nicht. drawImage auf
+       ein noch nicht dekodiertes Bild zeichnet auf dem Telefon eine leere
+       Flaeche — abtasten() faende dann keinen einzigen Treffer und gaebe
+       false zurueck, anwerfen() braeche ab, und weil der Resize-Pfad weiter
+       unten einen bereits laufenden Effekt voraussetzt, blieb es fuer diesen
+       Seitenaufruf dabei.
+
+       Sichtbar war das als: Logo steht gross da, Partikel fehlen — und beim
+       Neuladen war alles richtig, weil das Bild aus dem Zwischenspeicher
+       bereits dekodiert vorliegt.
+
+       Zwei Sicherungen dagegen. decode() wartet die Bitmap ab; es fehlt in
+       aelteren Browsern, deshalb der Zweig ohne. Und danach bis zu zehn
+       Bildschirmschritte lang erneut versuchen, falls die Lage im Hero noch
+       nicht steht — etwa weil die Schrift gerade erst eintrifft und den
+       Aufbau noch verschiebt. */
+    var versuchen = function (rest) {
+      if (anwerfen()) return;
+      if (rest > 0) requestAnimationFrame(function () { versuchen(rest - 1); });
+    };
+
+    var bereitmachen = function () {
+      var p = bild.decode && bild.decode();
+      if (p && p.then) p.then(function () { versuchen(10); },
+                              function () { versuchen(10); });
+      else versuchen(10);
+    };
+
+    if (bild.complete && bild.naturalWidth) bereitmachen();
+    else bild.addEventListener('load', bereitmachen);
 
     // Nur laufen lassen, solange der Hero im Bild ist — das spart Rechenzeit
     // beim Scrollen. Der Zustand bleibt dabei ABSICHTLICH stehen: der Aufbau
@@ -585,7 +616,11 @@
     window.addEventListener('resize', function () {
       clearTimeout(rt);
       rt = setTimeout(function () {
-        if (hero.dataset.drift !== 'an') return;
+        /* Laeuft der Effekt noch gar nicht, ist das hier die letzte
+           Gelegenheit, ihn nachzuholen — frueher stand an dieser Stelle ein
+           hartes "return", wenn drift nicht an war. Damit konnte ein
+           gescheiterter Erststart nie mehr aufgeholt werden. */
+        if (hero.dataset.drift !== 'an') { anwerfen(); return; }
         var breite = Math.round(window.innerWidth);
         if (breite === letzteBreite) return;
         letzteBreite = breite;
