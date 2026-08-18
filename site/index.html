@@ -33,7 +33,14 @@
 <meta name="twitter:description" content="Websites für mittelständische Unternehmen. Verbindlicher Festpreis nach Diagnose, Antwort in einem Werktag.">
 <meta name="twitter:image" content="assets/img/og.png">
 
-<link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32x32.png">
+<!-- Die Icons liegen in der Wurzel und ohne Inhaltshash, siehe build.mjs 1c:
+     Google merkt sich die Adresse des Favicons und holt es selten neu, ein
+     gehashter Name liefe nach der naechsten Motivaenderung ins Leere. Die
+     .ico traegt 48, 32 und 16 Pixel — 48 verlangt Google fuer die
+     Trefferliste, das frueher benutzte 32er allein reichte nicht. -->
+<link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
+<link rel="icon" type="image/png" href="/icon-512.png" sizes="512x512">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
 <link rel="preload" href="assets/fonts/archivo-var-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/ibm-plex-sans-var-latin.woff2" as="font" type="font/woff2" crossorigin>
@@ -52,11 +59,18 @@
      das Bild mindestens 112 x 112 Pixel gross und moeglichst quadratisch —
      das Feld schneidet quadratisch zu.
 
-     Soll das Logo aus einem Railway-Bucket kommen, wird im Knoten "#logo"
-     nur "url" und "contentUrl" auf die oeffentliche Bucket-Adresse gesetzt,
-     dazu "width" und "height" auf die echten Masse. Fremde Adressen laesst
-     der Build unangetastet; nur Adressen unter pixelkiez.de/assets/img/
-     bekommen den Inhalts-Hash. Siehe assets/img/LIESMICH.md. -->
+     Die Datei liegt bewusst als /logo.png in der Wurzel und NICHT unter
+     assets/img/. Dort bekaeme sie einen Inhalts-Hash, und der wechselt bei
+     jeder Ueberarbeitung des Motivs. Genau das ist am 17.08.2026 passiert:
+     die Adresse sprang von logo-suche.53244c14.png auf ...66301da4.png, die
+     alte lieferte ab da 404 — und Google hatte die Seite kurz zuvor erstmals
+     erfasst. Ein Logo, dessen Adresse sich beim Ueberarbeiten aendert, ist
+     fuer die Suche wertlos. Beim Austausch also die Datei ersetzen, den
+     Namen behalten.
+
+     Soll das Logo aus einem Railway-Bucket kommen, werden hier nur "url" und
+     "contentUrl" auf die oeffentliche Bucket-Adresse gesetzt, dazu "width"
+     und "height" auf die echten Masse. Siehe assets/img/LIESMICH.md. -->
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -116,8 +130,8 @@
     {
       "@type": "ImageObject",
       "@id": "https://pixelkiez.de/#logo",
-      "url": "https://pixelkiez.de/assets/img/logo-suche.png",
-      "contentUrl": "https://pixelkiez.de/assets/img/logo-suche.png",
+      "url": "https://pixelkiez.de/logo.png",
+      "contentUrl": "https://pixelkiez.de/logo.png",
       "width": 2000,
       "height": 2000,
       "caption": "Pixelkiez"

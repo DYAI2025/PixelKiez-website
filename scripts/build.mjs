@@ -335,12 +335,43 @@ async function build() {
     if (e.code !== 'ENOENT') throw e;   // Ordner darf fehlen, solange nichts darauf zeigt
   }
 
-  /* ---- 1c. Wurzeldateien: robots.txt, llms.txt, sitemap.xml -------------
-     Diese drei fragt eine Suchmaschine oder ein Agent als Erstes ab, noch
+  /* ---- 1c. Wurzeldateien: robots.txt, llms.txt, sitemap.xml, Icons ------
+     Diese fragt eine Suchmaschine oder ein Agent als Erstes ab, noch
      bevor er eine Seite laedt. Ohne Inhaltshash, denn ihre Namen sind
      festgelegt, und ohne Umschreibung, denn sie enthalten keine Verweise
-     auf gehashte Mitteldateien. */
-  const WURZELDATEIEN = ['robots.txt', 'llms.txt'];
+     auf gehashte Mitteldateien.
+
+     Die Icons gehoeren aus zwei Gruenden hierher und NICHT nach
+     assets/img/:
+
+     1. Google holt das Favicon fuer die Trefferliste selten neu und merkt
+        sich dabei die Adresse. Unter assets/img/ bekaeme es einen
+        Inhaltshash, und der aendert sich bei jeder Motivaenderung — die
+        gemerkte Adresse liefe dann auf 404 und die Trefferliste bliebe
+        ohne Icon zurueck. Ein fester Name haelt die Adresse stabil.
+     2. /favicon.ico ist der Pfad, den Googlebot und jeder Browser von sich
+        aus abfragen, auch ohne <link>-Angabe im Kopf. Fehlt die Datei
+        dort, ist das ein 404 bei jedem Seitenaufruf.
+
+     Groessen: die .ico traegt 48, 32 und 16 Pixel. 48 ist Vorgabe, weil
+     Google ein Vielfaches von 48 verlangt — das frueher benutzte 32er
+     Einzelbild erfuellte das nicht.
+
+     Dasselbe gilt fuer logo.png, das Firmenlogo fuer das Wissensfeld. Es lag
+     bis zum 18.08.2026 unter assets/img/logo-suche.png und trug damit einen
+     Inhalts-Hash. Als das Motiv am 17.08. ueberarbeitet wurde, wechselte die
+     Adresse von logo-suche.53244c14.png auf logo-suche.66301da4.png — die
+     alte lieferte ab sofort 404. Google hatte die Seite in genau dem Zeitraum
+     davor erstmals erfasst und hielt damit eine tote Adresse. Ein Logo, dessen
+     Adresse sich beim Ueberarbeiten aendert, ist fuer die Suche wertlos. */
+  const WURZELDATEIEN = [
+    'robots.txt',
+    'llms.txt',
+    'favicon.ico',
+    'icon-512.png',
+    'apple-touch-icon.png',
+    'logo.png',
+  ];
   for (const datei of WURZELDATEIEN) {
     await copyFile(join(QUELLE, datei), join(ZIEL, datei));
   }

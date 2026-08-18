@@ -9,10 +9,33 @@ diesen Ordner mit Inhalts-Hash nach `dist/assets/img/`.
 |---|---|---|---|---|
 | `logo.webp` | WebP verlustfrei, Graustufe + Alpha | 2006 × 465 | **nur der Auftakt** | liegt, aus `quelle/PK_logo-2172.png` |
 | `logo-klein.webp` | WebP verlustfrei, Graustufe + Alpha | 480 × 111 | Kopf, Fußzeile, Rechtsseiten | liegt, aus derselben Quelle |
-| `logo-suche.png` | PNG | 2000 × 2000 | Firmenlogo für Google, im JSON-LD als `#logo` | Übergangsfassung, siehe unten |
+| ~~`logo-suche.png`~~ | PNG | 2000 × 2000 | Firmenlogo für Google | **verschoben nach `site/logo.png`**, siehe unten |
 | `og.png` | PNG | 1200 × 630 | Vorschau, wenn jemand den Link verschickt | liegt, wird beim Logowechsel neu gesetzt |
-| `favicon-32x32.png` | PNG | 32 × 32 | Browser-Tab und Suchergebnis | liegt, **für Google zu klein**, siehe unten |
 | `logo.svg` | SVG | beliebig | ersetzt beide WebP, sobald vorhanden | **fehlt, wäre besser** |
+
+Die Icons liegen **nicht** hier, sondern in `site/` selbst: `favicon.ico`,
+`icon-512.png`, `apple-touch-icon.png`. Ebenso das Firmenlogo für die Suche,
+`logo.png`. Grund siehe unten — es ist für beide derselbe.
+
+## Warum Logo und Icons ohne Inhalts-Hash ausgeliefert werden
+
+Der Build hängt jeder Datei unter `assets/` einen Inhalts-Hash an den Namen.
+Für Schriften, CSS und Seitenbilder ist das richtig: ändert sich die Datei,
+ändert sich der Name, und kein Browser liefert eine veraltete Fassung aus.
+
+Für Logo und Favicon ist es **falsch**, und zwar nachweisbar. Google merkt
+sich die Adresse beider Dateien und holt sie selten neu. Am 17.08.2026 wurde
+das Motiv des Suchlogos überarbeitet. Damit sprang seine Adresse:
+
+```
+bis 17.08.   /assets/img/logo-suche.53244c14.png   →  seitdem HTTP 404
+seit 17.08.  /assets/img/logo-suche.66301da4.png
+```
+
+Google hatte die Seite kurz zuvor erstmals erfasst und hielt damit eine tote
+Adresse. Genau derselbe Fehler bestand beim Favicon.
+
+**Regel: Beim Austausch die Datei ersetzen, den Dateinamen behalten.**
 
 ## Warum die Wortmarke in zwei Größen liegt
 
@@ -89,7 +112,7 @@ Monogramm oder das Pixelmotiv, das den Rahmen wirklich füllt. Die Wortmarke
 ist 4,1 : 1 breit; im Quadrat bleiben rechnerisch 60 % der Höhe leer, ganz
 egal wie groß man sie zieht.
 
-**Übergangsfassung.** `logo-suche.png` trug die Wortmarke bis August in
+**Übergangsfassung.** `logo.png` (bis 18.08. `logo-suche.png`) trug die Wortmarke bis August in
 Originalgröße mitten auf einer 2000er Fläche — sie füllte 49 % der Breite und
 12 % der Höhe, das Bild wirkte klein und leer. Jetzt ist sie auf 86 % der
 Breite gezogen. Das ist das Maximum, das mit einer Wortmarke geht, und bleibt
@@ -108,9 +131,34 @@ sieht man davon nichts an.
 
 Neben dem Suchergebnis steht nicht das Firmenlogo, sondern das Favicon. Google
 verlangt dafür **48 × 48 Pixel oder ein Vielfaches davon** (96, 144, 192).
-`favicon-32x32.png` liegt darunter und wird deshalb möglicherweise ignoriert —
-dann steht dort ein grauer Platzhalter. Sobald das neue Logo vorliegt, gehört
-daraus ein Favicon in 192 × 192 abgeleitet und zusätzlich verdrahtet.
+Das frühere `favicon-32x32.png` lag darunter und wurde deshalb ignoriert —
+in der Trefferliste stand ein grauer Platzhalter statt des Motivs.
+
+Seit dem Umbau liegen drei Dateien in `site/` und werden vom Build ohne
+Inhalts-Hash in die Wurzel kopiert:
+
+| Datei | Maße | Wofür |
+|---|---|---|
+| `favicon.ico` | 48, 32, 16 in einer Datei | Trefferliste bei Google, Browser-Tab |
+| `icon-512.png` | 512 × 512 | hochauflösende Anzeigen, Lesezeichen |
+| `apple-touch-icon.png` | 180 × 180 | Startbildschirm iOS, randlos deckend |
+
+Zwei Dinge sind dabei nicht verhandelbar:
+
+**Die Adresse muss fest bleiben.** Google holt das Favicon selten neu und
+merkt sich dabei die Adresse. Läge es unter `assets/img/`, bekäme es einen
+Inhalts-Hash — und der ändert sich bei jeder Motivänderung. Die gemerkte
+Adresse liefe dann auf 404 und die Trefferliste bliebe ohne Icon.
+
+**`/favicon.ico` muss existieren.** Diesen Pfad fragen Googlebot und jeder
+Browser von sich aus ab, auch ohne `<link>` im Kopf. Fehlt die Datei, ist das
+ein 404 bei jedem Seitenaufruf.
+
+Das Motiv selbst ist zwei schlichte Quadrate auf `#B4C3BF`, schwarz `#000000`
+über orange `#F94A2C`, Kantenlänge je 26 % der Fläche, Eckenradius 18,75 %.
+Die 26 % sind bewusst so groß: Google rendert das Favicon real bei etwa 16 bis
+18 Pixeln, und bei den früheren 12,5 % blieben davon zwei kaum sichtbare
+Punkte übrig.
 
 Verlustfrei ist hier keine Vorsicht, sondern Notwendigkeit: der Auftakt
 tastet den Alphakanal ab, um die Partikel zu setzen, und eine

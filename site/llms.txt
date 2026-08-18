@@ -45,5 +45,6 @@ tragen soll.
 
 Alle Inhalte sind serverseitig gerendert und ohne JavaScript lesbar. Die
 Startseite trägt strukturierte Daten nach schema.org (ProfessionalService,
-WebSite, Service, FAQPage, BreadcrumbList) im Kopfbereich als JSON-LD.
+WebSite, WebPage, Service, FAQPage, ImageObject, Person) im Kopfbereich als
+JSON-LD.
 Sämtliche Crawler sind in `https://pixelkiez.de/robots.txt` zugelassen.
