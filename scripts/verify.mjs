@@ -120,6 +120,23 @@ async function verify() {
     if (en) {
       if (/[äöüÄÖÜß]/.test(html.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>|<[^>]+>/g, ' ')))
         F(`${seite}: Umlaute im sichtbaren Text — vermutlich deutscher Rest`);
+
+      /* Englische Seiten verweisen auf englische Fassungen. Ein href oder
+         action auf einen deutschen Paar-Pfad schickt den Besucher mitten im
+         englischen Auftritt auf die deutsche Seite — erlaubt ist das nur dem
+         Sprachumschalter (der genau dafuer da ist) und den bewusst deutsch
+         gehaltenen Rechtsseiten. Gefunden am 30.08.2026: das Analyse-Band
+         und der Footer-Link der englischen Startseite zeigten auf
+         /website-analyse/ statt /en/website-analyse/. */
+      const ohneSchalter = html.replace(/<a class="lang"[^>]*data-lang-switch>[^<]*<\/a>/, '');
+      const dePfade = SEITEN.filter((s) => s.lang === 'de' && s.paar).map((s) => s.kanonisch);
+      for (const dePfad of dePfade) {
+        const muster = new RegExp(
+          `(?:href|action)="${dePfad.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:#[^"]*)?"`, 'g');
+        for (const m of ohneSchalter.matchAll(muster)) {
+          F(`${seite}: Verweis ${m[0]} auf die deutsche Fassung — muss auf /en/… zeigen`);
+        }
+      }
     }
 
     /* --- Bildverweise muessen auf eine vorhandene Datei zeigen ---

@@ -137,11 +137,17 @@ async function baueEnglisch(paar, mittel) {
   html = html.replace('<html lang="de">', '<html lang="en">');
   if (!html.includes('<html lang="en">')) throw new Error(`${paar.zielEn}: <html lang="de"> nicht gefunden`);
 
-  /* --- Wurzelverweise auf die Startseite zeigen auf deren englische
-         Fassung — samt Ankern (/#leistungen → /en/#leistungen). Muss VOR dem
-         Umschalter-Ersatz laufen: der Umschalter wird danach als Ganzes neu
-         gesetzt und zeigt bewusst auf die deutsche Fassung. --- */
-  html = html.replace(/href="\/(#[^"]*)?"/g, (m, anker) => `href="/en/${anker || ''}"`);
+  /* --- Verweise auf deutsche Fassungen zeigen auf die englischen — fuer
+         JEDES Sprachpaar, in href wie action, samt Ankern (/#leistungen →
+         /en/#leistungen). Muss VOR dem Umschalter-Ersatz laufen: der wird
+         danach als Ganzes neu gesetzt und zeigt bewusst auf die deutsche
+         Fassung. Die Rechtsseiten stehen nicht im Register und bleiben
+         damit deutsch verlinkt — das ist Absicht. --- */
+  for (const p of SPRACHPAARE) {
+    const von = p.pfadDe.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    html = html.replace(new RegExp(`(href|action)="${von}(#[^"]*)?"`, 'g'),
+      (m, attribut, anker) => `${attribut}="${p.pfadEn}${anker || ''}"`);
+  }
 
   /* --- Umschalter zeigt jetzt zurueck aufs Deutsche --- */
   const schalter = /<a class="lang"[^>]*data-lang-switch>[^<]*<\/a>/;
