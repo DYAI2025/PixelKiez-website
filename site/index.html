@@ -411,6 +411,24 @@
   </ul>
 </section>
 
+<!-- ===================== ANALYSE-EINSTIEG =====================
+     Einstieg in die kostenlose Website-Analyse. Bewusst ein GET-Formular
+     ohne Skript: die Adresse wandert als ?url= zur Analyse-Seite und wird
+     dort ins Formular uebernommen. Funktioniert damit auch ohne JavaScript.
+     ============================================================ -->
+<aside class="analyse-band" aria-labelledby="ab-titel">
+  <div class="wrap analyse-band__in">
+    <div data-reveal>
+      <h2 class="h-md" id="ab-titel">Wie sichtbar ist Ihre Website für Google und KI?</h2>
+      <p class="small" style="margin-top:7px">Kostenlose Analyse: Technik, SEO, GEO und KI-Auffindbarkeit. Persönlich erstellt, Ergebnis per E-Mail.</p>
+    </div>
+    <form class="analyse-band__form" action="/website-analyse/" method="get" data-reveal>
+      <input class="input" type="url" name="url" inputmode="url" placeholder="https://ihre-website.de" aria-label="Adresse Ihrer Website">
+      <button type="submit" class="btn btn--split btn--primary"><span class="btn__label" data-label>Website analysieren</span><span class="btn__ico"><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg></span></button>
+    </form>
+  </div>
+</aside>
+
 <!-- ===================== AUSGANGSLAGE ===================== -->
 <section class="section sec--orange naht-anker" id="ausgangslage">
   <span class="naht naht--von-blau" aria-hidden="true"></span>
@@ -999,6 +1017,7 @@
           <!-- Ohne Skript fuehrt der Sprung in den Kontaktabschnitt, mit
                Skript oeffnet sich das Formular mit vorbelegtem Anliegen. -->
           <a href="#kontakt" data-open-contact data-anliegen="Preisanfrage: Bitte um ein Angebot.">Preis anfragen</a>
+          <a href="/website-analyse/">Website-Analyse</a>
           <a href="#check">Projekt-Check</a>
           <a href="impressum.html">Impressum</a>
           <a href="datenschutz.html">Datenschutz</a>

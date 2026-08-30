@@ -1236,6 +1236,15 @@
   var submit = $('#form-submit');
   var section = $('#kontakt');
 
+  /* Analyse-Seite: das Formular traegt dort ein Adressfeld. Ein ueber ?url=
+     mitgebrachter Wert — der Einstieg auf der Startseite reicht ihn so
+     weiter — wird vorbelegt, aber nie ueberschrieben. */
+  var urlFeld = $('#f-url');
+  if (urlFeld && typeof URLSearchParams === 'function') {
+    var mitgebracht = new URLSearchParams(window.location.search).get('url');
+    if (mitgebracht && !urlFeld.value) urlFeld.value = mitgebracht;
+  }
+
   var inView = function (el) {
     if (!el) return false;
     var r = el.getBoundingClientRect();
@@ -1351,6 +1360,13 @@
         ts:            new Date().toISOString(),
         quelle:        window.location.pathname + (pick.thema ? ' · projekt-check' : '')
       };
+
+      /* Adressfeld der Analyse-Seite: die Adresse gehoert sichtbar in die
+         Mail — der Formulardienst kennt kein eigenes Feld dafuer. */
+      var webadresse = urlFeld ? String(data.get('url') || '').trim() : '';
+      if (webadresse) {
+        payload.anliegen = ('Website: ' + webadresse + '\n' + payload.anliegen).trim();
+      }
 
       var label = $('[data-label]', submit);   // nur die Beschriftung tauschen, Icon bleibt stehen
       form.dataset.busy = 'true';

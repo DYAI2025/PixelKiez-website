@@ -325,5 +325,22 @@ Browser-Test nur behaupten, wenn wirklich im Browser ausgeführt (sonst NOT_BROW
 - Artefakte: dieser Plan; `CLAUDE.md` (aus /init, separater Commit)
 - Erkenntnisse, die frühere Annahmen korrigieren: Build erzeugt bereits `sitemap.xml` (README schweigt dazu); Formulardienst akzeptiert bereits ein `quelle`-Feld; verify prüft bislang kein Canonical.
 
-### Slice 1 — ausstehend
-(wird nach Implementierung gefüllt: Head SHA, geänderte Dateien, Testergebnisse, Blocker)
+### Slice 1 — implementiert 2026-08-30, wartet auf externen Review
+- Base SHA (Slice-0-Stand): `c63eb10` · Head SHA: siehe `git log` (Commit nach diesem Log-Update)
+- **Geänderte/neue Dateien:**
+  - `scripts/seiten.mjs` NEU — Seitenregister (EINSPRACHIG + SPRACHPAARE inkl. ldTausch)
+  - `scripts/build.mjs` — Sprachpaar-Registry statt Einzelfall; `setzeAlternates(html, sprache, paar)`; `baueEnglisch(paar, mittel)` gibt `{html, benutzt}` zurück; JS-Übersetzung + `veraltet`-Prüfung (Union über alle Paare) in den Aufrufer verlegt; JSON-LD-Adress-Tausch über `paar.ldTausch`; EN-Fassung schreibt Wurzelverweise `href="/"`/`href="/#…"` auf `/en/…` um (vor dem Umschalter-Ersatz); Sitemap aus dem Register mit Alternates je Paar; Zielpfade in Unterverzeichnissen (mkdir)
+  - `scripts/verify.mjs` — SEITEN als Tabelle (pfad/lang/kanonisch/paar); Canonical-Check für ALLE Seiten neu; Umschalter-/hreflang-Check je Paar; Wurzelabsolut-Regel für alle Seiten unterhalb der Wurzel; neues Gate: Startseite muss `/website-analyse/` verlinken
+  - `scripts/i18n-extract.mjs` — liest alle SPRACHPAARE-Quellen in eine gemeinsame en.json
+  - `site/website-analyse.html` NEU — Landingpage (Auftakt, Anfrage-Formular, 6 Prüffelder, 4-Stufen-Begriffsleiter, Nächster-Schritt, Footer); nur WebPage-JSON-LD, robots index,follow
+  - `site/index.html` — Analyse-Band nach dem Hero (GET-Formular → `/website-analyse/?url=…`, skriptfrei funktionsfähig); Footer-Link „Website-Analyse"; Menü 01–08 unverändert
+  - `site/assets/js/bds.js` — §9: `#f-url`-Vorbelegung aus `?url=`, Adresse wird dem Anliegen als `Website: …` vorangestellt; sonst unverändert (Formular-Handler, quelle=pathname greift automatisch)
+  - `site/assets/css/bds.css` — neuer Abschnitt 19 (analyse-band, analyse-fakten, auftakt, pruef, leiter)
+  - `site/i18n/en.json` — 57 neue Übersetzungen · `site/i18n/en.js.json` — `"Website: "`
+  - `site/llms.txt` — zwei Seiteneinträge für die Analyse-Seite
+- **Gates:** `npm run build` GRÜN (6 Seiten, Sitemap 6 Adressen) · `npm run verify` GRÜN (6 Seiten inkl. Canonical-/Paar-/Wurzelabsolut-Checks). TDD eingehalten: Verify-Gates zuerst rot (3 Fehler exakt wie geplant), dann grün gebaut.
+- **Browser-verifiziert (Chrome, echte Sitzung, localhost:8080):** Band → GET `?url=` → Vorbelegung auf der Landingpage ✓ · required-Validierung ✓ · Fehlerpfad ohne Backend: ehrliche Fehlermeldung + Mail-Ausweich, Eingaben bleiben erhalten ✓ · Erfolgspfad gegen `api/` im Trockenlauf (`MAIL_DRYRUN=1`, Port 3010, `API_UPSTREAM` gesetzt): „Angekommen."-Status, Formular-Reset, Server-Log zeigt `Herkunft: /website-analyse/` und `Anliegen: Website: https://example.com` ✓ · EN-Landingpage und EN-Band gerendert ✓ · keine Konsolenfehler ✓
+- **Abweichungen vom Plan:** verify-`SEITEN` ohne `skript:`-Flag umgesetzt (Skriptzahl wird weiter je Seite geloggt; hartes Gate nur für index wie zuvor). Task-1-Zwischencommit im roten Zustand NICHT gemacht — Brief §4 erlaubt Commits erst nach bestandenem Slice-Gate; alles in einem grünen Commit.
+- **Erkenntnis:** Port 3000 ist auf dieser Maschine fremdbelegt — lokale api-Tests mit `PORT=3010` + `API_UPSTREAM=127.0.0.1:3010 npm run serve`.
+- **Offen (unverändert aus Slice 0):** O-1 … O-5; Domain-Platzhalter B-02; Rechtstexte.
+- **Nächster Slice:** 2 (Knowledge-Hub-Shells, noindex + ohne Sitemap, Kiezbot-Visual-Slot) — erst nach externer Freigabe.

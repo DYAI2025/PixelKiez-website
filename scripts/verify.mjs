@@ -13,7 +13,21 @@ import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 
 const ZIEL = join(fileURLToPath(new URL('..', import.meta.url)), 'dist');
-const SEITEN = ['index.html', 'impressum.html', 'datenschutz.html', 'en/index.html'];
+
+/* Jede ausgelieferte Seite mit ihren Erwartungen. `paar` verbindet die beiden
+   Fassungen einer Quelle: der Umschalter der einen Seite muss exakt auf die
+   andere zeigen. Seiten ohne `paar` sind einsprachig und tragen weder
+   hreflang noch Umschalter. `kanonisch` ist der Pfad, den das canonical der
+   fertigen Seite nennen muss. */
+const DOMAIN = 'https://pixelkiez.de';
+const SEITEN = [
+  { pfad: 'index.html',                    lang: 'de', kanonisch: '/',                       paar: { partner: '/en/',                 schalter: 'EN' } },
+  { pfad: 'en/index.html',                 lang: 'en', kanonisch: '/en/',                    paar: { partner: '/',                    schalter: 'DE' } },
+  { pfad: 'website-analyse/index.html',    lang: 'de', kanonisch: '/website-analyse/',       paar: { partner: '/en/website-analyse/', schalter: 'EN' } },
+  { pfad: 'en/website-analyse/index.html', lang: 'en', kanonisch: '/en/website-analyse/',    paar: { partner: '/website-analyse/',    schalter: 'DE' } },
+  { pfad: 'impressum.html',                lang: 'de', kanonisch: '/impressum.html' },
+  { pfad: 'datenschutz.html',              lang: 'de', kanonisch: '/datenschutz.html' },
+];
 
 const fehler = [];
 const hinweise = [];
@@ -33,7 +47,8 @@ async function verify() {
     ? new Set(await readdir(fontVerzeichnis)) : new Set();
   const fontsBenutzt = new Set();
 
-  for (const seite of SEITEN) {
+  for (const eintrag of SEITEN) {
+    const seite = eintrag.pfad;
     const pfad = join(ZIEL, seite);
     if (!(await existiert(pfad))) { F(`${seite} fehlt in dist/`); continue; }
     const html = await readFile(pfad, 'utf8');
@@ -80,28 +95,31 @@ async function verify() {
       if (!(await existiert(join(ZIEL, ziel)))) F(`${seite}: Verweis ins Leere — ${ziel}`);
     }
 
-    /* --- Sprachfassung: Auszeichnung, Umschalter, Verweise --- */
-    const en = seite.startsWith('en/');
-    if (!/<html lang="(de|en)">/.test(html)) F(`${seite}: <html lang> fehlt oder unbekannt`);
-    if (en && !html.includes('<html lang="en">')) F('en/index.html: lang ist nicht "en"');
-    if (!en && seite === 'index.html' && !html.includes('<html lang="de">')) F('index.html: lang ist nicht "de"');
-    if (seite === 'index.html' || en) {
+    /* --- Sprachfassung: Auszeichnung, Canonical, Umschalter, Verweise --- */
+    const en = eintrag.lang === 'en';
+    if (!html.includes(`<html lang="${eintrag.lang}">`))
+      F(`${seite}: <html lang="${eintrag.lang}"> fehlt`);
+    if (!html.includes(`<link rel="canonical" href="${DOMAIN}${eintrag.kanonisch}">`))
+      F(`${seite}: canonical zeigt nicht auf ${DOMAIN}${eintrag.kanonisch}`);
+    if (eintrag.paar) {
       for (const hl of ['de', 'en', 'x-default']) {
         if (!html.includes(`hreflang="${hl}"`)) F(`${seite}: hreflang="${hl}" fehlt`);
       }
       const s2 = html.match(/<a class="lang"[^>]*href="([^"]*)"[^>]*>([^<]*)</);
       if (!s2) F(`${seite}: Sprachumschalter fehlt`);
-      else if (en && (s2[1] !== '/' || s2[2] !== 'DE')) F(`en: Umschalter zeigt auf ${s2[1]} mit "${s2[2]}" statt / und DE`);
-      else if (!en && (s2[1] !== '/en/' || s2[2] !== 'EN')) F(`index: Umschalter zeigt auf ${s2[1]} mit "${s2[2]}" statt /en/ und EN`);
+      else if (s2[1] !== eintrag.paar.partner || s2[2] !== eintrag.paar.schalter)
+        F(`${seite}: Umschalter zeigt auf ${s2[1]} mit "${s2[2]}" statt ${eintrag.paar.partner} und ${eintrag.paar.schalter}`);
     }
-    // Auf der englischen Seite duerfen keine relativen Verweise stehen: sie
-    // liegt eine Ebene tiefer und wuerden dort ins Leere zeigen.
-    if (en) {
+    // Seiten unterhalb der Wurzel duerfen keine relativen Verweise tragen:
+    // sie liegen eine Ebene tiefer, relative Pfade zeigten dort ins Leere.
+    if (seite.includes('/')) {
       for (const m of html.matchAll(/(?:href|src)="(?!https?:|mailto:|data:|#|\/)([^"]+)"/g)) {
-        F(`en/index.html: relativer Verweis "${m[1]}" — von /en/ aus falsch`);
+        F(`${seite}: relativer Verweis "${m[1]}" — von /${seite.slice(0, seite.lastIndexOf('/'))}/ aus falsch`);
       }
+    }
+    if (en) {
       if (/[äöüÄÖÜß]/.test(html.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>|<[^>]+>/g, ' ')))
-        F('en/index.html: Umlaute im sichtbaren Text — vermutlich deutscher Rest');
+        F(`${seite}: Umlaute im sichtbaren Text — vermutlich deutscher Rest`);
     }
 
     /* --- Bildverweise muessen auf eine vorhandene Datei zeigen ---
@@ -144,6 +162,16 @@ async function verify() {
     console.log(`  ${seite.padEnd(20)} ${kb(roh).padStart(9)}  gzip ${kb(gz).padStart(9)}  ` +
                 `brotli ${kb(brGroesse).padStart(9)}  ` +
                 `${skripte.length} Skript, ${(html.match(/<style>/g) || []).length} Stilblock`);
+  }
+
+  /* --- Funnel-Einstieg: die Startseite muss zur Analyse-Seite fuehren ---
+     Der Einstieg ist ein GET-Formular (action) oder ein Link (href). Faellt
+     er beim Ueberarbeiten der Startseite heraus, ist die Analyse-Seite von
+     der Startseite aus unerreichbar — genau das soll hier auffallen. */
+  if (await existiert(join(ZIEL, 'index.html'))) {
+    const start = await readFile(join(ZIEL, 'index.html'), 'utf8');
+    if (!/(?:href|action)="\/website-analyse\/"/.test(start))
+      F('index.html: kein Einstieg zur Website-Analyse (/website-analyse/) gefunden');
   }
 
   /* --- verwaiste Schriften --- */

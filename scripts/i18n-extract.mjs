@@ -1,13 +1,14 @@
-/* Liest alle uebersetzbaren Zeichenketten aus site/index.html und schreibt
-   sie als Geruest nach site/i18n/en.json. Bereits vorhandene Uebersetzungen
-   bleiben erhalten, neue kommen mit leerem Wert dazu. */
+/* Liest alle uebersetzbaren Zeichenketten aus den Quellen der Sprachpaare
+   (siehe scripts/seiten.mjs) und schreibt sie als Geruest nach
+   site/i18n/en.json. Bereits vorhandene Uebersetzungen bleiben erhalten,
+   neue kommen mit leerem Wert dazu. */
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { lieseStrings } from './i18n.mjs';
+import { SPRACHPAARE } from './seiten.mjs';
 
 const W = fileURLToPath(new URL('..', import.meta.url));
-const html = await readFile(join(W, 'site', 'index.html'), 'utf8');
 
 /* Textknoten und Attribute holt lieseStrings. Das JSON-LD steckt in einem
    <script>, das der Zerleger bewusst nicht anfasst — seine Beschreibungen
@@ -28,7 +29,16 @@ function ldStrings(quelle) {
   return raus;
 }
 
-const strings = [...new Set([...lieseStrings(html), ...ldStrings(html)])];
+const strings = [];
+const gesehen = new Set();
+for (const paar of SPRACHPAARE) {
+  const html = await readFile(join(W, 'site', paar.quelle), 'utf8');
+  for (const s of [...lieseStrings(html), ...ldStrings(html)]) {
+    if (gesehen.has(s)) continue;
+    gesehen.add(s);
+    strings.push(s);
+  }
+}
 
 let alt = {};
 try { alt = JSON.parse(await readFile(join(W, 'site', 'i18n', 'en.json'), 'utf8')); } catch {}
