@@ -789,3 +789,78 @@ Erwartung: **keine Ausgabe** (Exit 1). Jeder Treffer wird entfernt oder in einen
 - **Arbeitsumgebung:** `knowledge/` (Research-Rohmaterial) bleibt unversioniert, lokal über `.git/info/exclude` ausgenommen (Muster aus Slice-1-Korrekturrunde).
 - **Offen für Review:** O-6 (EN-Slugs), O-7 (Stufenbenennung), O-8 (Status-Wortlaut) + die zwei Beobachtungen oben.
 - **Nächster Slice:** 3 — erste research-freigegebene Inhalte; erst nach externer Freigabe. Indexierung, Sitemap, llms.txt und Startseiten-Navigation bleiben bis dahin unangetastet.
+
+## 8. Repair Slice 2.1 — Wissens-IA und UX schärfen (implementiert 2026-08-31)
+
+Bounded Repair nach menschlichem Review von Slice 2. Kein neuer Inhalt, keine
+Freigabe, kein Slice 3 — nur Informationsarchitektur, Wortlaut und Kartenoptik.
+
+### Entscheidungen (beschlossen im Review, hier umgesetzt)
+
+1. **Analyse-Hero:** „von einer KI-Übersicht beraten" ersetzt durch den
+   freigegebenen Wortlaut (KI-generierte Übersichten in den Suchergebnissen,
+   digitale Assistenten, die Informationen zusammenstellen). Wortlaut-Gate in
+   `verify.mjs` verankert.
+2. **Wissen ist kein Lernpfad:** Der Bereich ist ein zusammenhängendes
+   Themensystem mit gleichwertigen Einstiegen. Entfernt: „Lernpfad",
+   „fünf Schritte", die 01–05-Leiter, „Schritt N von 5"-Kicker und die
+   1→2→3→4→5→1-Weiterlesen-Kette. Kurs-Wortlaut-Gates (DE + EN) in
+   `verify.mjs` verankert, Canary rot gesehen.
+3. **Hub:** H1 „Wie KI die Sichtbarkeit von Websites verändert"; EIN
+   Themenraster (`.wk-grid`) statt Leiter + Kartenliste. Fünf Karten mit
+   Kategorie-Etikett (Auffindbarkeit, Maschinelle Lesbarkeit,
+   Antwortfähigkeit, Identität & Vertrauen, Nutzbarkeit) und
+   frage-orientiertem Titel. URLs unverändert.
+4. **Kartenkomponente `.wk`:** borgt die Formensprache der Leistungskarten
+   (Kante, Radius, kreisrunde Pfeilmarkierung, tone--weiss/--blau im
+   Wechsel), bewusst OHNE Vorhang-Interaktion — editorial, nicht buchbar.
+   Ganze Karte als Link (aufgespanntes ::after), Fokusring um die Karte,
+   Titel ohne Unterstreichung, 3/2/1 Spalten (1060/720px), Hover = leichtes
+   Anheben + Pfeildrehung, reduced-motion über den globalen Block abgedeckt.
+5. **Kind-Seiten:** Kicker „Wissen · <Kategorie>"; „Verwandte Themen" mit
+   kontextueller Zuordnung (SEO→Lesen+Identität · Lesen→Antwort+Nutzbarkeit ·
+   Antwort→Lesen+Identität · Identität→SEO+Antwort · Nutzbarkeit→Lesen+Antwort)
+   plus stiller Textlink „Alle Themen im Überblick" → /wissen/.
+6. **Analyse-CTA je Thema:** themenspezifische Leitfrage als H2, einheitlicher
+   Stützsatz („prüft diese Frage an Ihrer eigenen Website …"), CTA-Label
+   „Eigene Website analysieren". Keine Problembehauptung über die Website
+   des Besuchers.
+7. **Services vs. Wissen:** Startseiten-Leistungskarten unangetastet
+   (`site/index.html` byte-identisch zu e8fa99d, per git diff belegt).
+   Semantik: Services = Nutzen/Umsetzung/Angebot, Wissen =
+   Frage/Erklärung/Verständnis.
+8. **Kiezbot eingefroren:** Prototyp, Szene 1 und alle `.kiezbot-*`/`.kb-*`-
+   Deklarationen unverändert (Diff-Beweis gegen e8fa99d). Der Prototyp ist
+   damit NICHT als finales Design akzeptiert — eigener Visual-Review folgt.
+
+### Aufgeschobener Vertrag: Startseiten-Integration des Wissensbereichs
+
+Gilt erst, NACHDEM die Wissensinhalte fachlich freigegeben und indexierbar
+sind. Bis dahin: kein Startseiten-, Navigations- oder Footer-Link auf
+/wissen/; noindex-, Sitemap- und llms.txt-Gates bleiben aktiv.
+
+1. **Einfügepunkt:** kompakter Wissens-Teaser NACH `#ausgangslage` und VOR
+   `#leistungen`. Begründung: erst das veränderte Problemfeld sehen, es
+   optional vertiefen können, dann die kommerzielle Leistungsschicht.
+2. **Teaser-Inhalt:** NICHT alle fünf Themen spiegeln. Drei edukative
+   Beispielfragen, z. B.: Was sehen KI-Systeme, wenn sie eine Website lesen?
+   · Kann eine Website konkrete Kundenfragen klar beantworten? · Können
+   Systeme ein Unternehmen eindeutig zuordnen?
+3. **Ein Link:** „Zum Wissensbereich" → /wissen/.
+4. **Rollenverteilung:** Das Analyse-Band bleibt die stärkere, unmittelbare
+   Conversion-Option; der Teaser ist Vertiefung, kein Konkurrenz-CTA.
+5. **Footer:** Bei Freigabe zusätzlich ein zurückhaltender Footer-Link
+   „Wissen" auf den veröffentlichten Seiten.
+6. **Navigation:** KEIN neunter nummerierter Hauptnavigationspunkt allein
+   für den Hub — nur falls ein späterer Navigations-Review ihn rechtfertigt.
+
+### Gates (Slice 2.1)
+
+- verify.mjs: Floskel-Gate + Kurs-Framing-Gates (DE: Lernpfad/fünf
+  Schritte/Schritt-N-von-5/01–05-Etiketten · EN: learning path/five
+  steps/step N of 5) — per Canary gegen den alten dist/ rot gesehen
+  (31 Treffer), nach dem Umbau grün.
+- dist-Beweise: Floskel 0 (DE+EN) · Kurs-Framing 0 (DE+EN) · 12 × noindex ·
+  sitemap/llms 0 Wissens-Treffer · Startseiten DE+EN 0 Entwurfs-Links ·
+  `site/index.html` byte-identisch · Kiezbot-Diff 0 Treffer ·
+  Claim-Audit-Grep über site/wissen/ 0 Treffer.

@@ -127,6 +127,24 @@ async function verify() {
           F(`${seite}: robots="${m[1]}" erlaubt Indexierung — Entwurfsstatus verletzt`);
       }
     }
+    /* --- Wissensbereich: Themennetz, kein Kurs (Slice 2.1) ---
+       Der Bereich ist als zusammenhaengendes Themensystem beschlossen, nicht
+       als sequenzieller Lernpfad. Kurs-Wortlaut kaeme bei einer Ueberarbeitung
+       leicht zurueck — deshalb hier gegen dist/ verankert. */
+    if (eintrag.noindex) {
+      const kursMuster = eintrag.lang === 'en'
+        ? [/learning path/i, /five steps/i, /step \d of 5/i]
+        : [/Lernpfad/, /fünf Schritte/, /Schritt \d von 5/,
+           /01 · Finden/, /02 · Lesen/, /03 · Antworten/, /04 · Erkennen/, /05 · Handeln/];
+      for (const m of kursMuster) {
+        if (m.test(html))
+          F(`${seite}: Kurs-Framing /${m.source}/ — Wissensbereich ist ein Themennetz, kein Lernpfad`);
+      }
+    }
+    /* Analyse-Seite: eine Uebersicht beraet niemanden — die Floskel ist
+       durch den freigegebenen Wortlaut ersetzt und darf nicht zurueckkehren. */
+    if (seite === 'website-analyse/index.html' && html.includes('von einer KI-Übersicht beraten'))
+      F(`${seite}: Floskel "von einer KI-Übersicht beraten" — ersetzt durch den freigegebenen Wortlaut (Slice 2.1)`);
     if (eintrag.paar) {
       const pfadDe = eintrag.lang === 'de' ? eintrag.kanonisch : eintrag.paar.partner;
       const pfadEn = eintrag.lang === 'en' ? eintrag.kanonisch : eintrag.paar.partner;
