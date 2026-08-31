@@ -53,6 +53,152 @@ const regexEscape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 async function existiert(p) { try { await stat(p); return true; } catch { return false; } }
 
+/* -------------------------------------------------------------------------
+   Kleiner Regel-Leser fuer eingebettetes CSS. Liefert Selektor,
+   Deklarationen und die umschliessenden At-Regeln jeder Stilregel.
+   Zeichenketten werden uebersprungen, damit eine geschweifte Klammer darin
+   die Zaehlung nicht verschiebt.
+
+   Die Bedingungen mitzufuehren ist kein Beiwerk: eine Regel, die nur unter
+   @media (prefers-reduced-motion) sichtbar macht, sieht sonst aus wie eine
+   Grundregel — und waere doch keine.
+
+   Kein Parser fuer alle Faelle — genug fuer die eine Frage unten, und ohne
+   neue Abhaengigkeit.
+   ------------------------------------------------------------------------- */
+function stilRegeln(quelle) {
+  // Kommentare zuerst weg: im ausgelieferten CSS gibt es keine, aber ein
+  // Kommentar unmittelbar vor einer Regel wuerde sonst Teil des Selektors.
+  const css = quelle.replace(/\/\*[\s\S]*?\*\//g, ' ');
+  const raus = [];
+  const stapel = [];                 // {at:true,kopf} fuer At-Regeln, {at:false} sonst
+  let i = 0, kopf = 0;
+  while (i < css.length) {
+    const c = css[i];
+    if (c === '"' || c === "'") {
+      const q = c; i++;
+      while (i < css.length && css[i] !== q) { i += css[i] === '\\' ? 2 : 1; }
+      i++; continue;
+    }
+    if (c === '{') {
+      const k = css.slice(kopf, i).trim();
+      const istAt = k.startsWith('@');
+      if (!istAt) {
+        raus.push({
+          selektor: k, start: i + 1, dekl: undefined,
+          bedingungen: stapel.filter((s) => s.at).map((s) => s.kopf),
+        });
+      }
+      stapel.push({ at: istAt, kopf: k });
+      i++; kopf = i; continue;
+    }
+    if (c === '}') {
+      const zu = stapel.pop();
+      if (zu && zu.at === false) {
+        for (let n = raus.length - 1; n >= 0; n--) {
+          if (raus[n].dekl === undefined) { raus[n].dekl = css.slice(raus[n].start, i); break; }
+        }
+      }
+      i++; kopf = i; continue;
+    }
+    i++;
+  }
+  return raus.filter((r) => r.dekl !== undefined);
+}
+
+/* -------------------------------------------------------------------------
+   PXK-23: Das Einblenden beim Scrollen darf Inhalt nicht zur Geisel nehmen.
+
+   Geprueft wird die Architektur, nicht die Optik — kein Suchen nach einer
+   bestimmten Zeichenkette, sondern vier Aussagen ueber das ausgelieferte
+   Dokument, die zusammen "ohne JavaScript sichtbar" ergeben:
+
+     1. Keine Regel versteckt [data-reveal] — oder irgendetwas, dessen
+        Sichtbarkeit an der Skript-Klasse .in haengt —, ohne unter dem
+        Merkmal data-reveal-anim zu stehen.
+     2. Es gibt eine Grundregel ohne dieses Merkmal, die sichtbar macht —
+        und zwar bedingungslos, nicht erst unter einer Media Query. Nur
+        unter prefers-reduced-motion sichtbar zu sein hilft dem Besucher
+        ohne JavaScript nicht.
+     3. Irgendein Skript der Seite setzt das Merkmal — und irgendeines nimmt
+        es wieder zurueck. Ohne das Zuruecknehmen bliebe ein Fehlschlag des
+        Hauptskripts als leere Seite stehen.
+     4. Gesetzt wird es im <head>. Weiter hinten waere die Seite bereits
+        gemalt und der fertige Inhalt blitzte auf, bevor er sich versteckt.
+
+   Faellt eine davon, kann eine Seite wieder leer ausgeliefert werden.
+   ------------------------------------------------------------------------- */
+const MERKMAL = 'data-reveal-anim';
+const REVEAL_SEL = /\[data-reveal\](?![-\w])/;
+
+function pruefeReveal(seite, html, skripte) {
+  const css = [...html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((m) => m[1]).join('\n');
+  const alle = stilRegeln(css);
+  const regeln = alle.filter((r) => REVEAL_SEL.test(r.selektor));
+  if (!regeln.length) return;                       // Seite kennt kein Reveal
+
+  const verbirgt = (d) =>
+    /(?:^|;)\s*opacity\s*:\s*(?:0|0?\.0+)\s*(?:!important)?\s*(?:;|$)/.test(d) ||
+    /(?:^|;)\s*visibility\s*:\s*hidden/.test(d) ||
+    /(?:^|;)\s*display\s*:\s*none/.test(d);
+  const zeigt = (d) => /(?:^|;)\s*opacity\s*:\s*(?:1|100%)/.test(d);
+  const gedeckt = (sel) => sel.includes(`[${MERKMAL}]`);
+
+  /* Dieselbe Frage fuer den Rest der Reveal-Familie. Die Klasse .in vergibt
+     ausschliesslich das Reveal-Skript; wer seine Sichtbarkeit daran haengt,
+     ist ohne Skript unsichtbar, auch wenn er kein data-reveal traegt. Genau
+     so verschwanden die Merkmale der Preiskarten.
+
+     Verglichen wird von rechts, Kompaktselektor fuer Kompaktselektor: der
+     versteckende Selektor muss im .in-Selektor (ohne .in gelesen) enthalten
+     sein. `.pack ul li` steckt so in `.pack.in ul li`, `.pack__badge` in
+     `.pack.in .pack__badge`. */
+  const ohneIn = (s) => s.replace(/\.in(?![-\w])/g, '').replace(/\s+/g, ' ').trim();
+  const teile = (s) => ohneIn(s).split(/\s+/).filter(Boolean);
+  const stecktIn = (versteck, kandidat) => {
+    const a = teile(versteck), b = teile(kandidat);
+    if (!a.length || a.length > b.length) return false;
+    for (let n = 1; n <= a.length; n++) {
+      const av = a[a.length - n], bv = b[b.length - n];
+      const stuecke = av.match(/[.#[][^.#[\s]*|^[a-z]+/g) || [av];
+      if (!stuecke.every((t) => bv.includes(t))) return false;
+    }
+    return true;
+  };
+  const mitIn = alle.filter((r) => /\.in(?![-\w])/.test(r.selektor));
+  const anIn = alle.filter((r) => !r.bedingungen.length && !gedeckt(r.selektor)
+    && verbirgt(r.dekl) && mitIn.some((k) => stecktIn(r.selektor, k.selektor)));
+  if (anIn.length)
+    F(`${seite}: ${anIn.length} Regel(n) verstecken unbedingt, obwohl ihre Sichtbarkeit an der Skript-Klasse .in haengt — ohne JavaScript bliebe das unsichtbar: ${anIn.map((r) => r.selektor).slice(0, 4).join(' · ')}`);
+
+  const offen = regeln.filter((r) => verbirgt(r.dekl) && !gedeckt(r.selektor));
+  if (offen.length)
+    F(`${seite}: [data-reveal] wird ohne ${MERKMAL} versteckt — ohne JavaScript bliebe der Inhalt unsichtbar (${offen[0].selektor})`);
+
+  if (!regeln.some((r) => !gedeckt(r.selektor) && zeigt(r.dekl) && !r.bedingungen.length))
+    F(`${seite}: keine bedingungslose Grundregel, die [data-reveal] ohne ${MERKMAL} sichtbar macht`);
+
+  if (!regeln.some((r) => gedeckt(r.selektor))) return;   // kein Vorzustand, nichts weiter zu decken
+
+  const setzt = (c) => new RegExp(`setAttribute\\(\\s*["']${MERKMAL}["']`).test(c);
+  const nimmtZurueck = (c) => new RegExp(`removeAttribute\\(\\s*["']${MERKMAL}["']`).test(c);
+  const code = skripte.join('\n');
+  /* Setzt die Seite das Merkmal gar nicht, kann sie auch nichts verstecken —
+     das ist der Zustand von Impressum und Datenschutz, die das gemeinsame
+     CSS mitbekommen, aber kein Skript tragen. Fail-open ist dort ohne
+     weiteres Zutun erfuellt. Ab hier geht es nur noch um Seiten, die den
+     Vorzustand tatsaechlich aufspannen. */
+  if (!setzt(code)) return;
+  if (!nimmtZurueck(code))
+    F(`${seite}: ${MERKMAL} wird von keinem Skript zurueckgenommen — ein Fehlschlag bliebe als leere Seite stehen`);
+
+  const kopfEnde = html.search(/<\/head>/i);
+  const kopfSkripte = [...html.slice(0, kopfEnde === -1 ? 0 : kopfEnde)
+    .matchAll(/<script(?![^>]*\bsrc=)(?![^>]*application\/ld\+json)[^>]*>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
+  if (!kopfSkripte.some(setzt))
+    F(`${seite}: ${MERKMAL} wird erst nach dem <head> gesetzt — der fertige Inhalt blitzte auf, bevor er sich versteckt`);
+}
+
 async function verify() {
   console.log('\n\x1b[1mAbnahme dist/\x1b[0m');
   console.log('─'.repeat(70));
@@ -99,6 +245,9 @@ async function verify() {
       if (/<\/?script/i.test(code)) F(`${seite}: Skript-Tag im Skriptinhalt`);
     }
     if (seite === 'index.html' && !skripte.length) F('index.html: kein eingebettetes Skript');
+
+    /* --- Reveal bleibt fail-open (PXK-23) --- */
+    pruefeReveal(seite, html, skripte.map(([, c]) => c));
 
     /* --- JSON-LD --- */
     for (const m of html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)) {

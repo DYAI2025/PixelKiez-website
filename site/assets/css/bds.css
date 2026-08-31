@@ -744,7 +744,9 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
 .pv__svg{width:100%;height:auto;overflow:visible}
 .pv__noise{fill:var(--ink);opacity:.28}
 .pv__rule{stroke:var(--ink);stroke-width:1.5;opacity:.55}
-.pv__c{opacity:0;transform:scale(.4);transform-origin:center;transform-box:fill-box}
+.pv__c{transform-origin:center;transform-box:fill-box}
+/* Vorzustand nur, wenn das Skript ihn auch wieder aufloesen kann — PXK-23. */
+:root[data-reveal-anim] .pv__c{opacity:0;transform:scale(.4)}
 .pv__c--w{fill:#FFFFFF}
 .pv__c--k{fill:#0E1413}
 .pv__c--o{fill:#EC5D43}
@@ -823,8 +825,9 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
 .weg__raster i{
   aspect-ratio:1;border-radius:2px;
   background:color-mix(in srgb,var(--ink) 12%,transparent);
-  opacity:0;transform:scale(.4);
 }
+/* Vorzustand nur, wenn das Skript ihn auch wieder aufloesen kann — PXK-23. */
+:root[data-reveal-anim] .weg__raster i{opacity:0;transform:scale(.4)}
 .weg__raster i.on{background:var(--ink)}
 .weg__st.in .weg__raster i{
   animation:wegZelle 420ms var(--ease) forwards;
@@ -1296,7 +1299,10 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
 
 /* Die Merkmale kommen einzeln, nicht als Block. 45ms Abstand: genug, dass man
    die Reihenfolge wahrnimmt, zu wenig, um darauf zu warten. */
-.pack ul li{opacity:0;transform:translate3d(-6px,0,0)}
+/* Vorzustand nur, wenn das Skript ihn auch wieder aufloesen kann — PXK-23.
+   Hier haengt Geschaeftsinhalt daran: ohne die Bindung standen die Merkmale
+   der Preiskarten ohne JavaScript dauerhaft auf opacity:0. */
+:root[data-reveal-anim] .pack ul li{opacity:0;transform:translate3d(-6px,0,0)}
 .pack.in ul li{animation:packMerkmal 380ms var(--ease) forwards}
 .pack.in ul li:nth-child(1){animation-delay:240ms}
 .pack.in ul li:nth-child(2){animation-delay:285ms}
@@ -1306,7 +1312,9 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
 
 /* Das Schild kommt zuletzt und aus 0.8 — nicht aus dem Nichts, sondern aus
    etwas, das schon da war. */
-.pack__badge{opacity:0;transform:translateY(-50%) scale(.8)}
+/* Vorzustand nur, wenn das Skript ihn auch wieder aufloesen kann — PXK-23.
+   Das Schild nennt die empfohlene Karte; ohne JavaScript blieb es weg. */
+:root[data-reveal-anim] .pack__badge{opacity:0;transform:translateY(-50%) scale(.8)}
 .pack.in .pack__badge{
   animation:packSchild 320ms var(--ease) 520ms forwards;
 }
@@ -1369,11 +1377,12 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
   position:absolute;
   width:var(--punkt);height:var(--punkt);border-radius:50%;
   background:var(--paper);border:1px solid var(--line-strong);
-  transform:scale(.35);opacity:0;
   transition:transform 420ms var(--ease),opacity 300ms var(--ease),
              background-color 240ms var(--ease),border-color 240ms var(--ease);
   transition-delay:calc(var(--i) * 130ms);
 }
+/* Vorzustand nur, wenn das Skript ihn auch wieder aufloesen kann — PXK-23. */
+:root[data-reveal-anim] .lauf__punkt{transform:scale(.35);opacity:0}
 .lauf__st.in .lauf__punkt{transform:scale(1);opacity:1}
 /* Der letzte Schritt ist optional — hohl statt gefuellt, damit man sieht,
    dass der Weg auch vorher enden darf. */
@@ -1866,9 +1875,22 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
    es nicht: kuerzere Dauer bei gleicher Strecke sieht nach nichts aus. Etwas
    mehr Weg in weniger Zeit liest sich als Zug, nicht als Hast.
 
-   Die Staffelung (--d, 55ms je Element) bleibt, wie sie war. */
-[data-reveal]{opacity:0;transform:translate3d(0,18px,0)}
-[data-reveal].in{
+   Die Staffelung (--d, 55ms je Element) bleibt, wie sie war.
+
+   Die Richtung der Abhaengigkeit ist dabei umgedreht (PXK-23). Vorher galt
+   der Vorzustand — unsichtbar, 18 Punkte tiefer — unbedingt, und erst das
+   Skript holte den Inhalt mit .in wieder hervor. Lief das Skript nicht,
+   blieb die Seite leer: Text im Quelltext, nichts auf dem Schirm. Damit
+   haengt Lesbarkeit an einer Animation, und das ist die falsche Richtung.
+
+   Jetzt ist sichtbar der Grundzustand. Der Vorzustand gilt nur, solange
+   das Dokument selbst data-reveal-anim traegt — ein Merkmal, das kein
+   Markup mitbringt, sondern allein das Skript setzt (Vorlauf im <head>,
+   siehe scripts/build.mjs) und bei jedem Fehlschlag wieder abraeumt.
+   Kein Skript, kein Merkmal, kein Verstecken. */
+[data-reveal]{opacity:1;transform:none}
+:root[data-reveal-anim] [data-reveal]{opacity:0;transform:translate3d(0,18px,0)}
+:root[data-reveal-anim] [data-reveal].in{
   opacity:1;transform:none;
   transition:opacity 420ms var(--ease),transform 420ms var(--ease);
   transition-delay:var(--d,0ms);

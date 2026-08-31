@@ -60,6 +60,47 @@ const log = (...a) => console.log(...a);
 const DOMAIN = 'https://pixelkiez.de';
 
 /* -------------------------------------------------------------------------
+   Vorlauf fuer das Einblenden beim Scrollen (PXK-23).
+
+   Der Inhalt ist im CSS unbedingt sichtbar. Versteckt wird nur, solange das
+   <html>-Element data-reveal-anim traegt, und dieses Merkmal bringt kein
+   Markup mit — es entsteht ausschliesslich hier, im Browser, aus laufendem
+   JavaScript. Laeuft keines, gibt es nichts zu verstecken: die Seite steht
+   da, ohne Bewegung, aber vollstaendig.
+
+   Warum im <head> und nicht in bds.js: bds.js steht als letztes vor
+   </body>. Bis dorthin hat der Browser den sichtbaren Teil der Seite laengst
+   gemalt. Wuerde erst dort versteckt, saehe man den fertigen Inhalt kurz und
+   danach verschwaende er wieder, um eingeblendet zu werden — schlechter als
+   gar keine Animation. Der Vorzustand muss vor dem ersten Bild stehen.
+
+   Drei Wege fuehren hier zurueck zu sichtbar, und alle drei brauchen es:
+   fehlender IntersectionObserver und reduzierte Bewegung heben das Merkmal
+   gar nicht erst; und wer es setzt, muss es auch wieder abraeumen koennen,
+   falls bds.js danach nicht ankommt (blockiert, Ausnahme, Syntaxfehler).
+   Dafuer steht der Rueckfall auf DOMContentLoaded — kein willkuerlicher
+   Zeitgeber, sondern der Punkt, an dem feststeht, dass jedes Skript des
+   Dokuments seine Gelegenheit hatte. Bis dahin ist "bereit" gesetzt; wer
+   den Zustand uebernimmt, schreibt "an" darueber (siehe bds.js, Abschnitt
+   2) und schuetzt ihn damit vor dem Rueckfall.
+   ------------------------------------------------------------------------- */
+const REVEAL_VORLAUF = '<script>' + [
+  '(function(){var d=document.documentElement;try{',
+  'if(!("IntersectionObserver" in window))return;',
+  'if(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches)return;',
+  'd.setAttribute("data-reveal-anim","bereit");',
+  'document.addEventListener("DOMContentLoaded",function(){',
+  'if(d.getAttribute("data-reveal-anim")==="bereit")d.removeAttribute("data-reveal-anim");',
+  '});}catch(e){d.removeAttribute("data-reveal-anim");}})();',
+].join('') + '</script>';
+
+/* Nur Seiten, die bds.js mitbringen, duerfen den Vorzustand ueberhaupt
+   aufspannen. Auf Impressum und Datenschutz laeuft kein Skript; dort waere
+   ein Merkmal, das niemand zuruecknimmt, genau der Fehler, den PXK-23
+   behebt. */
+const SKRIPT_TAG = '<script src="assets/js/bds.js" defer></script>';
+
+/* -------------------------------------------------------------------------
    Bildverweise mit VOLLSTAENDIGER Adresse auf den gehashten Namen ziehen.
 
    Die Umschreibung weiter unten fasst nur href-, src- und content-Attribute
@@ -209,8 +250,9 @@ async function baueEnglisch(paar, mittel) {
   });
 
   /* --- Mittel einbetten, wie bei der deutschen Fassung --- */
+  const hatSkript = html.includes(SKRIPT_TAG);
   const linkMuster = /[ \t]*<link rel="stylesheet" href="assets\/css\/fonts\.css">\s*\n[ \t]*<link rel="stylesheet" href="assets\/css\/bds\.css">/;
-  html = html.replace(linkMuster, () => `<style>${cssMin}</style>`);
+  html = html.replace(linkMuster, () => `<style>${cssMin}</style>` + (hatSkript ? REVEAL_VORLAUF : ''));
   html = html.replace(/href="assets\/fonts\/([^"]+\.woff2)"/g, (m, datei) => {
     const neu = fontKarte.get(datei);
     if (!neu) throw new Error(`${paar.zielEn}: Vorladehinweis auf unbekannte Schrift ${datei}`);
@@ -223,7 +265,7 @@ async function baueEnglisch(paar, mittel) {
     return `${attr}="${ziel}"`;
   });
   html = absoluteBilder(html, bildKarte, paar.zielEn);
-  html = html.replace('<script src="assets/js/bds.js" defer></script>', () => `<script>${jsEn}</script>`);
+  html = html.replace(SKRIPT_TAG, () => `<script>${jsEn}</script>`);
 
   html = await minifyHtml(html, HTML_OPTIONEN);
   pruefe(paar.zielEn, html, jsEn);
@@ -489,13 +531,16 @@ async function build() {
 
     /* 4a. Beide Stylesheet-Verweise durch einen <style>-Block ersetzen.
            fonts.css steht zuerst — die Reihenfolge bleibt erhalten, weil
-           beim Zusammenlegen genauso vorgegangen wurde. */
+           beim Zusammenlegen genauso vorgegangen wurde. Direkt dahinter,
+           noch im <head>, der Reveal-Vorlauf — aber nur auf Seiten, die
+           bds.js auch mitbringen (siehe REVEAL_VORLAUF). */
+    const hatSkript = html.includes(SKRIPT_TAG);
     const linkMuster = /[ \t]*<link rel="stylesheet" href="assets\/css\/fonts\.css">\s*\n[ \t]*<link rel="stylesheet" href="assets\/css\/bds\.css">/;
     if (!linkMuster.test(html)) throw new Error(`${seite}: Stylesheet-Verweise nicht gefunden`);
     // Ersetzungs-FUNKTION, nicht -Zeichenkette: in einer Ersetzungszeichenkette
     // sind $&, $', $`, $1..$9 Sonderfolgen. Minifiziertes CSS/JS enthaelt sie
     // ohne weiteres — $&& entsteht schon aus einer Variablen namens $.
-    html = html.replace(linkMuster, () => `<style>${cssMin}</style>`);
+    html = html.replace(linkMuster, () => `<style>${cssMin}</style>` + (hatSkript ? REVEAL_VORLAUF : ''));
 
     /* 4b. Schrift-Vorladehinweise auf die gehashten Namen ziehen, ebenfalls
            wurzelabsolut — siehe Begruendung beim CSS. */
@@ -518,8 +563,8 @@ async function build() {
     html = absoluteBilder(html, bildKarte, seite);
 
     /* 4c. Skript einbetten, an genau derselben Stelle */
-    if (html.includes('<script src="assets/js/bds.js" defer></script>')) {
-      html = html.replace('<script src="assets/js/bds.js" defer></script>', () => `<script>${jsMin}</script>`);
+    if (hatSkript) {
+      html = html.replace(SKRIPT_TAG, () => `<script>${jsMin}</script>`);
     } else if (seite === 'index.html') {
       throw new Error('index.html: Skriptverweis nicht gefunden');
     }
