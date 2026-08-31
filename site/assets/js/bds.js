@@ -128,29 +128,58 @@
     });
   }
 
-  /* --- 2. Reveal beim Scrollen ------------------------------------------ */
-  var reveals = $$('[data-reveal]');
-  if (reduced || !('IntersectionObserver' in window)) {
-    reveals.forEach(function (el) { el.classList.add('in'); });
-  } else {
-    var ro = new IntersectionObserver(function (entries) {
-      entries.forEach(function (e) {
-        if (!e.isIntersecting) return;
-        e.target.classList.add('in');
-        ro.unobserve(e.target);
+  /* --- 2. Reveal beim Scrollen ------------------------------------------
+     Sichtbarkeit ist der Grundzustand, Bewegung die Zutat. Das Verstecken
+     vor dem Einblenden haengt allein am Merkmal data-reveal-anim auf dem
+     <html>-Element; gesetzt wird es vom Vorlauf im <head> (siehe
+     scripts/build.mjs), damit der Vorzustand steht, bevor das erste Bild
+     gemalt ist — sonst blitzte der fertige Inhalt kurz auf und verschwaende
+     wieder.
+
+     Der Vorlauf setzt es auf "bereit" und nimmt es zu DOMContentLoaded
+     selbst zurueck, falls sich bis dahin niemand darum gekuemmert hat. Hier
+     wird es entweder bestaetigt — und dann erst, wenn der Beobachter
+     wirklich steht — oder abgeraeumt. Abgeraeumt heisst sichtbar. Jeder
+     Weg, auf dem dieser Block nicht bis zum Ende kommt, endet also bei
+     sichtbarem Inhalt und nicht bei einer leeren Seite. */
+  var wurzel = document.documentElement;
+  (function reveal() {
+    var reveals = $$('[data-reveal]');
+    // Aufgeben heisst: Vorzustand weg, alles auf Endstand. Die Klasse .in
+    // bleibt dabei wichtig — an ihr haengen auch Nachbarwirkungen wie
+    // .pack.in oder .weg__st.in, die sonst ausfielen.
+    var aufgeben = function () {
+      wurzel.removeAttribute('data-reveal-anim');
+      reveals.forEach(function (el) { el.classList.add('in'); });
+    };
+
+    if (!wurzel.hasAttribute('data-reveal-anim') || reduced
+        || !('IntersectionObserver' in window)) { aufgeben(); return; }
+
+    try {
+      var ro = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (!e.isIntersecting) return;
+          e.target.classList.add('in');
+          ro.unobserve(e.target);
+        });
+      }, { rootMargin: '0px 0px -8% 0px', threshold: 0.06 });
+      reveals.forEach(function (el, i) {
+        /* Elemente mit eigener Ordnungszahl (--i, etwa die Schritte der
+           Zeitleiste) bestimmen ihre Reihenfolge selbst. Ohne das haenge die
+           Staffelung an der Dokumentposition modulo sechs — fuenf nebeneinander
+           stehende Schritte koennten dann in der Reihenfolge 4,5,1,2,3
+           erscheinen, also sichtbar durcheinander. */
+        var eigen = el.style.getPropertyValue('--i');
+        el.style.setProperty('--d', (eigen === '' ? i % 6 : +eigen) * 55 + 'ms');
+        ro.observe(el);
       });
-    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.06 });
-    reveals.forEach(function (el, i) {
-      /* Elemente mit eigener Ordnungszahl (--i, etwa die Schritte der
-         Zeitleiste) bestimmen ihre Reihenfolge selbst. Ohne das haenge die
-         Staffelung an der Dokumentposition modulo sechs — fuenf nebeneinander
-         stehende Schritte koennten dann in der Reihenfolge 4,5,1,2,3
-         erscheinen, also sichtbar durcheinander. */
-      var eigen = el.style.getPropertyValue('--i');
-      el.style.setProperty('--d', (eigen === '' ? i % 6 : +eigen) * 55 + 'ms');
-      ro.observe(el);
-    });
-  }
+      // Zuletzt: erst jetzt ist das Verstecken gedeckt.
+      wurzel.setAttribute('data-reveal-anim', 'an');
+    } catch (e) {
+      aufgeben();
+    }
+  })();
 
   /* --- 3. Rotierende Headline (Portierung animated-hero.tsx) ------------
      Vorlage: setTimeout 2000 ms, Index laeuft zyklisch; bereits gezeigte
