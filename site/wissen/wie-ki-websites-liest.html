@@ -129,11 +129,11 @@
       <li data-reveal>
         <b>Zweck 3</b>
         <h3 class="h-sm">Abruf im Auftrag eines Nutzers</h3>
-        <p class="small">Der dritte Fall sammelt nichts auf Vorrat: Jemand stellt gerade eine Frage, und das System holt sich dafür eine bestimmte Seite. Anthropic beschreibt Claude-User so — wenn Menschen Claude etwas fragen, kann Claude über diesen Agenten Websites aufrufen. Perplexity beschreibt Perplexity-User entsprechend und hält dazu ausdrücklich fest, dass dieser Abrufer robots.txt in der Regel ignoriert, weil ein Nutzer den Abruf ausgelöst hat.</p>
+        <p class="small">Beim dritten Fall steht der unmittelbare Nutzerabruf im Vordergrund: Ein Mensch stellt eine Frage, und der Anbieter kann dafür gezielt Webinhalte abrufen. Anthropic beschreibt Claude-User so — wenn Menschen Claude etwas fragen, kann Claude über diesen Agenten Websites aufrufen. Perplexity beschreibt Perplexity-User entsprechend und hält dazu ausdrücklich fest, dass dieser Abrufer robots.txt in der Regel ignoriert, weil ein Nutzer den Abruf ausgelöst hat. Daraus folgt keine allgemeine Aussage darüber, wie Anbieter solche Abrufe anschließend speichern oder weiterverarbeiten.</p>
       </li>
     </ul>
 
-    <p class="prose" style="margin-top:clamp(26px,3.5vw,44px)" data-reveal>Gesteuert wird das meiste davon über eine einzige Datei im Wurzelverzeichnis: robots.txt. Anthropic schreibt, die eigenen Bots hielten sich an die branchenüblichen Angaben darin. Der eben genannte nutzerausgelöste Abruf bei Perplexity ist die dokumentierte Ausnahme davon — und ein guter Grund, robots.txt als Steuerung zu verstehen und nicht als Schloss.</p>
+    <p class="prose" style="margin-top:clamp(26px,3.5vw,44px)" data-reveal>Für viele automatisierte Crawler ist eine einzige Datei im Wurzelverzeichnis das zentrale Steuerungsmittel: robots.txt. Anthropic schreibt, die eigenen Bots hielten sich an die branchenüblichen Angaben darin. Wie sich nutzerausgelöste Abrufe verhalten, hängt dagegen vom Anbieter und von der Zugriffsart ab: Perplexity hält für Perplexity-User ausdrücklich fest, dass dieser Abrufer robots.txt bei nutzerangeforderten Abrufen in der Regel ignoriert. Robots.txt ist damit eine Steuerung und kein Schloss.</p>
 
     <p class="prose" data-reveal>Ein häufiges Missverständnis gehört gleich hierher: <strong>Google-Extended ist kein eigener Bot.</strong> Googles Crawler-Dokumentation hält fest, dass Google-Extended keine eigene User-Agent-Zeichenkette in HTTP-Anfragen hat; gecrawlt wird mit den vorhandenen Google-User-Agents, und der Eintrag in der robots.txt wirkt allein steuernd. Er regelt, ob von Google erfasste Inhalte für das Training künftiger Gemini-Modelle und für das Grounding in bestimmten Google-Produkten verwendet werden dürfen. Auf die Aufnahme in die Google-Suche und auf das Ranking dort hat er nach derselben Dokumentation keinen Einfluss.</p>
 
@@ -244,13 +244,13 @@
       <li data-reveal>
         <b>Was das für eine Website bedeutet</b>
         <h3 class="h-sm">Eine Frage statt einer Regel</h3>
-        <p class="small">Daraus folgt kein pauschales „alles serverseitig rendern“. Es folgt eine Frage, die jeder Betrieb für sich beantworten kann: Welche Angaben, auf die es geschäftlich ankommt, entstehen erst im Browser? Bei Leistung, Ort, Preisrahmen und Kontaktweg ist eine Abhängigkeit vom Browser ein vermeidbares Risiko. Bei einem Bildwechsler oder einem Chat-Fenster ist sie belanglos.</p>
+        <p class="small">Daraus folgt kein pauschales „alles serverseitig rendern“. Es folgt eine Frage, die jeder Betrieb für sich beantworten kann: Welche Angaben, auf die es geschäftlich ankommt, entstehen erst im Browser? Bei Leistung, Ort, Preisrahmen und Kontaktweg ist eine Abhängigkeit vom Browser ein vermeidbares Risiko. Bei einem Bildwechsler oder einem Chat-Fenster ist sie weniger kritisch, solange über die Komponente keine geschäftlich tragende Angabe und keine notwendige Handlung ausschließlich erreichbar ist.</p>
       </li>
     </ol>
 
     <p class="prose" style="margin-top:clamp(26px,3.5vw,44px)" data-reveal>Für die klassische Google-Suche ist der Fall dokumentiert und anders gelagert: Google Search führt JavaScript aus, mit einer laufend aktualisierten Chromium-Version. Die Dokumentation beschreibt dafür drei Phasen — Crawling, Rendering, Indexierung — und hält zugleich fest, dass diese Phasen nicht sauber nacheinander ablaufen und von außen nicht erkennbar sind.</p>
 
-    <p class="prose" data-reveal>Beides gleichzeitig ist damit möglich: Eine Seite kann bei Google gut aufgehoben sein und bei einem System, das nicht rendert, trotzdem kaum etwas hergeben. Wer nur auf die Google-Sichtbarkeit schaut, sieht diesen Unterschied nicht.</p>
+    <p class="prose" data-reveal>Beides gleichzeitig ist damit möglich: Google kann clientseitig erzeugte Inhalte rendern und für die Indexierung verarbeiten, während ein nicht-rendernder Abruf nur das initial ausgelieferte Dokument erhält. Wer nur auf die Google-Sichtbarkeit schaut, sieht diesen Unterschied nicht.</p>
   </div>
 </section>
 
@@ -303,9 +303,9 @@
 
     <p class="prose" data-reveal>OpenAI nennt dafür ein konkretes Beispiel: ChatGPT Atlas nutze ARIA-Auszeichnungen — dieselben Rollen und Beschriftungen, die auch Screenreader auswerten —, um Seitenstruktur und interaktive Elemente zu deuten. Empfohlen wird, den WAI-ARIA-Empfehlungen zu folgen und interaktiven Elementen wie Schaltflächen, Menüs und Formularen aussagekräftige Rollen, Beschriftungen und Zustände zu geben.</p>
 
-    <p class="prose" data-reveal>Dieser Punkt wird leicht falsch verstanden, deshalb deutlich: <strong>Barrierefreiheit ist kein KI-Trick.</strong> Sie ist zuerst dafür da, dass Menschen eine Website benutzen können — mit Screenreader, mit der Tastatur, mit eingeschränkter Sicht. Dass ein Agent von derselben Auszeichnung profitiert, ist eine willkommene Folge, nicht der Zweck. Wer Barrierefreiheit als Maschinenoptimierung betreibt, baut sie erfahrungsgemäß halb und verfehlt am Ende beides.</p>
+    <p class="prose" data-reveal>Dieser Punkt wird leicht falsch verstanden, deshalb deutlich: <strong>Barrierefreiheit ist kein KI-Trick.</strong> Sie ist zuerst dafür da, dass Menschen eine Website benutzen können — mit Screenreader, mit der Tastatur, mit eingeschränkter Sicht. Dass semantische Rollen, Beschriftungen und Zustände zusätzlich Browser-Agenten helfen können, dokumentiert OpenAI derzeit ausdrücklich für den Agentenbetrieb in ChatGPT Atlas — die eben genannte Empfehlung. Eine allgemeine Zusage für beliebige Agenten ist damit nicht verbunden. Wer Barrierefreiheit als Maschinenoptimierung betreibt, baut sie halb und verfehlt am Ende beides.</p>
 
-    <p class="prose" data-reveal>Geschäftlich interessant wird das dort, wo am Ende eine Handlung steht: eine Kontaktmöglichkeit finden, eine Leistung auswählen, eine Anfrage absenden, eine Buchung anbahnen. Was ein bestimmter Agent davon heute tatsächlich zu Ende bringt, ist damit ausdrücklich nicht gesagt — die Bandbreite ist groß und verändert sich laufend. Die haltbare Aussage ist bescheidener: Eine Seite, deren Bedienelemente nicht benannt sind, macht es jedem Agenten schwerer als nötig — und einem Teil Ihrer menschlichen Besucher ebenfalls.</p>
+    <p class="prose" data-reveal>Geschäftlich interessant wird das dort, wo am Ende eine Handlung steht: eine Kontaktmöglichkeit finden, eine Leistung auswählen, eine Anfrage absenden, eine Buchung anbahnen. Was ein bestimmter Agent davon heute tatsächlich zu Ende bringt, ist damit ausdrücklich nicht gesagt — die Bandbreite ist groß und verändert sich laufend. Die haltbare Aussage ist bescheidener: Eine Seite, deren Bedienelemente nicht benannt sind, macht es einem Agenten schwerer als nötig, der sich an dieser Auszeichnung orientiert — und einem Teil Ihrer menschlichen Besucher ebenfalls.</p>
   </div>
 </section>
 
@@ -326,17 +326,17 @@
       <li data-reveal>
         <b>02</b>
         <h3 class="h-sm">Entscheiden Sie Zugänge bewusst statt versehentlich.</h3>
-        <p class="small">In der robots.txt lassen sich Suche, Modellentwicklung und nutzerausgelöste Abrufe getrennt regeln. Ein pauschales Blockieren schließt oft genau die Systeme aus, in denen man vorkommen möchte.</p>
+        <p class="small">In der robots.txt lassen sich Suche und Modellentwicklung getrennt regeln; bei nutzerausgelösten Abrufen hängt die Wirkung vom Anbieter und von der Zugriffsart ab. Ein pauschales Blockieren schließt oft genau die Systeme aus, in denen man vorkommen möchte.</p>
       </li>
       <li data-reveal>
         <b>03</b>
         <h3 class="h-sm">Beantworten Sie Fragen dort, wo sie gestellt werden.</h3>
-        <p class="small">Eine Angabe, die nur im PDF, nur im Bild oder nur auf telefonische Nachfrage existiert, kann kein System übernehmen. Preise, Einzugsgebiete, Fristen und Zuständigkeiten gehören als Text auf die Seite.</p>
+        <p class="small">Zentrale Angaben, die ausschließlich in PDFs oder Bildern stehen, sind nicht über jeden Abruf- und Antwortpfad gleich zuverlässig zugänglich; was nur auf telefonische Nachfrage existiert, steht auf der Seite gar nicht. Preise, Einzugsgebiete, Fristen und Zuständigkeiten sollten deshalb zusätzlich als klarer HTML-Text auf der Seite stehen.</p>
       </li>
       <li data-reveal>
         <b>04</b>
         <h3 class="h-sm">Benennen Sie Ihre Bedienelemente.</h3>
-        <p class="small">Beschriftete Schaltflächen und Formularfelder, korrekte Rollen, eine nachvollziehbare Struktur. Das nützt zuerst Menschen — und macht die Seite nebenbei für Agenten benutzbar.</p>
+        <p class="small">Beschriftete Schaltflächen und Formularfelder, korrekte Rollen, eine nachvollziehbare Struktur. Das nützt zuerst Menschen — und kann Agenten, die sich an dieser Auszeichnung orientieren, die Bedienung erleichtern.</p>
       </li>
       <li data-reveal>
         <b>05</b>
