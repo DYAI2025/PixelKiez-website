@@ -1993,3 +1993,74 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
   background:var(--paper-2);border:1px solid var(--line);border-radius:var(--radius-sm);
 }
 .leiter b{font-family:var(--font-mono);font-weight:500;font-size:.8125rem;letter-spacing:.01em;color:var(--accent-ink)}
+
+/* ---------- 20. Wissen + Kiezbot-Szene ------------------------------------
+   Editoriale Schicht: Hub /wissen/ und die Wissens-Shells. Baut auf den
+   bestehenden Karten- und Leiter-Mustern auf; Neues nur, wo das Vorhandene
+   nicht reicht. figure.kiezbot-scene ist das wiederverwendbare Gefaess fuer
+   erklaerende Bildszenen; der enthaltene Kiezbot ist ein PROTOTYP als
+   Design-Beleg, keine finale Markenfigur. Bewusst keine Animation: jede
+   Szene muss im Stillstand vollstaendig verstaendlich sein. */
+
+/* Entwurfs-Hinweis: markiert Seiten und Bereiche, deren Inhalt noch nicht
+   freigegeben ist. Mono wie die Kicker, aber mit Rahmen — ein Etikett,
+   keine Ueberschrift. */
+.wissen-status{
+  display:inline-block;margin-top:clamp(16px,2vw,24px);
+  padding:7px 12px;
+  border:1px solid var(--line-strong);border-radius:var(--radius-sm);
+  font-family:var(--font-mono);font-size:.8125rem;letter-spacing:.01em;
+  color:var(--ink-70);
+}
+
+/* Platzhalter fuer Abschnitte, die nach fachlicher Pruefung folgen. Die
+   gestrichelte Kante sagt sichtbar "hier fehlt noch etwas" — ehrlicher als
+   ein Abschnitt, der fertig aussieht und es nicht ist. */
+.wissen-platzhalter{
+  margin-top:clamp(14px,2vw,20px);
+  padding-left:14px;border-left:2px dashed var(--line-strong);
+  color:var(--ink-45);
+}
+
+/* Bildszene: Rahmen und helle Flaeche wie die Leiter-Karten, die Grafik
+   traegt keine Sprache (a11y + Uebersetzung), die Aussage steht in der
+   Bildunterschrift. */
+.kiezbot-scene{
+  /* Kein Seitenrand vom Browser; nach oben der Abstand der uebrigen
+     Inhaltsbloecke (.pruef, .leiter), weil die Szene im Abschnitt auf Text
+     folgt. */
+  margin:clamp(26px,3.5vw,44px) 0 0;
+  padding:clamp(18px,2.5vw,26px);
+  background:var(--paper-2);border:1px solid var(--line);border-radius:var(--radius-sm);
+}
+.kiezbot-scene__bild svg{display:block;width:100%;height:auto;max-width:640px;margin-inline:auto}
+.kiezbot-scene figcaption{
+  margin-top:clamp(14px,2vw,20px);
+  font-size:.9375rem;line-height:1.6;color:var(--ink-45);
+}
+.kiezbot-scene figcaption b{color:var(--ink-70)}
+
+/* Reservierter Szenenplatz: gleiche Huelle, statt der Grafik eine
+   gestrichelte Flaeche mit Hinweis — der Platz ist eingeplant, nicht
+   vergessen. */
+.kiezbot-scene--slot .kiezbot-scene__bild{
+  min-height:160px;
+  display:grid;place-items:center;text-align:center;
+  border:1px dashed var(--line-strong);border-radius:var(--radius-sm);
+  padding:14px;
+}
+
+/* Weiterlesen: zwei Kanalkarten nebeneinander, darunter untereinander. */
+.wissen-weiter{display:grid;gap:14px;margin-top:clamp(26px,3.5vw,44px)}
+@media(min-width:720px){.wissen-weiter{grid-template-columns:1fr 1fr}}
+
+/* Verweise in den Leiter-Ueberschriften (Hub-Lernpfad): dieselbe Affordanz
+   wie .channel a — Textfarbe, Unterstrich mit Abstand, Akzent beim Zeigen. */
+.leiter h3 a{color:var(--ink);text-underline-offset:4px}
+.leiter h3 a:hover{color:var(--accent-ink)}
+
+/* Kiezbot-Prototyp: Konturen aus dem Text-Schwarz, Akzentflaechen aus der
+   Nebenfarbe — beides ueber Tokens, damit die Szene auch auf inv-Flaechen
+   stimmt. Die Klassen sitzen auf den <g>-Gruppen, die Primitive erben. */
+.kiezbot-scene [class^="kb-"]{stroke:var(--ink);stroke-width:1.7}
+.kiezbot-scene .kb-akzent{fill:var(--accent);stroke:none}

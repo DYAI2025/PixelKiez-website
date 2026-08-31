@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Entity Trust · Pixelkiez Wissen</title>
+<meta name="description" content="Können Maschinen Unternehmen, Leistungen, Ort und Personen hinter einer Website zuverlässig zuordnen? Eine Einordnung des Begriffs Entity Trust.">
+<meta name="theme-color" content="#B6C7C4">
+<meta name="robots" content="noindex">
+<link rel="canonical" href="https://pixelkiez.de/wissen/entity-trust/"><!-- hreflang setzt der Build -->
+
+<meta property="og:type" content="website">
+<meta property="og:locale" content="de_DE">
+<meta property="og:site_name" content="Pixelkiez">
+<meta property="og:title" content="Entity Trust · Pixelkiez Wissen">
+<meta property="og:description" content="Können Maschinen Unternehmen, Leistungen, Ort und Personen hinter einer Website zuverlässig zuordnen? Eine Einordnung des Begriffs Entity Trust.">
+<meta property="og:url" content="https://pixelkiez.de/wissen/entity-trust/">
+<meta property="og:image" content="assets/img/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Pixelkiez">
+
+<link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
+<link rel="icon" type="image/png" href="/icon-512.png" sizes="512x512">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+<link rel="preload" href="assets/fonts/archivo-var-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/ibm-plex-sans-var-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/ibm-plex-mono-500-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/css/fonts.css">
+<link rel="stylesheet" href="assets/css/bds.css">
+
+<!-- ENTWURF (Slice 2): Content-Shell ohne freigegebene Fakten — noindex,
+     nicht in Sitemap oder Maschinenlisten, nicht von der Startseite verlinkt.
+     Bewusst KEIN JSON-LD, bis der Inhalt steht: strukturierte Daten sollen
+     nie mehr behaupten, als die Seite leistet. -->
+</head>
+<body>
+
+<a class="skip" href="#main">Zum Inhalt springen</a>
+
+<!-- Icon-Sprite: Teilmenge des Startseiten-Sets, gleiche Strichstärke -->
+<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true" focusable="false">
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-arrow-ur" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></symbol>
+  <symbol id="i-gate" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v16"/><path d="M8 8h8M8 12h11M8 16h6"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></symbol>
+</svg>
+
+<!-- Unterseiten-Kopf wie auf der Analyse-Seite: Marke, ein Knopf zur
+     Website-Analyse, Sprachumschalter. Kein Dialog, kein Overlay. -->
+<header class="header" data-scrolled="true">
+  <div class="wrap header__in">
+    <a class="brand" href="/" aria-label="Pixelkiez, Startseite">
+      <img class="brand__mark" src="assets/img/logo-klein.webp" alt="Pixelkiez" width="480" height="111" decoding="async">
+      <span class="brand__sub">Webdesign Berlin</span>
+    </a>
+    <div class="header__act">
+      <a class="btn btn--split btn--primary btn--sm" href="/website-analyse/"><span class="btn__label">Zur Website-Analyse</span><span class="btn__ico"><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg></span></a>
+      <a class="lang" href="/en/knowledge/entity-trust/" hreflang="en" lang="en" aria-label="Switch to English" data-lang-switch>EN</a>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+<!-- ===================== AUFTAKT ===================== -->
+<section class="section section--flush auftakt">
+  <div class="wrap">
+    <div class="section__head">
+      <p class="kicker" data-reveal>Wissen · Schritt 4 von 5 — Erkennen</p>
+      <h1 class="h-lg" data-reveal>Entity Trust: Weiß die Maschine, wer Sie sind?</h1>
+      <p class="lead" data-reveal>Können Maschinen Unternehmen, Leistungen, Ort, Personen und Fakten hinter einer Website zuverlässig zuordnen? Dieser Beitrag erklärt, worum es bei Entity Trust geht.</p>
+      <p class="wissen-status" data-reveal>Dieser Beitrag ist in Vorbereitung. Die inhaltlichen Abschnitte werden nach fachlicher Prüfung ergänzt.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== ORIENTIERUNG ===================== -->
+<section class="section">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 class="h-lg" data-reveal>Was Sie hier verstehen werden.</h2>
+      <ul class="analyse-fakten" data-reveal>
+        <li><svg aria-hidden="true"><use href="#i-check"/></svg>Zuordnung durch Maschinen verstehen</li>
+        <li><svg aria-hidden="true"><use href="#i-check"/></svg>Konsistenz über Quellen einordnen</li>
+        <li><svg aria-hidden="true"><use href="#i-check"/></svg>Beobachtung von Vermutung trennen</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== GEPLANTE ABSCHNITTE ===================== -->
+<section class="section">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 class="h-lg" data-reveal>Weiß das System, wer Sie sind?</h2>
+      <p class="lead" data-reveal>Hinter jeder Website stehen ein Unternehmen, Menschen und Leistungen — dieser Abschnitt fragt, ob Maschinen diese Zuordnung treffen.</p>
+      <p class="small wissen-platzhalter" data-reveal>Dieser Abschnitt folgt nach fachlicher Prüfung.</p>
+    </div>
+
+    <figure class="kiezbot-scene kiezbot-scene--slot" data-reveal>
+      <div class="kiezbot-scene__bild" aria-hidden="true"><span class="small">Bildszene in Vorbereitung</span></div>
+      <figcaption><b>Geplante Szene: Verstreute Angaben, ein Bild.</b> Die Szene wird zeigen, wie Angaben aus verschiedenen Quellen zu einem Gesamtbild eines Unternehmens zusammenlaufen.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 class="h-lg" data-reveal>Unternehmen, Ort, Leistungen, Personen.</h2>
+      <p class="lead" data-reveal>Vier Arten von Angaben, die zusammengehören — dieser Abschnitt sortiert, was wozu gehört.</p>
+      <p class="small wissen-platzhalter" data-reveal>Dieser Abschnitt folgt nach fachlicher Prüfung.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 class="h-lg" data-reveal>Konsistenz über Quellen hinweg.</h2>
+      <p class="lead" data-reveal>Dieselben Angaben tauchen an vielen Stellen auf — dieser Abschnitt betrachtet, was Widersprüche zwischen ihnen bedeuten.</p>
+      <p class="small wissen-platzhalter" data-reveal>Dieser Abschnitt folgt nach fachlicher Prüfung.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 class="h-lg" data-reveal>Strukturierte Daten und externe Bestätigung.</h2>
+      <p class="lead" data-reveal>Neben dem sichtbaren Text gibt es maschinenlesbare Angaben und Nennungen an anderer Stelle — dieser Abschnitt ordnet beide ein.</p>
+      <p class="small wissen-platzhalter" data-reveal>Dieser Abschnitt folgt nach fachlicher Prüfung.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 class="h-lg" data-reveal>Beobachtbar oder erschlossen.</h2>
+      <p class="lead" data-reveal>Nicht alles, was über Erkennung gesagt wird, lässt sich belegen — dieser Abschnitt trennt Beobachtung von Vermutung.</p>
+      <p class="small wissen-platzhalter" data-reveal>Dieser Abschnitt folgt nach fachlicher Prüfung.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== ANALYSE-HINWEIS ===================== -->
+<section class="section inv">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 class="h-lg" data-reveal>Wo steht Ihre eigene Website?</h2>
+      <p class="lead" data-reveal>Die kostenlose Website-Analyse sieht sich genau diese Fragen an Ihrer Website an.</p>
+      <div data-reveal>
+        <a class="btn btn--split btn--primary" href="/website-analyse/"><span class="btn__label">Zur Website-Analyse</span><span class="btn__ico"><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg></span></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== WEITERLESEN ===================== -->
+<section class="section">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 class="h-lg" data-reveal>Weiterlesen.</h2>
+    </div>
+
+    <div class="wissen-weiter">
+      <div class="channel" data-reveal>
+        <span class="channel__i"><svg aria-hidden="true"><use href="#i-gate"/></svg></span>
+        <div>
+          <h3 class="h-sm"><a href="/wissen/agent-readiness/">Agent-Readiness: Kann eine KI Ihre Website benutzen?</a></h3>
+          <p class="small" style="margin-top:5px">Schritt 5 von 5: Kann ein KI-Agent eine Website nicht nur lesen, sondern tatsächlich benutzen?</p>
+        </div>
+      </div>
+      <div class="channel" data-reveal>
+        <span class="channel__i"><svg aria-hidden="true"><use href="#i-file"/></svg></span>
+        <div>
+          <h3 class="h-sm"><a href="/wissen/">Pixelkiez Wissen</a></h3>
+          <p class="small" style="margin-top:5px">Zur Übersicht: der ganze Lernpfad.</p>
+        </div>
+      </div>
+    </div>
+
+    <p class="small wissen-platzhalter" data-reveal>Belege und Quellen werden mit den geprüften Inhalten ergänzt.</p>
+  </div>
+</section>
+
+</main>
+
+<!-- ===================== FOOTER ===================== -->
+<footer class="footer inv">
+  <div class="wrap">
+    <div class="footer__bar">
+      <span>© Pixelkiez · Berlin</span>
+      <nav aria-label="Weitere Seiten">
+        <a href="/wissen/" style="text-decoration:none">Wissen</a>
+        <a href="/impressum.html" style="text-decoration:none">Impressum</a>
+        <a href="/datenschutz.html" style="text-decoration:none">Datenschutz</a>
+      </nav>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/js/bds.js" defer></script>
+</body>
+</html>

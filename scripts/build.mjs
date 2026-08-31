@@ -393,6 +393,7 @@ async function build() {
      Seitenregister — eine neue Seite traegt sich hier von selbst ein. */
   const sitemapEintraege = [];
   for (const paar of SPRACHPAARE) {
+    if (paar.entwurf) continue;   // Entwuerfe (noindex) stehen nicht in der Sitemap
     const alternates = [
       `    <xhtml:link rel="alternate" hreflang="de" href="${DOMAIN}${paar.pfadDe}"/>`,
       `    <xhtml:link rel="alternate" hreflang="en" href="${DOMAIN}${paar.pfadEn}"/>`,

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Wie KI eine Website liest · Pixelkiez Wissen</title>
+<meta name="description" content="Was Crawler, KI-Suchsysteme und Browser-Agenten sehen, wenn sie eine Website abrufen — und warum verschiedene maschinelle Besucher unterschiedliche Darstellungen erhalten können.">
+<meta name="theme-color" content="#B6C7C4">
+<meta name="robots" content="noindex">
+<link rel="canonical" href="https://pixelkiez.de/wissen/wie-ki-websites-liest/"><!-- hreflang setzt der Build -->
+
+<meta property="og:type" content="website">
+<meta property="og:locale" content="de_DE">
+<meta property="og:site_name" content="Pixelkiez">
+<meta property="og:title" content="Wie KI eine Website liest · Pixelkiez Wissen">
+<meta property="og:description" content="Was Crawler, KI-Suchsysteme und Browser-Agenten sehen, wenn sie eine Website abrufen — und warum verschiedene maschinelle Besucher unterschiedliche Darstellungen erhalten können.">
+<meta property="og:url" content="https://pixelkiez.de/wissen/wie-ki-websites-liest/">
+<meta property="og:image" content="assets/img/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Pixelkiez">
+
+<link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
+<link rel="icon" type="image/png" href="/icon-512.png" sizes="512x512">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+<link rel="preload" href="assets/fonts/archivo-var-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/ibm-plex-sans-var-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/ibm-plex-mono-500-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/css/fonts.css">
+<link rel="stylesheet" href="assets/css/bds.css">
+
+<!-- ENTWURF (Slice 2): Content-Shell ohne freigegebene Fakten — noindex,
+     nicht in Sitemap oder Maschinenlisten, nicht von der Startseite verlinkt.
+     Bewusst KEIN JSON-LD, bis der Inhalt steht: strukturierte Daten sollen
+     nie mehr behaupten, als die Seite leistet. -->
+</head>
+<body>
+
+<a class="skip" href="#main">Zum Inhalt springen</a>
+
+<!-- Icon-Sprite: Teilmenge des Startseiten-Sets, gleiche Strichstärke -->
+<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true" focusable="false">
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-arrow-ur" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5a2.5 2.5 0 0 1-2.5 2.5H8l-4 3.5v-15A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5Z"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></symbol>
+</svg>
+
+<!-- Unterseiten-Kopf wie auf der Analyse-Seite: Marke, ein Knopf zur
+     Website-Analyse, Sprachumschalter. Kein Dialog, kein Overlay. -->
+<header class="header" data-scrolled="true">
+  <div class="wrap header__in">
+    <a class="brand" href="/" aria-label="Pixelkiez, Startseite">
+      <img class="brand__mark" src="assets/img/logo-klein.webp" alt="Pixelkiez" width="480" height="111" decoding="async">
+      <span class="brand__sub">Webdesign Berlin</span>
+    </a>
+    <div class="header__act">
+      <a class="btn btn--split btn--primary btn--sm" href="/website-analyse/"><span class="btn__label">Zur Website-Analyse</span><span class="btn__ico"><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg></span></a>
+      <a class="lang" href="/en/knowledge/how-ai-reads-websites/" hreflang="en" lang="en" aria-label="Switch to English" data-lang-switch>EN</a>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+<!-- ===================== AUFTAKT ===================== -->
+<section class="section section--flush auftakt">
+  <div class="wrap">
+    <div class="section__head">
+      <p class="kicker" data-reveal>Wissen · Schritt 2 von 5 — Lesen</p>
+      <h1 class="h-lg" data-reveal>Wie KI eine Website liest</h1>
+      <p class="lead" data-reveal>Was sehen Crawler, KI-Suchsysteme und Browser-Agenten, wenn sie eine Website abrufen? Dieser Beitrag ordnet die verschiedenen Lesarten — und was sie für eine Website bedeuten.</p>
+      <p class="wissen-status" data-reveal>Dieser Beitrag ist in Vorbereitung. Die inhaltlichen Abschnitte werden nach fachlicher Prüfung ergänzt.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== ORIENTIERUNG ===================== -->
+<section class="section">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 class="h-lg" data-reveal>Was Sie hier verstehen werden.</h2>
+      <ul class="analyse-fakten" data-reveal>
+        <li><svg aria-hidden="true"><use href="#i-check"/></svg>Besuchertypen unterscheiden</li>
+        <li><svg aria-hidden="true"><use href="#i-check"/></svg>Darstellungen einer Seite einordnen</li>
+        <li><svg aria-hidden="true"><use href="#i-check"/></svg>Erreichbarkeit von Sichtbarkeit trennen</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== GEPLANTE ABSCHNITTE ===================== -->
+<section class="section">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 class="h-lg" data-reveal>Nicht jeder maschinelle Besucher kommt mit derselben Absicht.</h2>
+      <p class="lead" data-reveal>Crawler, KI-Suchsysteme und Browser-Agenten rufen Websites zu unterschiedlichen Zwecken ab — dieser Abschnitt sortiert die Besuchertypen.</p>
+      <p class="small wissen-platzhalter" data-reveal>Dieser Abschnitt folgt nach fachlicher Prüfung.</p>
+    </div>
+
+    <!-- KIEZBOT-PROTOTYP (Slice 2): Design-Beleg fuer das Szenen-Gefaess, keine
+         finale Markenfigur. Nur lokale SVG-Primitive, Farben aus den Tokens per
+         CSS-Klassen. Die Grafik ist dekorativ (aria-hidden) — die Aussage traegt
+         die Bildunterschrift; wer die Grafik nicht sieht, verliert nichts. -->
+    <figure class="kiezbot-scene" data-reveal>
+      <div class="kiezbot-scene__bild" aria-hidden="true">
+        <svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" fill="none" stroke-linecap="round">
+          <!-- links: ein Dokument (die Website) -->
+          <g class="kb-dok">
+            <rect x="24" y="60" width="150" height="180" rx="6"/>
+            <rect x="40" y="78" width="80" height="12" rx="2" class="kb-akzent"/>
+            <line x1="40" y1="110" x2="158" y2="110"/><line x1="40" y1="128" x2="158" y2="128"/>
+            <line x1="40" y1="146" x2="130" y2="146"/><line x1="40" y1="176" x2="158" y2="176"/>
+            <line x1="40" y1="194" x2="158" y2="194"/><rect x="40" y="212" width="60" height="16" rx="3"/>
+          </g>
+          <!-- Mitte: Kiezbot als Pixelraster (Prototyp) -->
+          <g class="kb-bot">
+            <rect x="284" y="118" width="12" height="12"/><rect x="296" y="118" width="12" height="12"/><rect x="308" y="118" width="12" height="12"/><rect x="320" y="118" width="12" height="12"/><rect x="332" y="118" width="12" height="12"/>
+            <rect x="284" y="130" width="12" height="12"/><rect x="332" y="130" width="12" height="12"/>
+            <rect x="284" y="142" width="12" height="12"/><rect x="296" y="142" width="12" height="12" class="kb-akzent"/><rect x="320" y="142" width="12" height="12" class="kb-akzent"/><rect x="332" y="142" width="12" height="12"/>
+            <rect x="284" y="154" width="12" height="12"/><rect x="332" y="154" width="12" height="12"/>
+            <rect x="284" y="166" width="12" height="12"/><rect x="296" y="166" width="12" height="12"/><rect x="308" y="166" width="12" height="12"/><rect x="320" y="166" width="12" height="12"/><rect x="332" y="166" width="12" height="12"/>
+            <rect x="308" y="100" width="12" height="12" class="kb-akzent"/>
+          </g>
+          <!-- Verbindungen -->
+          <g class="kb-linie">
+            <path d="M174 150 H 278"/>
+            <path d="M350 150 H 400 M400 150 C 430 150 430 84 460 84"/>
+            <path d="M400 150 H 460"/>
+            <path d="M400 150 C 430 150 430 216 460 216"/>
+          </g>
+          <!-- rechts: drei Lesarten desselben Dokuments -->
+          <g class="kb-lesart">
+            <rect x="464" y="48" width="152" height="72" rx="6"/>
+            <rect x="478" y="62" width="52" height="30" rx="3" class="kb-akzent"/><line x1="540" y1="68" x2="602" y2="68"/><line x1="540" y1="84" x2="602" y2="84"/><line x1="478" y1="104" x2="602" y2="104"/>
+            <rect x="464" y="132" width="152" height="52" rx="6"/>
+            <line x1="478" y1="148" x2="602" y2="148"/><line x1="478" y1="162" x2="580" y2="162"/><line x1="478" y1="176" x2="602" y2="176"/>
+            <rect x="464" y="196" width="152" height="72" rx="6"/>
+            <rect x="478" y="210" width="124" height="16" rx="3"/><rect x="478" y="234" width="124" height="16" rx="3"/>
+          </g>
+        </svg>
+      </div>
+      <figcaption>
+        <b>Szene 1 — Ein Dokument, mehrere Lesarten.</b>
+        Verschiedene maschinelle Besucher können unterschiedliche Darstellungen derselben Website erhalten: gerendert mit Layout, als reiner Text oder als strukturierte Felder. Welche Lesart ankommt, entscheidet mit darüber, was von einer Website verstanden wird.
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 class="h-lg" data-reveal>Was in der ersten Antwort ankommt.</h2>
+      <p class="lead" data-reveal>Der erste Abruf einer Seite liefert eine bestimmte Darstellung — dieser Abschnitt beschreibt, worauf maschinelle Leser dabei aufsetzen.</p>
+      <p class="small wissen-platzhalter" data-reveal>Dieser Abschnitt folgt nach fachlicher Prüfung.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 class="h-lg" data-reveal>Rendern oder direkt lesen.</h2>
+      <p class="lead" data-reveal>Manche Systeme führen eine Seite wie ein Browser aus, andere lesen den ausgelieferten Text direkt — dieser Abschnitt erklärt den Unterschied.</p>
+      <p class="small wissen-platzhalter" data-reveal>Dieser Abschnitt folgt nach fachlicher Prüfung.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 class="h-lg" data-reveal>Informationen finden oder eine Website benutzen.</h2>
+      <p class="lead" data-reveal>Lesen und Bedienen sind zwei verschiedene Aufgaben — dieser Abschnitt grenzt sie voneinander ab.</p>
+      <p class="small wissen-platzhalter" data-reveal>Dieser Abschnitt folgt nach fachlicher Prüfung.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 class="h-lg" data-reveal>Von technischer Erreichbarkeit zu beobachteter Sichtbarkeit.</h2>
+      <p class="lead" data-reveal>Dass eine Seite abrufbar ist, sagt noch nicht, ob sie in Antworten auftaucht — dieser Abschnitt verbindet beide Blickwinkel.</p>
+      <p class="small wissen-platzhalter" data-reveal>Dieser Abschnitt folgt nach fachlicher Prüfung.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== ANALYSE-HINWEIS ===================== -->
+<section class="section inv">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 class="h-lg" data-reveal>Wo steht Ihre eigene Website?</h2>
+      <p class="lead" data-reveal>Die kostenlose Website-Analyse sieht sich genau diese Fragen an Ihrer Website an.</p>
+      <div data-reveal>
+        <a class="btn btn--split btn--primary" href="/website-analyse/"><span class="btn__label">Zur Website-Analyse</span><span class="btn__ico"><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg></span></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== WEITERLESEN ===================== -->
+<section class="section">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 class="h-lg" data-reveal>Weiterlesen.</h2>
+    </div>
+
+    <div class="wissen-weiter">
+      <div class="channel" data-reveal>
+        <span class="channel__i"><svg aria-hidden="true"><use href="#i-chat"/></svg></span>
+        <div>
+          <h3 class="h-sm"><a href="/wissen/answerability/">Answerability: Beantwortet Ihre Website konkrete Fragen?</a></h3>
+          <p class="small" style="margin-top:5px">Schritt 3 von 5: Kann eine Website Maschinen eine klare, belastbare Antwort auf eine konkrete Kundenfrage geben?</p>
+        </div>
+      </div>
+      <div class="channel" data-reveal>
+        <span class="channel__i"><svg aria-hidden="true"><use href="#i-file"/></svg></span>
+        <div>
+          <h3 class="h-sm"><a href="/wissen/">Pixelkiez Wissen</a></h3>
+          <p class="small" style="margin-top:5px">Zur Übersicht: der ganze Lernpfad.</p>
+        </div>
+      </div>
+    </div>
+
+    <p class="small wissen-platzhalter" data-reveal>Belege und Quellen werden mit den geprüften Inhalten ergänzt.</p>
+  </div>
+</section>
+
+</main>
+
+<!-- ===================== FOOTER ===================== -->
+<footer class="footer inv">
+  <div class="wrap">
+    <div class="footer__bar">
+      <span>© Pixelkiez · Berlin</span>
+      <nav aria-label="Weitere Seiten">
+        <a href="/wissen/" style="text-decoration:none">Wissen</a>
+        <a href="/impressum.html" style="text-decoration:none">Impressum</a>
+        <a href="/datenschutz.html" style="text-decoration:none">Datenschutz</a>
+      </nav>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/js/bds.js" defer></script>
+</body>
+</html>

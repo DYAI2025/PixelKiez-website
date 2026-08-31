@@ -353,3 +353,439 @@ Review-Verdict CHANGES_REQUIRED, sechs Punkte:
 4. **Responsive-Verifikation 390/768/1440, echte Browser:** Zwei Hürden dokumentiert: (a) interaktives Chrome-Fenster hat ~500 px Mindestbreite und der `localhost:8080`-Origin trug einen verstellten Seitenzoom (~50 %; Ausweg: `127.0.0.1` = frischer Origin); (b) `--headless --window-size=390` klemmt das Layout intern bei ~500 px — dessen 390er-Screenshots sind Artefakte. Belastbare Methode: Puppeteer-core (Scratchpad, keine Repo-Dependency) mit CDP-`setViewport` gegen das installierte Chrome 151. Messwerte: `innerWidth == scrollWidth` exakt bei 390/768/1440 auf Startseite, Landingpage und EN-Landingpage → kein horizontaler Overflow; Band-Input/-Button in allen Größen im Viewport, keine Überlappung; Fokus `#f-url` = 2px solid Akzent. Screenshots (Band 390/768/1440, Formular, Prüffelder 1-/2-/3-spaltig, Leiter, Schlusssektion, Footer, EN-Auftakt+Formular 390) gesichtet: saubere Wraps, nichts verdeckt, nichts abgeschnitten.
 5. **Regression:** build + verify grün; Branch-Diff enthält kein `.claude/`, kein CLAUDE.md (netto), keinen fremden Scope.
 6. **Review-Artefakt:** Patch nach `/tmp/pxk-slice-1-review.patch` erzeugt (Pfad + Größe im Handoff).
+
+---
+
+## 7. Slice 2 — Wissensbereich: Hub, fünf Content-Shells, Kiezbot-Bildsystem
+
+> **For Claude:** REQUIRED SUB-SKILL: superpowers:executing-plans. Nur Slice 2 umsetzen, danach STOP + SLICE_HANDOFF (Format in 7.9). Slice 3 beginnt erst nach externer Freigabe.
+
+**Gate-Stand:** SLICE_1_EXTERNAL_REVIEW = PASS — vom Nutzer am 2026-08-31 ausdrücklich bestätigt.
+**Basis (verifiziert 2026-08-31):** Branch `feat/pxk-self-service-analysis-funnel`, HEAD `e5cfc4a2a11000fa83bc3ff2220159f5c3966d92`. Baseline `npm run build` GRÜN (6 Seiten, Sitemap 6 Adressen) · `npm run verify` GRÜN. Working Tree: nur untracked `knowledge/` (Research-Rohmaterial — **Unterstützungsmaterial, kein Publikationsvertrag**; wird NICHT committet, siehe Task 2.0).
+
+### 7.0 Was Slice 2 ist — und was nicht
+
+Slice 2 baut die Informationsarchitektur des Wissensbereichs: den Hub `/wissen/`, fünf Content-Shells darunter und das wiederverwendbare Kiezbot-Szenen-Gefäß mit EINEM Prototyp. Die Shells tragen Seitenzweck, H1, neutrale Einleitung, Abschnittsarchitektur und Platzhalter — **keine Fakten aus dem Research-Paket**.
+
+**Research-Gate (hart):** In keine neue Quelle dürfen: Provider-Namen (ChatGPT, Claude, Gemini, Perplexity, Googlebot, GPTBot, OpenAI, Anthropic, Cloudflare …), Prozentzahlen, Marktstatistiken, Chunk-Größen, Ranking-Faktor-Behauptungen, „Plattform X kann Y nicht sehen", llms.txt-Wirksamkeitsaussagen, Traffic-/Conversion-Behauptungen, erfundene Scores, Garantie-Formulierungen, „immer"/„nie"/„kann nicht". Erlaubt sind strukturelle, gehedgte Aussagen („können unterschiedliche Darstellungen erhalten"). Task 2.8 prüft das per grep gegen Null.
+
+**Indexierungs-Gate (hart):** Alle 12 neuen Seiten (6 DE + 6 EN) tragen `noindex`, stehen NICHT in sitemap.xml, NICHT in llms.txt, werden NICHT von der Startseite verlinkt. Lokal erreichbar für Review — mehr nicht.
+
+**Explizit out of scope:** Slice 3 (echte Inhalte), `site/index.html` (bleibt byte-identisch — harte Invariante; wird eine Änderung technisch nötig: STOP und melden), Service-Kacheln, `/website-analyse/`-Funnel (keine Umgestaltung), api/, jegliches Backend, Analytics, Newsletter, Deploys, neue Dependencies, finale Kiezbot-Markenassets, kommerzielle Seiten wie `/leistungen/agent-readiness/`.
+
+**Rollback:** ein einziger lokaler Commit (Brief §27); Rücknahme = `git revert <sha>`. Kein Zustand außerhalb des Repos; `dist/` wird ohnehin je Build neu erzeugt.
+
+### 7.1 Architekturentscheidungen
+
+- **D-7 Quellen & Routen.** Quellen liegen gebündelt unter `site/wissen/` (der Build liest `join(QUELLE, paar.quelle)` — Unterverzeichnisse funktionieren, geprüft gegen build.mjs/i18n-extract.mjs; kein Kopier-alles-Mechanismus, der lose Dateien mitzöge). Registrierung ausschließlich über `scripts/seiten.mjs`:
+
+  | Quelle (`site/`) | zielDe (`dist/`) | pfadDe | zielEn (`dist/`) | pfadEn |
+  |---|---|---|---|---|
+  | `wissen/index.html` | `wissen/index.html` | `/wissen/` | `en/knowledge/index.html` | `/en/knowledge/` |
+  | `wissen/seo-geo-ai-visibility.html` | `wissen/seo-geo-ai-visibility/index.html` | `/wissen/seo-geo-ai-visibility/` | `en/knowledge/seo-geo-ai-visibility/index.html` | `/en/knowledge/seo-geo-ai-visibility/` |
+  | `wissen/wie-ki-websites-liest.html` | `wissen/wie-ki-websites-liest/index.html` | `/wissen/wie-ki-websites-liest/` | `en/knowledge/how-ai-reads-websites/index.html` | `/en/knowledge/how-ai-reads-websites/` |
+  | `wissen/answerability.html` | `wissen/answerability/index.html` | `/wissen/answerability/` | `en/knowledge/answerability/index.html` | `/en/knowledge/answerability/` |
+  | `wissen/entity-trust.html` | `wissen/entity-trust/index.html` | `/wissen/entity-trust/` | `en/knowledge/entity-trust/index.html` | `/en/knowledge/entity-trust/` |
+  | `wissen/agent-readiness.html` | `wissen/agent-readiness/index.html` | `/wissen/agent-readiness/` | `en/knowledge/agent-readiness/index.html` | `/en/knowledge/agent-readiness/` |
+
+- **D-8 EN-Routenfamilie `/en/knowledge/` mit übersetztem Slug für Seite 2.** Der Brief bevorzugt `/en/knowledge/`; die Registry trägt `pfadEn` frei und der EN-Link-Rewrite in build.mjs (Schleife über SPRACHPAARE, exakter Attribut-Match `(href|action)="pfadDe(#anker)?"`) bildet DE→EN pfadgenau ab — **kein Präfix-Risiko** (`href="/wissen/answerability/"` matcht nicht das Muster für `/wissen/`, weil nach dem Pfad `"` oder `#` stehen muss; verifiziert an build.mjs Z. 146–150). Abweichung vom Slice-1-Präzedenzfall (`/en/website-analyse/` behielt den deutschen Slug): dort gab es keine Vorgabe, hier gibt der Brief `/en/knowledge/` vor. Slugs 1, 4, 5 sind bereits englisch; nur Hub und Seite 2 übersetzen.
+- **D-9 Entwurfsstatus über Registry-Flag `entwurf: true`.** Wirkung: (a) build.mjs überspringt den Sitemap-Eintrag; (b) die Quelle trägt `<meta name="robots" content="noindex">` (übersteht die i18n-Übersetzung unverändert — der content-Attribut-Filter in i18n.mjs Z. 110 verlangt „Buchstabe Leerzeichen Buchstabe", was auf `noindex` nicht zutrifft; verifiziert); (c) llms.txt und Startseite bleiben unangetastet. Canonical + hreflang-Paar bleiben gesetzt (der Build erzeugt sie ohnehin je Paar; konsistente Paare erfüllen Gate F, noindex neutralisiert die Indexwirkung). Spätere Freigabe = Flag entfernen + robots-Meta tauschen + llms.txt-Einträge — eigener, review-pflichtiger Slice.
+- **D-10 Kein JSON-LD auf den Shells.** `ldTausch: []`; der JSON-LD-Walk und der dateModified-Ersatz in build.mjs sind No-Ops ohne Treffer (Regex-replace ohne Match; verifiziert). Strukturierte Daten kommen mit echtem, geprüftem Inhalt in Slice 3 — sie sollen nie mehr behaupten, als die Seite leistet (gleiche Linie wie D-5).
+- **D-11 Kiezbot = Gefäß + ein Prototyp, kein Asset-Projekt.** Neue CSS-Komponente `figure.kiezbot-scene` (Bildfläche, Szenentitel, erklärende Bildunterschrift, responsive, keine Animation). EIN Prototyp auf `wie-ki-websites-liest`: inline-SVG aus lokalen Primitiven, Kiezbot als Pixelraster aus Rechtecken in Token-Farben, `aria-hidden="true"` — **die Aussage trägt die figcaption**, nie die Grafik allein. Kennzeichnung im Quelltext-Kommentar: Prototyp/Design-Beleg, keine finale Markenfigur. Keine externen Bilder, keine Bild-APIs, keine Anlehnung an fremde KI-Maskottchen.
+- **D-12 Lernpfad statt Blogliste.** Kette Finden → Lesen → Antworten → Erkennen → Handeln, abgebildet auf Seiten 1–5. Hub verlinkt alle fünf (Karten + Kette); jede Shell verlinkt: Hub, die nächste Stufe (1→2→3→4→5→Hub) und zurückhaltend `/website-analyse/`. Kein Jeder-mit-jedem-Linkteppich.
+- **D-13 Ein Commit am Schluss.** Brief §27 verlangt einen kohärenten Slice-Commit; der RED-Zwischenstand (Task 2.1/2.2) bleibt ungestaged bis alles grün ist (Slice-1-Präzedenzfall).
+
+### 7.2 Task 2.0 — Vorbereitung Working Tree
+
+**Step 1:** `knowledge/` lokal ausnehmen (Muster aus Slice-1-Korrekturrunde: Session-/Arbeitsmaterial über `.git/info/exclude`, NICHT über das Projekt-.gitignore):
+
+```bash
+echo 'knowledge/' >> .git/info/exclude
+git status --short
+```
+
+Expected: leere Ausgabe. Das Research-Material bleibt lokal liegen und unversioniert.
+
+### 7.3 Task 2.1 — Verify-Gates erweitern (RED)
+
+**Files:** Modify `scripts/verify.mjs`
+
+**Step 1:** In `SEITEN` (Z. 23–30) zwölf Einträge ergänzen, Feld `noindex: true` neu:
+
+```js
+  { pfad: 'wissen/index.html',                          lang: 'de', kanonisch: '/wissen/',                          noindex: true, paar: { partner: '/en/knowledge/',                       schalter: 'EN' } },
+  { pfad: 'en/knowledge/index.html',                    lang: 'en', kanonisch: '/en/knowledge/',                    noindex: true, paar: { partner: '/wissen/',                            schalter: 'DE' } },
+  { pfad: 'wissen/seo-geo-ai-visibility/index.html',    lang: 'de', kanonisch: '/wissen/seo-geo-ai-visibility/',    noindex: true, paar: { partner: '/en/knowledge/seo-geo-ai-visibility/', schalter: 'EN' } },
+  { pfad: 'en/knowledge/seo-geo-ai-visibility/index.html', lang: 'en', kanonisch: '/en/knowledge/seo-geo-ai-visibility/', noindex: true, paar: { partner: '/wissen/seo-geo-ai-visibility/',   schalter: 'DE' } },
+  { pfad: 'wissen/wie-ki-websites-liest/index.html',    lang: 'de', kanonisch: '/wissen/wie-ki-websites-liest/',    noindex: true, paar: { partner: '/en/knowledge/how-ai-reads-websites/', schalter: 'EN' } },
+  { pfad: 'en/knowledge/how-ai-reads-websites/index.html', lang: 'en', kanonisch: '/en/knowledge/how-ai-reads-websites/', noindex: true, paar: { partner: '/wissen/wie-ki-websites-liest/',   schalter: 'DE' } },
+  { pfad: 'wissen/answerability/index.html',            lang: 'de', kanonisch: '/wissen/answerability/',            noindex: true, paar: { partner: '/en/knowledge/answerability/',        schalter: 'EN' } },
+  { pfad: 'en/knowledge/answerability/index.html',      lang: 'en', kanonisch: '/en/knowledge/answerability/',      noindex: true, paar: { partner: '/wissen/answerability/',              schalter: 'DE' } },
+  { pfad: 'wissen/entity-trust/index.html',             lang: 'de', kanonisch: '/wissen/entity-trust/',             noindex: true, paar: { partner: '/en/knowledge/entity-trust/',         schalter: 'EN' } },
+  { pfad: 'en/knowledge/entity-trust/index.html',       lang: 'en', kanonisch: '/en/knowledge/entity-trust/',       noindex: true, paar: { partner: '/wissen/entity-trust/',               schalter: 'DE' } },
+  { pfad: 'wissen/agent-readiness/index.html',          lang: 'de', kanonisch: '/wissen/agent-readiness/',          noindex: true, paar: { partner: '/en/knowledge/agent-readiness/',      schalter: 'EN' } },
+  { pfad: 'en/knowledge/agent-readiness/index.html',    lang: 'en', kanonisch: '/en/knowledge/agent-readiness/',    noindex: true, paar: { partner: '/wissen/agent-readiness/',            schalter: 'DE' } },
+```
+
+**Step 2:** Direkt nach dem Canonical-Check (Z. 102–103) den Entwurfsstatus prüfen:
+
+```js
+    /* --- Entwurfsseiten: noindex ist Pflicht, Indexfreigabe ein Fehler --- */
+    if (eintrag.noindex) {
+      if (!html.includes('<meta name="robots" content="noindex">'))
+        F(`${seite}: noindex fehlt — Entwurfsseite waere indexierbar`);
+      for (const m of html.matchAll(/<meta name="robots" content="([^"]*)">/g)) {
+        if (!m[1].includes('noindex'))
+          F(`${seite}: robots="${m[1]}" erlaubt Indexierung — Entwurfsstatus verletzt`);
+      }
+    }
+```
+
+*(Korrektur aus dem Quality-Review der Umsetzung: wertbasierte Prüfung statt loser Teilstring-Suche `content="index` — fängt auch `all`/Varianten, keine Fehltreffer aus fremden Attributen.)*
+
+**Step 3:** Den hreflang-Anwesenheitscheck (Z. 105–107, Schleife über `['de','en','x-default']` mit `hreflang="${hl}"`-includes) durch einen **exakten** Check ersetzen — strengere Prüfung, keine Abschwächung. Format gegen dist verifiziert (`<link rel="alternate" hreflang="de" href="https://pixelkiez.de/…">`, übersteht die Minifizierung wörtlich):
+
+```js
+      const pfadDe = eintrag.lang === 'de' ? eintrag.kanonisch : eintrag.paar.partner;
+      const pfadEn = eintrag.lang === 'en' ? eintrag.kanonisch : eintrag.paar.partner;
+      for (const [hl, zielPfad] of [['de', pfadDe], ['en', pfadEn], ['x-default', pfadDe]]) {
+        if (!html.includes(`<link rel="alternate" hreflang="${hl}" href="${DOMAIN}${zielPfad}">`))
+          F(`${seite}: hreflang="${hl}" zeigt nicht auf ${DOMAIN}${zielPfad}`);
+      }
+```
+
+**Step 4:** Nach dem Funnel-Einstiegs-Gate (Z. 184–192) drei Entwurfs-Gates ergänzen:
+
+```js
+  /* --- Entwurfs-Gates: unveroeffentlichte Wissensseiten duerfen weder in
+     der Sitemap noch in llms.txt stehen und von keiner veroeffentlichten
+     Seite verlinkt sein. Geprueft gegen dist/ — gegen das, was ausgeliefert
+     wuerde, nicht gegen Absichten. Fehlt sitemap.xml oder llms.txt selbst,
+     ist DAS der Fehler — ein Gate, das mit der Datei verschwindet, prueft
+     nichts. Pfad-Treffer sind verankert (Trennzeichen danach), damit der
+     Hub-Pfad /wissen/ nicht jeden Kind-Pfad mit-matcht. --- */
+  const entwurfsPfade = SEITEN.filter((s) => s.noindex).map((s) => s.kanonisch);
+  if (entwurfsPfade.length) {
+    if (!(await existiert(join(ZIEL, 'sitemap.xml')))) F('sitemap.xml fehlt in dist/');
+    else {
+      const sitemap = await readFile(join(ZIEL, 'sitemap.xml'), 'utf8');
+      for (const p of entwurfsPfade) {
+        if (sitemap.includes(`${DOMAIN}${p}<`) || sitemap.includes(`${DOMAIN}${p}"`))
+          F(`sitemap.xml nennt die Entwurfsseite ${p}`);
+      }
+    }
+    if (!(await existiert(join(ZIEL, 'llms.txt')))) F('llms.txt fehlt in dist/');
+    else {
+      const llms = await readFile(join(ZIEL, 'llms.txt'), 'utf8');
+      for (const p of entwurfsPfade) {
+        if (new RegExp(regexEscape(p) + '(?![a-z0-9-])').test(llms))
+          F(`llms.txt nennt die Entwurfsseite ${p}`);
+      }
+    }
+    for (const veroeffentlicht of SEITEN.filter((s) => !s.noindex).map((s) => s.pfad)) {
+      if (!(await existiert(join(ZIEL, veroeffentlicht)))) continue;
+      const html = await readFile(join(ZIEL, veroeffentlicht), 'utf8');
+      for (const p of entwurfsPfade) {
+        const muster = new RegExp(`(?:href|action)="${regexEscape(p)}(?:#[^"]*)?"`);
+        if (muster.test(html))
+          F(`${veroeffentlicht}: verlinkt die unveroeffentlichte Wissensseite ${p}`);
+      }
+    }
+  }
+```
+
+Dazu ein Helfer oben im Skript (ersetzt auch das bereits doppelt vorhandene Escape-Idiom im EN-Link-Gate): `const regexEscape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');`
+
+*(Korrekturen aus dem Quality-Review der Umsetzung: (1) Treffer verankert — sonst falsches Rot mit irreführender Meldung, sobald später ein Kind veröffentlicht ist und der Hub Entwurf bleibt; (2) fehlende sitemap.xml/llms.txt ist ein Fehler, kein stilles Überspringen; (3) Entkopplungs-Gate läuft über ALLE veröffentlichten Seiten statt hart über die zwei Startseiten.)*
+
+Damit sind die Brief-Gates abgedeckt: A/B/C (Seiten fehlen → „fehlt in dist/"), D (Sitemap), E (noindex), F (canonical exakt + hreflang exakt), G (Umschalter über `paar`), H (Wurzelabsolut-Regel für Seiten unterhalb der Wurzel greift bereits, gilt automatisch für die neuen Tiefen), I (interner-Verweis-Check greift bereits), J (Startseiten-Entkopplung).
+
+**Step 5:** Run `npm run build && npm run verify`
+Expected: Build grün (unverändert), Verify **FAIL mit exakt 12 Fehlern** `… fehlt in dist/` für die zwölf neuen Pfade — und KEINEM weiteren Fehler (die vier Bestandsseiten müssen die exakten hreflang-Checks bestehen; tun sie es nicht, dist-Format ansehen und den Check dem realen Format anpassen — nicht umgekehrt).
+
+**Kein Commit** (D-13).
+
+### 7.4 Task 2.2 — Registry + Sitemap-Skip
+
+**Files:** Modify `scripts/seiten.mjs`, `scripts/build.mjs`
+
+**Step 1:** In `seiten.mjs` die sechs Paare aus D-7 an `SPRACHPAARE` anhängen, jeweils mit `entwurf: true` und `ldTausch: []`. Davor diesen Kommentar:
+
+```js
+  /* --- Wissensbereich (Slice 2): Entwuerfe. entwurf:true heisst:
+     kein Sitemap-Eintrag (build.mjs ueberspringt sie dort), die Quelle
+     traegt noindex, kein llms.txt-Eintrag, keine Startseiten-Verlinkung.
+     Die Freigabe eines spaeteren Slices entfernt das Flag und tauscht die
+     robots-Meta. ldTausch bleibt leer, solange die Shells kein JSON-LD
+     tragen (strukturierte Daten erst mit geprueftem Inhalt). */
+```
+
+Eintragsform (die übrigen fünf analog zur D-7-Tabelle):
+
+```js
+  {
+    quelle: 'wissen/index.html',
+    zielDe: 'wissen/index.html',
+    zielEn: 'en/knowledge/index.html',
+    pfadDe: '/wissen/',
+    pfadEn: '/en/knowledge/',
+    entwurf: true,
+    ldTausch: [],
+  },
+```
+
+**Step 2:** In `build.mjs` die Sitemap-Schleife (Z. 395) ergänzen:
+
+```js
+  for (const paar of SPRACHPAARE) {
+    if (paar.entwurf) continue;   // Entwuerfe (noindex) stehen nicht in der Sitemap
+```
+
+**Step 3:** Run `npm run build`
+Expected: **FAIL** mit ENOENT für `site/wissen/index.html` — Beweis, dass die Registry greift und die Quellen wirklich gebaut würden.
+
+### 7.5 Task 2.3 — CSS: Abschnitt 20 (Wissen + Kiezbot-Szene)
+
+**Files:** Modify `site/assets/css/bds.css` (neuer Abschnitt ans Ende, nach §19)
+
+**Step 1:** §1 (Tokens) und die Muster `channel`, `pruef`, `leiter`, `analyse-fakten` in §19 vollständig lesen — die neuen Regeln benutzen ausschließlich vorhandene Token-Variablen (Farbwerte nie hart kodieren; WCAG AA halten, Akzent als Text nur in der dunklen Abstufung wie überall).
+
+**Step 2:** Neuen Abschnitt anlegen. Struktur (Token-Namen beim Schreiben aus §1 übernehmen):
+
+```css
+/* ---------- 20. Wissen + Kiezbot-Szene ------------------------------------
+   Editoriale Schicht: Hub /wissen/ und die Wissens-Shells. Baut auf den
+   bestehenden Karten- und Leiter-Mustern auf; Neues nur, wo das Vorhandene
+   nicht reicht. figure.kiezbot-scene ist das wiederverwendbare Gefaess fuer
+   erklaerende Bildszenen; der enthaltene Kiezbot ist ein PROTOTYP als
+   Design-Beleg, keine finale Markenfigur. Bewusst keine Animation: jede
+   Szene muss im Stillstand vollstaendig verstaendlich sein. */
+
+/* Entwurfs-Hinweis auf jeder Shell — sichtbar ehrlich, solange Inhalte fehlen */
+.wissen-status{ /* mono-Schrift klein, Rahmen 1px, Innenabstand, gedaempfte Tinte */ }
+
+/* Platzhalter fuer noch nicht freigegebene Inhalte */
+.wissen-platzhalter{ /* gestrichelte Linie links, gedaempfte Tinte */ }
+
+/* Kiezbot-Szene */
+.kiezbot-scene{ margin:0; /* Rahmen, Innenabstand, Flaechenfarbe aus Tokens */ }
+.kiezbot-scene__bild{ /* zentriert */ }
+.kiezbot-scene__bild svg{ display:block; width:100%; height:auto; max-width:640px; margin-inline:auto; }
+.kiezbot-scene figcaption{ /* small-Groesse, oben abgesetzt; <b> traegt den Szenentitel */ }
+
+/* Reservierter Bildplatz auf Shells ohne fertige Szene */
+.kiezbot-scene--slot .kiezbot-scene__bild{ /* gestrichelter Rahmen, Mindesthoehe ~160px, Hinweistext zentriert */ }
+
+/* Weiterlesen-Reihe: zwei Karten nebeneinander, mobil untereinander */
+.wissen-weiter{ display:grid; gap:14px; }
+@media(min-width:720px){ .wissen-weiter{ grid-template-columns:1fr 1fr; } }
+```
+
+Für Hub-Karten und Lernpfad KEINE neuen Klassen: `pruef`/`channel` (Karten) und `leiter` (Kette) wiederverwenden; vorher prüfen, dass `leiter` mit 5 Einträgen umbricht (§19 lesen) — falls die Spaltenzahl hart auf 4 steht, in §20 eine Variante `.leiter--fuenf` ergänzen statt §19 anzufassen.
+
+### 7.6 Task 2.4 — Die sechs Quellseiten
+
+**Files:** Create `site/wissen/index.html`, `site/wissen/seo-geo-ai-visibility.html`, `site/wissen/wie-ki-websites-liest.html`, `site/wissen/answerability.html`, `site/wissen/entity-trust.html`, `site/wissen/agent-readiness.html`
+
+**Gemeinsamer Kopf** (Muster website-analyse.html Z. 1–35, exakt diese Reihenfolge; Preloads/Stylesheets RELATIV `assets/…` — der Build hasht und schreibt wurzelabsolut um; nur handgeschriebene Navigations-hrefs sind wurzelabsolut):
+
+```html
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>«TITEL» · Pixelkiez Wissen</title>
+<meta name="description" content="«BESCHREIBUNG»">
+<meta name="theme-color" content="#B6C7C4">
+<meta name="robots" content="noindex">
+<link rel="canonical" href="https://pixelkiez.de«PFAD_DE»"><!-- hreflang setzt der Build -->
+
+<meta property="og:type" content="website">
+<meta property="og:locale" content="de_DE">
+<meta property="og:site_name" content="Pixelkiez">
+<meta property="og:title" content="«TITEL» · Pixelkiez Wissen">
+<meta property="og:description" content="«BESCHREIBUNG»">
+<meta property="og:url" content="https://pixelkiez.de«PFAD_DE»">
+<meta property="og:image" content="assets/img/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Pixelkiez">
+
+<link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
+<link rel="icon" type="image/png" href="/icon-512.png" sizes="512x512">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+<link rel="preload" href="assets/fonts/archivo-var-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/ibm-plex-sans-var-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/ibm-plex-mono-500-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/css/fonts.css">
+<link rel="stylesheet" href="assets/css/bds.css">
+
+<!-- ENTWURF (Slice 2): Content-Shell ohne freigegebene Fakten — noindex,
+     nicht in Sitemap oder llms.txt, nicht von der Startseite verlinkt.
+     Bewusst KEIN JSON-LD, bis der Inhalt steht: strukturierte Daten sollen
+     nie mehr behaupten, als die Seite leistet. -->
+</head>
+```
+
+**Gemeinsames Gerüst** (Muster website-analyse.html): Skip-Link → Sprite-Teilmenge (benötigte Symbole aus website-analyse.html kopieren: mindestens `i-check`, `i-arrow-ur`, plus je Seite passende aus `i-layout`/`i-search`/`i-radio`/`i-chat`/`i-file`/`i-gate`) → Unterseiten-Header (Brand → `/`, Knopf `btn--sm` „Zur Website-Analyse" `href="/website-analyse/"`, Sprachumschalter `<a class="lang" href="«PFAD_EN»" hreflang="en" lang="en" aria-label="Switch to English" data-lang-switch>EN</a>`) → `<main id="main">` → Footer (wie website-analyse.html Z. 293–303, zusätzlich in der nav ein Link `<a href="/wissen/">Wissen</a>` NUR auf den Wissensseiten selbst) → `<script src="assets/js/bds.js" defer></script>` (kein JS-Neucode; `data-reveal` funktioniert damit, §2 läuft elementgeprüft leer, wo nichts ist).
+
+**Shell-Hauptteil je Kind-Seite** (Reihenfolge bindend — Brief §13):
+
+1. Auftakt: `kicker` = `Wissen · Schritt «N» von 5 — «STUFE»`, H1, `lead` = Kernfrage ausformuliert, danach `<p class="wissen-status" data-reveal>Dieser Beitrag ist in Vorbereitung. Die inhaltlichen Abschnitte werden nach fachlicher Prüfung ergänzt.</p>`
+2. „Was Sie hier verstehen werden" — `analyse-fakten`-Liste, 3 Punkte (strukturell, faktenfrei).
+3. 3–5 geplante Abschnitte: je `<section class="section">` mit `h2`, EINEM neutralen Orientierungssatz und `<p class="small wissen-platzhalter">Dieser Abschnitt folgt nach fachlicher Prüfung.</p>`
+4. Bildplatz: Seite 2 trägt die echte Kiezbot-Szene (Task 2.5); Seiten 1/3/4/5 je einen reservierten Platz:
+   ```html
+   <figure class="kiezbot-scene kiezbot-scene--slot" data-reveal>
+     <div class="kiezbot-scene__bild" aria-hidden="true"><span class="small">Bildszene in Vorbereitung</span></div>
+     <figcaption><b>«SZENENTITEL»</b> «EIN SATZ, WAS DIE SZENE SPÄTER ZEIGT»</figcaption>
+   </figure>
+   ```
+5. „Wo steht Ihre eigene Website?" — Bezug zur Analyse, zurückhaltend, ohne behauptete Befunde: ein Satz („Die kostenlose Website-Analyse sieht sich genau diese Fragen an Ihrer Website an.") + Button `href="/website-analyse/"` „Zur Website-Analyse".
+6. „Weiterlesen" — `wissen-weiter` mit zwei `channel`-Karten: nächste Stufe + Hub (`/wissen/`, „Zur Übersicht: der ganze Lernpfad").
+7. Quellen-Platzhalter: `<p class="small wissen-platzhalter">Belege und Quellen werden mit den geprüften Inhalten ergänzt.</p>`
+
+**Inhalts-Tabelle** (Titel/H1/Kernfrage sind Vorgabe; Formulierungen dürfen beim Schreiben geglättet werden, solange das Research-Gate hält — kein Provider-Name, keine Zahl, kein „immer/nie/kann nicht"):
+
+| Seite | Schritt/Stufe | H1 | Kernfrage (lead) | Geplante Abschnitte (h2) |
+|---|---|---|---|---|
+| seo-geo-ai-visibility | 1 · Finden | SEO, GEO, AI Visibility: drei Begriffe, drei Fragen | Was unterscheidet klassisches SEO, GEO und AI Visibility — und wie hängen sie zusammen? | Drei Begriffe, drei Fragen · Wo sie sich überschneiden · AI Visibility: Messung, nicht Optimierung · Warum klassische Suche weiter zählt · Was sich beobachten lässt — und was nicht |
+| wie-ki-websites-liest | 2 · Lesen | Wie KI eine Website liest | Was sehen Crawler, KI-Suchsysteme und Browser-Agenten, wenn sie eine Website abrufen? | Nicht jeder maschinelle Besucher kommt mit derselben Absicht · Was in der ersten Antwort ankommt · Rendern oder direkt lesen · Informationen finden oder eine Website benutzen · Von technischer Erreichbarkeit zu beobachteter Sichtbarkeit |
+| answerability | 3 · Antworten | Answerability: Beantwortet Ihre Website konkrete Fragen? | Kann eine Website Maschinen eine klare, belastbare Antwort auf eine konkrete Kundenfrage geben? | Lesbar ist nicht gleich antwortfähig · Was eine Antwort explizit macht · Kontext und Mehrdeutigkeit · Belege und faktische Stützung · Wie Pixelkiez Answerability einschätzt |
+| entity-trust | 4 · Erkennen | Entity Trust: Weiß die Maschine, wer Sie sind? | Können Maschinen Unternehmen, Leistungen, Ort, Personen und Fakten hinter einer Website zuverlässig zuordnen? | Weiß das System, wer Sie sind? · Unternehmen, Ort, Leistungen, Personen · Konsistenz über Quellen hinweg · Strukturierte Daten und externe Bestätigung · Beobachtbar oder erschlossen |
+| agent-readiness | 5 · Handeln | Agent-Readiness: Kann eine KI Ihre Website benutzen? | Kann ein KI-Agent eine Website nicht nur lesen, sondern tatsächlich benutzen? | Lesen oder handeln · Navigation und semantische Struktur · Formulare und bedienbare Elemente · Anmeldung und Transaktionen als spätere Reifestufe · Was heute praktikabel ist — und was Experiment bleibt |
+
+Weiterlesen-Kette: 1→2, 2→3, 3→4, 4→5, 5→1 („Der Anfang des Pfads") — plus Hub auf jeder Seite.
+
+**Hub `site/wissen/index.html`:** gleicher Kopf («TITEL» = „Wissen: Sichtbarkeit für Suche, KI und Agenten", «PFAD_DE» = `/wissen/`). Hauptteil:
+
+1. Auftakt: kicker „Pixelkiez Wissen", H1 „Sichtbarkeit verstehen: Suche, KI-Systeme, Agenten", lead: Websites werden heute nicht mehr nur von Menschen und klassischen Suchmaschinen interpretiert — auch KI-Suchsysteme und Agenten rufen sie ab, lesen sie und handeln mit ihnen. Dieser Bereich erklärt, was das für eine Website bedeutet — als zusammenhängender Lernpfad, nicht als Schlagwortsammlung. Danach `wissen-status`-Hinweis (Bereich im Aufbau).
+2. Lernpfad: `ol class="leiter"` mit 5 Einträgen — `«01 · Finden»` bis `«05 · Handeln»`, je `h3` = Seitentitel-Kurzform als Link auf die Kind-Seite, `small` = Kernfrage in einem Satz.
+3. Karten: `pruef`-Raster mit 5 `channel`-Karten (Icon, verlinkte `h3`, Kernfrage) — Karten und Leiter verlinken dieselben fünf Ziele; das ist gewollt (zwei Einstiege, ein Graph).
+4. Zurückhaltender Analyse-Verweis (wie Punkt 5 der Shells).
+5. Footer wie oben.
+
+Startseite `site/index.html` wird NICHT angefasst (Invariante; das Verify-Gate aus Task 2.1 Step 4 erzwingt die Entkopplung zusätzlich in dist).
+
+### 7.7 Task 2.5 — Kiezbot-Prototyp auf `wie-ki-websites-liest`
+
+**Files:** Modify `site/wissen/wie-ki-websites-liest.html` (Szene ersetzt dort den `--slot`-Platzhalter, positioniert nach dem ersten geplanten Abschnitt)
+
+```html
+<!-- KIEZBOT-PROTOTYP (Slice 2): Design-Beleg fuer das Szenen-Gefaess, keine
+     finale Markenfigur. Nur lokale SVG-Primitive, Farben aus den Tokens per
+     CSS-Klassen. Die Grafik ist dekorativ (aria-hidden) — die Aussage traegt
+     die Bildunterschrift; wer die Grafik nicht sieht, verliert nichts. -->
+<figure class="kiezbot-scene" data-reveal>
+  <div class="kiezbot-scene__bild" aria-hidden="true">
+    <svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" fill="none" stroke-linecap="round">
+      <!-- links: ein Dokument (die Website) -->
+      <g class="kb-dok">
+        <rect x="24" y="60" width="150" height="180" rx="6"/>
+        <rect x="40" y="78" width="80" height="12" rx="2" class="kb-akzent"/>
+        <line x1="40" y1="110" x2="158" y2="110"/><line x1="40" y1="128" x2="158" y2="128"/>
+        <line x1="40" y1="146" x2="130" y2="146"/><line x1="40" y1="176" x2="158" y2="176"/>
+        <line x1="40" y1="194" x2="158" y2="194"/><rect x="40" y="212" width="60" height="16" rx="3"/>
+      </g>
+      <!-- Mitte: Kiezbot als Pixelraster (Prototyp) -->
+      <g class="kb-bot">
+        <rect x="284" y="118" width="12" height="12"/><rect x="296" y="118" width="12" height="12"/><rect x="308" y="118" width="12" height="12"/><rect x="320" y="118" width="12" height="12"/><rect x="332" y="118" width="12" height="12"/>
+        <rect x="284" y="130" width="12" height="12"/><rect x="332" y="130" width="12" height="12"/>
+        <rect x="284" y="142" width="12" height="12"/><rect x="296" y="142" width="12" height="12" class="kb-akzent"/><rect x="320" y="142" width="12" height="12" class="kb-akzent"/><rect x="332" y="142" width="12" height="12"/>
+        <rect x="284" y="154" width="12" height="12"/><rect x="332" y="154" width="12" height="12"/>
+        <rect x="284" y="166" width="12" height="12"/><rect x="296" y="166" width="12" height="12"/><rect x="308" y="166" width="12" height="12"/><rect x="320" y="166" width="12" height="12"/><rect x="332" y="166" width="12" height="12"/>
+        <rect x="308" y="100" width="12" height="12" class="kb-akzent"/>
+      </g>
+      <!-- Verbindungen -->
+      <g class="kb-linie">
+        <path d="M174 150 H 278"/>
+        <path d="M350 150 H 400 M400 150 C 430 150 430 84 460 84"/>
+        <path d="M400 150 H 460"/>
+        <path d="M400 150 C 430 150 430 216 460 216"/>
+      </g>
+      <!-- rechts: drei Lesarten desselben Dokuments -->
+      <g class="kb-lesart">
+        <rect x="464" y="48" width="152" height="72" rx="6"/>
+        <rect x="478" y="62" width="52" height="30" rx="3" class="kb-akzent"/><line x1="540" y1="68" x2="602" y2="68"/><line x1="540" y1="84" x2="602" y2="84"/><line x1="478" y1="104" x2="602" y2="104"/>
+        <rect x="464" y="132" width="152" height="52" rx="6"/>
+        <line x1="478" y1="148" x2="602" y2="148"/><line x1="478" y1="162" x2="580" y2="162"/><line x1="478" y1="176" x2="602" y2="176"/>
+        <rect x="464" y="196" width="152" height="72" rx="6"/>
+        <rect x="478" y="210" width="124" height="16" rx="3"/><rect x="478" y="234" width="124" height="16" rx="3"/><rect x="478" y="258" width="56" height="0"/>
+      </g>
+    </svg>
+  </div>
+  <figcaption>
+    <b>Szene 1 — Ein Dokument, mehrere Lesarten.</b>
+    Verschiedene maschinelle Besucher können unterschiedliche Darstellungen derselben Website erhalten: gerendert mit Layout, als reiner Text oder als strukturierte Felder. Welche Lesart ankommt, entscheidet mit darüber, was von einer Website verstanden wird.
+  </figcaption>
+</figure>
+```
+
+In §20 dazu die Strichklassen (Token-Farben): `.kiezbot-scene__bild [class^="kb-"]{stroke:…}` / `.kb-akzent{fill:…}` — Konturen in Tinte, Akzentflächen in der Akzentfarbe, Hintergrund transparent. Beim Umsetzen frei nachjustieren (Abstände, Rundungen); die Struktur „1 Dokument → Kiezbot → 3 Lesarten" ist die Vorgabe. Keine Animation, kein Text IM SVG (Übersetzbarkeit + Zugänglichkeit: alles Sprachliche steht in figcaption).
+
+### 7.8 Task 2.6 — Übersetzungen
+
+**Step 1:** Run `npm run i18n` → neue Keys (erwartet grob 120–200) mit leerem Wert in `site/i18n/en.json`.
+**Step 2:** Alle neuen Werte füllen. Idiomatisch, Begriffe: „AI visibility", „answerability", „entity trust", „agent readiness". Fachbegriffe, die deutsch = englisch sind („Answerability", „Entity Trust", „Kiezbot" …), als Selbst-Zuordnung eintragen (Wert = Key) — KEINE Änderung an der UNVERAENDERT-Liste in i18n.mjs nötig. `en.js.json` bleibt unberührt (kein neuer JS-String).
+**Step 3:** Run `npm run build` — Expected: rot, solange ein Wert leer ist; danach grün. Die EN-Gegenproben des Builds (Umlaute, deutsche Restwörter) müssen ohne Sonderbehandlung bestehen.
+
+### 7.9 Task 2.7 — Gates, Beweise, Browser
+
+**Step 1:** Run `npm run build && npm run verify`
+Expected: beide GRÜN; Verify listet 18 Seiten (6 alt + 12 neu).
+
+**Step 2:** Deterministische dist-Beweise (Ausgaben wörtlich ins Handoff):
+
+```bash
+grep -c 'wissen\|knowledge' dist/sitemap.xml || echo LEER            # Erwartung: 0/LEER
+for f in dist/wissen/index.html dist/wissen/*/index.html dist/en/knowledge/index.html dist/en/knowledge/*/index.html; do printf '%s %s\n' "$f" "$(grep -c 'content="noindex"' "$f")"; done   # Erwartung: 12 Zeilen, je 1
+grep -cE '(href|action)="/(wissen|en/knowledge)' dist/index.html dist/en/index.html || echo ENTKOPPELT   # Erwartung: je 0
+grep -c 'wissen\|knowledge' dist/llms.txt || echo LEER               # Erwartung: 0/LEER
+```
+
+**Step 3:** `npm run serve` (Hintergrund) und ECHTE Browser-Verifikation (Chrome, 1440×900 / 768×1024 / 390×844) auf: `/wissen/`, allen fünf Kind-Seiten, `/en/knowledge/` und mindestens `/en/knowledge/how-ai-reads-websites/`. Prüfen: kein horizontaler Overflow (innerWidth == scrollWidth), Hierarchie/Karten lesbar, Kiezbot-Szene korrekt skaliert, Weiterlesen-Links und Analyse-CTA führen richtig, Sprachumschalter beidseitig korrekt, Konsole leer, keine gebrochenen Requests. Nur behaupten, was wirklich im Browser lief (Slice-1-Regel; 390er-Breite ggf. wieder per CDP-setViewport, siehe Korrekturrunde 1 Punkt 4).
+
+### 7.10 Task 2.8 — Claim-Audit (vor dem Commit)
+
+```bash
+grep -rniE '(chatgpt|claude|gemini|perplexity|copilot|googlebot|gptbot|bingbot|openai|anthropic|cloudflare|llms\.txt|[0-9]+ ?%|prozent|garant|immer|niemals|(kann|koennen|können) nicht)' site/wissen/
+```
+
+Erwartung: **keine Ausgabe** (Exit 1). Jeder Treffer wird entfernt oder in einen späteren, research-freigegebenen Slice verschoben — es gibt keine „erklärbaren" Treffer in den Shells. Zusätzlich Sichtprüfung der sechs Quellen auf Zahlen, Daten, Ranking-/Traffic-/Conversion-Aussagen und Garantie-Ton.
+
+### 7.11 Task 2.9 — Log, Commit, Handoff
+
+**Step 1:** Abschnitt „Slice 2 — Log" unten anfügen (Base/Head-SHA, Dateien, Routen, Gate-Ergebnisse, Browser-Beweise, Abweichungen, offene Fragen). Frühere Slice-Einträge unangetastet lassen.
+**Step 2:** `git status --short` + `git diff` vollständig durchsehen: kein `dist/`, kein `knowledge/`, kein `site/index.html`-Diff, nichts Unbeteiligtes.
+**Step 3:** EIN Commit, Message im Stil der Historie, z. B.: `Analyse-Funnel Slice 2: Wissensbereich als Entwurf — Hub, fünf Shells, Kiezbot-Szene (noindex, ohne Sitemap)`. NICHT pushen, nicht mergen, nicht deployen.
+**Step 4:** SLICE_HANDOFF im Pflichtformat des Briefs ausgeben (slice/status, repository, external_gate, baseline, implemented, knowledge_routes, indexing, service_architecture, kiezbot, changed_files, validation, browser, claim_audit, git, architecture_decisions, truth_and_limits, open_questions, risks, recommended_next_slice, CLAUDE_CONTEXT, REVIEW_REQUEST) — Werte aus den realen Kommando-Ausgaben, nicht aus dem Gedächtnis. Danach STOP; Slice 3 (Research-Inhalte, Indexierung, Sitemap, Startseiten-Navigation) beginnt erst nach externer Freigabe.
+
+### 7.12 Offene Fragen an den Review (blockieren Slice 2 nicht)
+
+- O-6: EN-Familie `/en/knowledge/` mit übersetztem Slug für Seite 2 (D-8) — bestätigen, bevor die Seiten indexierbar werden (Umbenennen ist vor der Freigabe billig, danach teuer).
+- O-7: Schrittfolge des Lernpfads (Finden→Lesen→Antworten→Erkennen→Handeln) und die deutsche Stufenbenennung — redaktionell OK?
+- O-8: `wissen-status`-Hinweis („in Vorbereitung") auf den Shells — gewünschte Formulierung fürs externe Review?
+
+### Slice 2 — Log, implementiert 2026-08-31, wartet auf externen Review
+
+- Base SHA: `e5cfc4a2a11000fa83bc3ff2220159f5c3966d92` · Head SHA: siehe `git log` (Commit nach diesem Log-Update) · Branch `feat/pxk-self-service-analysis-funnel`
+- Gate-Stand: SLICE_1_EXTERNAL_REVIEW = PASS (Nutzer, 2026-08-31). Baseline vor Beginn: build ✅ verify ✅ (6 Seiten).
+- **Geänderte/neue Dateien:**
+  - `scripts/verify.mjs` — 12 Entwurfsseiten in der SEITEN-Tabelle (`noindex: true`); noindex-Gate (Exakt-String + wertbasierte robots-Prüfung); hreflang-Prüfung von Anwesenheit auf exakte Zieladressen verschärft; `regexEscape`-Helfer; Entwurfs-Gates: sitemap.xml (Treffer per Trennzeichen verankert), llms.txt (Lookahead gegen Präfix-Bluten), Verlinkungs-Gate über ALLE veröffentlichten Seiten; fehlende sitemap.xml/llms.txt sind jetzt selbst Fehler
+  - `scripts/seiten.mjs` — 6 Sprachpaare mit `entwurf: true`, `ldTausch: []`; Doku des Flags (nur Sitemap-Skip automatisch, Rest erzwingt verify)
+  - `scripts/build.mjs` — eine Zeile: Sitemap-Schleife überspringt `entwurf`-Paare
+  - `site/wissen/` NEU — `index.html` (Hub: Lernpfad-Leiter 01–05, 5 Karten, Analyse-Hinweis) + 5 Shells (Auftakt mit Schritt-Kicker, „Was Sie hier verstehen werden", 5 geplante Abschnitte mit je einem Orientierungssatz + Platzhalter, Bildplatz, Analyse-CTA, Weiterlesen-Kette 1→2→3→4→5→1 + Hub, Quellen-Platzhalter). Alle Seiten: noindex, KEIN JSON-LD, kein Jahr im Footer, Kommentar „Maschinenlisten" statt des wörtlichen Dateinamens (Claim-Grep-Sauberkeit)
+  - `site/assets/css/bds.css` — §20 (+71 Zeilen): wissen-status, wissen-platzhalter, kiezbot-scene (+ --slot, kb-*-Strichklassen, `.leiter h3 a`-Affordanz, wissen-weiter); nur Token-Farben, keine Animation
+  - `site/i18n/en.json` — 140 neue Übersetzungen (443 gesamt, 303 unverändert; 1 Eintrag nur Komma/Position). „Wissen" → „Knowledge" passend zur URL-Familie
+- **Kiezbot:** Prototyp-Szene „Ein Dokument, mehrere Lesarten" auf wie-ki-websites-liest — inline-SVG (Dokument → Pixelraster-Bot → drei Lesarten), aria-hidden, Aussage in der figcaption, im Quelltext als Prototyp/kein finales Markenzeichen markiert. Kein Drittanbieter-Asset, keine Animation.
+- **Gates:** TDD eingehalten — verify zuerst rot (exakt 12 × „fehlt in dist/", kein weiterer Fehler), Registry-RED per ENOENT belegt, Entwurfs-Gates per Canary einmal rot gesehen (Verankerung bewiesen: injizierter Hub-Pfad meldete NICHT die Kinder). Endstand: `npm run build` GRÜN (18 Seiten) · `npm run verify` GRÜN. dist-Beweise: sitemap.xml 6 `<loc>`, 0 × wissen/knowledge · 12 Seiten je 1 × `content="noindex"` · Startseiten DE+EN 0 Links auf Entwürfe · llms.txt 0 Treffer.
+- **Browser-verifiziert:** Chrome (echte Sitzung, 127.0.0.1:8080) Desktop 1440 alle 6 DE + EN-Hub + EN-Kind: Umschalter, CTA-Ziele (`/en/website-analyse/` auf EN), Kiezbot-Szene, Hub-Leiter — keine Konsolenfehler. Responsive per Puppeteer-core/CDP-setViewport (Scratchpad, Chrome installiert): 8 Seiten × 1440/768/390 = 24 Kombis, innerWidth == scrollWidth überall, 0 Konsolenfehler, 0 gescheiterte Requests; Screenshots 390/768 gesichtet (Szene skaliert, Status-Box umbricht sauber).
+- **Beobachtung (kein Slice-2-Defekt):** In einem frischen Automations-Tab feuert der Reveal-IntersectionObserver beim allerersten Seitenaufruf nicht (Inhalte bleiben opacity 0 bis zum ersten Scroll); identisch auf der extern reviewten Bestandsseite /website-analyse/ reproduziert, nach Reload überall korrekt. Einordnung: Automations-/First-Load-Artefakt derselben Familie wie der in efb7d69 behobene Partikel-Fall; auf echten Erstbesuchen nicht nachgewiesen. Fürs Review notiert.
+- **Vorbestehender Befund (außerhalb Slice-Scope, nicht angefasst):** Die EN-Fehlermeldung des Kontaktformulars ist halb übersetzt (bds.js:1412 f. — drei String-Literale, en.js.json übersetzt nur das erste; auf der EN-Startseite sichtbar bei fehlgeschlagenem Versand; auf den Wissensseiten toter Code). Empfehlung: eigener kleiner Fix-Slice.
+- **Abweichungen vom Plan:** Quality-Review-Korrekturen in verify.mjs (Verankerung, fehlende-Datei-Fehler, wertbasierte robots-Prüfung, Gate über alle veröffentlichten Seiten) wurden in Abschnitt 7.3 zurückgeschrieben — Plan und Code stimmen überein. Kein `.leiter--fuenf` nötig (Leiter ist 2-spaltig). Kein twitter:*-Block auf Entwürfen (Head-Parität vor Freigabe prüfen).
+- **Claim-Audit:** Quellen `site/wissen/` 0 Treffer (Provider, Zahlen, Jahre, Garantie-/Absolutwörter; einzige Grep-Ausnahme: SVG-Namespace-URI). en.json: „What can be observed — and what cannot." als epistemische Messgrenzen-Aussage eingestuft (deutsches Original „— und was nicht"), kein Plattform-Claim.
+- **Arbeitsumgebung:** `knowledge/` (Research-Rohmaterial) bleibt unversioniert, lokal über `.git/info/exclude` ausgenommen (Muster aus Slice-1-Korrekturrunde).
+- **Offen für Review:** O-6 (EN-Slugs), O-7 (Stufenbenennung), O-8 (Status-Wortlaut) + die zwei Beobachtungen oben.
+- **Nächster Slice:** 3 — erste research-freigegebene Inhalte; erst nach externer Freigabe. Indexierung, Sitemap, llms.txt und Startseiten-Navigation bleiben bis dahin unangetastet.
