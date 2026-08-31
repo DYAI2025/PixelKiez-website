@@ -864,3 +864,140 @@ sind. Bis dahin: kein Startseiten-, Navigations- oder Footer-Link auf
   sitemap/llms 0 Wissens-Treffer · Startseiten DE+EN 0 Entwurfs-Links ·
   `site/index.html` byte-identisch · Kiezbot-Diff 0 Treffer ·
   Claim-Audit-Grep über site/wissen/ 0 Treffer.
+
+---
+
+## 9. Slice 3 — Wissensinhalt: „Wie KI Ihre Website wirklich liest" (implementiert 2026-08-31)
+
+Erster ausgeschriebener Wissensbeitrag. Genau EINE Shell wird zum Artikel;
+die vier übrigen bleiben unangetastet. Der Bereich bleibt Entwurf: noindex,
+keine Sitemap, kein llms.txt, keine Startseiten-Verlinkung.
+
+### 9.1 Quellenlage — abweichend vom Auftrag geprüft
+
+Der Auftrag nannte sechs Primärquellen als „extern verifiziert". Sie wurden
+vor dem Schreiben eigenständig nachgeholt, weil ein übernommener Claim kein
+geprüfter Claim ist. Ergebnis:
+
+- **Fünf Quellen bestätigt.** Anthropic, Perplexity, Google-Crawler,
+  Google-JavaScript, Vercel/MERJ — jeweils mit wörtlichem Beleg.
+- **OpenAI war per WebFetch und curl nicht erreichbar** (HTTP 403 auf beiden
+  Adressen, `help.openai.com`). Erst über eine echte Browsersitzung geholt.
+  Ohne diesen zweiten Anlauf wären C2 und C8 unbelegt in den Text gegangen.
+- **Anthropic-Adresse leitet um** (301 → `support.claude.com`). Im
+  Quellenblock steht die im Auftrag genannte Adresse; sie löst korrekt auf.
+
+### 9.2 Korrekturen, die aus der Prüfung folgten
+
+Die Prüfung hat den Text an vier Stellen gegenüber dem Claims-Paket
+verschärft — jeweils in Richtung *weniger* Behauptung:
+
+1. **Vercel/MERJ nennt zwei Gegenbeispiele**, die im Auftrag nicht standen:
+   Gemini (über Googlebot-Infrastruktur) und AppleBot rendern sehr wohl.
+   „Kein JavaScript" ist damit nicht einmal innerhalb dieser Studie
+   allgemein. Der Abschnitt nennt beide.
+2. **Google-Extended: kein „ausschließlich".** Die Quelle nennt die
+   gesteuerten Zwecke, behauptet aber keine Ausschließlichkeit. Ebenso bleibt
+   „kein Einfluss" auf Aufnahme und Ranking *in der Google-Suche* beschränkt.
+3. **Perplexity: „in der Regel" bleibt stehen.** Die Quelle schreibt
+   „generally ignores robots.txt" — ohne das Wort wäre es ein Absolutum.
+   Zur PerplexityBot-Zeile gehört „KI-Basismodelle", nicht „Training".
+4. **Kein Garantie-Disclaimer im Namen von OpenAI erfunden.** Der Satz
+   „Platzierung ist nicht garantiert" steht wörtlich in der ChatGPT-Such-
+   Dokumentation und wird nur deshalb zitiert.
+
+### 9.3 Research-Konflikt — entschieden
+
+`knowledge/ki-lesbarkeit-websites.md` behauptet zeitlos „Die großen
+KI-Crawler rendern kein JavaScript" (Z. 10, 51, 55; Vertrauen „hoch").
+Diese Formulierung wurde **nicht übernommen**. Der Beitrag datiert den Befund
+(17.12.2024), nennt die untersuchten Crawler beim Namen, nennt die
+Gegenbeispiele und trennt Befund / Grenze / Folgerung in drei Blöcke. Die
+brauchbare Nuance derselben Datei (Z. 57 — auch JSON-LD und serverseitig
+vorbereitete Inhalte stehen im Roh-Response) ist eingearbeitet und schützt
+gegen das View-Source-Absolutum.
+
+### 9.4 Terminologie — kleinste kontextsichere Lösung
+
+Der deutsche Schlüssel `Antwortfähigkeit` ist **geteilt**:
+`site/website-analyse.html:264` (Diagnose-Leiter) und
+`site/wissen/index.html:108` (Hub-Kategorie). Da en.json eine flache,
+seitenübergreifende Tabelle ist, hätte eine Wertänderung die Analyse-Leiter
+mitverändert — deshalb unangetastet.
+
+Geändert wurden nur die drei Schlüssel, die **ausschließlich** auf
+Wissensseiten vorkommen (`Wissen · Antwortfähigkeit`, der Lead und der
+Fakten-Punkt auf `answerability.html`): „answer readiness" → „answerability".
+Kein deutscher Quelltext einer anderen Wissensseite wurde angefasst.
+
+**Verbleibend:** 1 × „Answer readiness" in der EN-Ausgabe, auf
+`/en/knowledge/` (Hub-Kategoriechip). Auflösbar nur, indem der deutsche
+Hub-Text von `Antwortfähigkeit` auf `Answerability` geändert wird — das ist
+`site/wissen/index.html` und lag außerhalb des Slice-3-Scopes.
+
+### 9.5 CSS — drei Zusätze, sonst Wiederverwendung
+
+Neu in Abschnitt 20b: `.leiter--drei` (nur Spaltenzahl), `.wissen-probe`
+(Mono-Abrufprobe), `.wissen-quellen` (Quellen-`<dl>`). Alles andere trägt
+`.leiter`, `.channel`, `.prose`, `.analyse-fakten`. 51 Zeilen hinzugefügt,
+0 entfernt. Kiezbot-Regeln unverändert (Diff inkl. Zeilennummern leer).
+
+### 9.6 Gates (Slice 3)
+
+- **Kiezbot eingefroren:** Block und CSS byte-identisch zu HEAD —
+  sha256 `c2e58798…` vorher wie nachher, `diff` leer, Exit 0.
+- **Canaries vor Grün:** (A) noindex aus der Quelle entfernt → verify rot mit
+  genau 2 Fehlern (DE + EN „noindex fehlt"); (B) Entwurfspfad in llms.txt →
+  verify rot mit „llms.txt nennt die Entwurfsseite". Beide zurückgebaut,
+  Dateien danach identisch.
+- **Claim-Audit** (33 Prüfungen, 0 Fehler): Presence-, Qualifier- und
+  Absence-Invarianten statt einer nackten Wortliste — eine Wortliste hätte
+  den geforderten Satz „Google-Extended ist kein eigener Bot." selbst
+  verworfen. Qualifier-Regel: jede Stelle mit dem Rendering-Befund trägt im
+  Umkreis von 600 Zeichen das Messdatum (DE 1/1, EN 1/1). Die
+  Platzhalter-Prüfung war zuerst falsch rot (las die Rohdatei und traf die
+  eingebettete CSS-Regel); nach der Verschärfung auf Attributposition per
+  Canary rot gesehen und dann grün.
+- **dist-Beweise:** 12 × noindex · sitemap 6 `<loc>`, 0 Wissens-Treffer ·
+  llms.txt 0 · veröffentlichte Seiten 0 Entwurfs-Links ·
+  `site/index.html` unverändert.
+- **Browser (Chrome über CDP, 6 Kombinationen):** DE+EN × 1440/768/390 —
+  `innerWidth == scrollWidth` überall, 0 überstehende Elemente,
+  0 Konsolenfehler, 0 gescheiterte Requests. Satzbreite 82ch (1440) bis
+  41ch (390). Quellenblock und Abrufprobe ohne Überlauf.
+
+### 9.7 Reveal-Beobachtung aus Slice 2 — aufgeklärt
+
+Einordnung: **LIKELY_AUTOMATION_ONLY**, jetzt mit Gegenbeweis statt Vermutung.
+
+- Ursache benannt: Im Automations-Tab ist `document.visibilityState`
+  `"hidden"`. Ein **frisch angelegter** IntersectionObserver auf ein
+  Element im Sichtfeld feuerte dort in 700 ms **0 ×** — der Browser stellt
+  im versteckten Tab nicht zu. Das liegt nicht am Seitencode.
+- Gegenprobe auf der Bestandsseite `/website-analyse/`: identisch
+  (29 Reveals, 0 × `.in`) — also nicht durch Slice 3 verursacht.
+- **Entscheidender Nachweis:** headless mit echtem Viewport
+  (`visibilityState: "visible"`), **ohne jedes Scrollen**, `scrollY = 0`:
+  `h1`-Opazität **1** in allen 6 Kombinationen. Der Nutzerfall ist damit
+  NICHT reproduziert.
+- Vollständigkeit: bei langsamem Durchlauf 64/64 Reveals aktiv, 0 unsichtbar
+  (DE+EN, 1440 und 390). Ein früherer Zwischenwert von 15/64 war ein
+  Messartefakt der zu schnellen Scroll-Schleife, kein Seitenfehler.
+- Grenze der Aussage: Ein sichtbarer, fokussierter Tab liess sich über den
+  Automationskanal nicht herstellen; der Negativbeweis stammt aus dem
+  Headless-Viewport, nicht aus einer Handsitzung.
+
+### 9.8 Offen für den Review
+
+- **O-9:** 1 × „Answer readiness" im EN-Hub (9.4) — Auflösung erfordert
+  `site/wissen/index.html`.
+- **O-10:** Der Hub nennt den Beitrag „Was sehen KI-Systeme, wenn sie eine
+  Website lesen?", die Seite trägt jetzt H1 „Wie KI Ihre Website wirklich
+  liest". Hub-Fragen und Artikel-Aussagen dürfen auseinandergehen — falls
+  nicht gewollt, ist das eine Hub-Änderung.
+- **O-11:** Ohne JavaScript bleiben `[data-reveal]`-Inhalte auf **allen**
+  Seiten unsichtbar (site-weit, nicht Slice-3-spezifisch). Für Maschinen
+  ohne Bedeutung — der Text steht im DOM —, für Menschen ohne JS schon.
+  Eigener Slice, falls das jemand entscheiden will.
+- **O-12:** Die vier übrigen Shells tragen weiter `wissen-platzhalter`.
+  Der Beitrag ist damit der einzige ausgeschriebene im Bereich.

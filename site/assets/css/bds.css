@@ -2112,3 +2112,54 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
    stimmt. Die Klassen sitzen auf den <g>-Gruppen, die Primitive erben. */
 .kiezbot-scene [class^="kb-"]{stroke:var(--ink);stroke-width:1.7}
 .kiezbot-scene .kb-akzent{fill:var(--accent);stroke:none}
+
+/* ---------- 20b. Ausgeschriebene Wissensbeitraege (Slice 3) ---------------
+   Erst der erste ausformulierte Beitrag zeigt, was ein Fliesstext-Beitrag
+   ueber die Shell hinaus braucht. Bewusst nur drei Zusaetze: alles Uebrige
+   (.leiter, .channel, .prose, .analyse-fakten) trug bereits. */
+
+/* Dreispaltige Leiter. Die Leiter ist zweispaltig, weil vier Stufen so
+   aufgehen; Dreiergruppen — drei Besucherzwecke, drei Abrufwege, Befund /
+   Grenze / Folgerung — brechen darin unguenstig in 2+1. Nur die Spaltenzahl
+   aendert sich, die Karten kommen unveraendert aus .leiter. */
+@media(min-width:920px){.leiter--drei{grid-template-columns:1fr 1fr 1fr}}
+
+/* Abrufprobe: was bei einem Abruf ankommt, in Mono auf eigener Flaeche —
+   sichtbar getrennt von der Erklaerung daneben. Kein <pre>: der Text muss
+   auf schmalen Anzeigen umbrechen duerfen, sonst schiebt eine einzige lange
+   Zeile die ganze Seite quer. Deshalb <span>-Zeilen statt Zeilenumbruechen
+   im Quelltext. */
+.wissen-probe{
+  font-family:var(--font-mono);font-size:.8125rem;line-height:1.7;
+  color:var(--ink-70);
+  padding:12px 14px;
+  background:var(--paper);border:1px solid var(--line);border-radius:var(--radius-sm);
+  overflow-wrap:anywhere;
+}
+.wissen-probe span{display:block}
+.wissen-probe .aus{color:var(--ink-45)}
+
+/* Quellenblock: je Quelle der Beleg, wofuer er steht, und sein Stand. Als
+   <dl>, damit der Zusammenhang zwischen Quelle und Aussage auch vorgelesen
+   erhalten bleibt. Schmal untereinander, ab 720px die Quelle links neben
+   ihren Angaben. Adressen duerfen an jeder Stelle brechen — eine
+   Dokumentations-URL ist laenger als jede Telefonspalte. */
+.wissen-quellen{margin-top:clamp(26px,3.5vw,44px)}
+.wissen-quellen > div{
+  display:grid;gap:6px;
+  padding-block:clamp(16px,2vw,22px);
+  border-top:1px solid var(--line);
+}
+.wissen-quellen > div:last-child{border-bottom:1px solid var(--line)}
+@media(min-width:720px){
+  .wissen-quellen > div{grid-template-columns:minmax(0,22ch) minmax(0,1fr);gap:6px 32px}
+  .wissen-quellen dt{grid-row:span 2}
+}
+.wissen-quellen dt{
+  font-family:var(--font-display);font-weight:600;
+  font-size:1.0625rem;letter-spacing:-.012em;line-height:1.3;
+}
+.wissen-quellen dd{margin:0;color:var(--ink-70);font-size:.9375rem;line-height:1.6}
+.wissen-quellen dd a{color:var(--ink);text-underline-offset:4px;overflow-wrap:anywhere}
+.wissen-quellen dd a:hover{color:var(--accent-ink)}
+.wissen-quellen .stand{color:var(--ink-45);font-family:var(--font-mono);font-size:.75rem;letter-spacing:.01em}
