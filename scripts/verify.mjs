@@ -11,6 +11,7 @@ import { readFile, readdir, stat } from 'node:fs/promises';
 import { join, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
+import { createContext, runInContext } from 'node:vm';
 
 const ZIEL = join(fileURLToPath(new URL('..', import.meta.url)), 'dist');
 
@@ -118,9 +119,12 @@ function stilRegeln(quelle) {
         und zwar bedingungslos, nicht erst unter einer Media Query. Nur
         unter prefers-reduced-motion sichtbar zu sein hilft dem Besucher
         ohne JavaScript nicht.
-     3. Irgendein Skript der Seite setzt das Merkmal — und irgendeines nimmt
-        es wieder zurueck. Ohne das Zuruecknehmen bliebe ein Fehlschlag des
-        Hauptskripts als leere Seite stehen.
+     3. Irgendein Skript der Seite setzt das Merkmal — und der Vorlauf im
+        <head>, der es setzt, nimmt es zu DOMContentLoaded auch selbst
+        wieder zurueck, wenn sich bis dahin niemand darum gekuemmert hat.
+        Ohne dieses Zuruecknehmen bliebe ein Fehlschlag des Hauptskripts als
+        leere Seite stehen. Geprueft wird das nicht am Quelltext, sondern am
+        Verhalten (siehe vorlaufMaengel weiter unten).
      4. Gesetzt wird es im <head>. Weiter hinten waere die Seite bereits
         gemalt und der fertige Inhalt blitzte auf, bevor er sich versteckt.
 
@@ -128,6 +132,85 @@ function stilRegeln(quelle) {
    ------------------------------------------------------------------------- */
 const MERKMAL = 'data-reveal-anim';
 const REVEAL_SEL = /\[data-reveal\](?![-\w])/;
+const setzt = (c) => new RegExp(`setAttribute\\(\\s*["']${MERKMAL}["']`).test(c);
+
+/* -------------------------------------------------------------------------
+   Der ausgelieferte Vorlauf wird nicht gelesen, sondern ausgefuehrt.
+
+   Punkt 3 stand frueher als Suche nach removeAttribute ueber alle Skripte
+   der Seite. Das war zu grob und deckte genau den Fall nicht ab, um den es
+   geht: bds.js enthaelt denselben Aufruf (in `aufgeben()`), und bds.js ist
+   das Skript, dessen Ausbleiben der Rueckfall abfangen soll. Faellt der
+   Rueckfall aus dem Vorlauf heraus, findet die Suche ihn weiterhin in
+   bds.js und bleibt gruen — waehrend der Browser die Seite leer ausliefert,
+   sobald bds.js blockiert wird oder beim Auswerten scheitert.
+
+   Deshalb laeuft der Vorlauf hier wirklich: in einem eigenen vm-Kontext mit
+   einem winzigen Ersatz-DOM, ohne Browser und ohne Zufall. Der Ersatz kennt
+   nur, was der Vorlauf anfasst — documentElement mit den vier
+   Merkmal-Methoden, addEventListener, matchMedia und IntersectionObserver.
+   ------------------------------------------------------------------------- */
+function laufVorlauf(code) {
+  const merkmale = new Map();
+  const lauscher = [];
+  const wurzel = {
+    setAttribute: (n, v) => { merkmale.set(n, String(v)); },
+    getAttribute: (n) => (merkmale.has(n) ? merkmale.get(n) : null),
+    removeAttribute: (n) => { merkmale.delete(n); },
+    hasAttribute: (n) => merkmale.has(n),
+  };
+  /* Der Fall, um den es geht: Beobachter vorhanden, Bewegung nicht
+     reduziert — nur dann spannt der Vorlauf den Vorzustand ueberhaupt auf,
+     und nur dann braucht er den Rueckfall. */
+  const kontext = createContext({
+    window: { IntersectionObserver: function () {}, matchMedia: () => ({ matches: false }) },
+    document: { documentElement: wurzel, addEventListener: (typ, fn) => { lauscher.push([typ, fn]); } },
+  });
+  runInContext(code, kontext, { timeout: 2000 });
+  return {
+    merkmal: () => (merkmale.has(MERKMAL) ? merkmale.get(MERKMAL) : null),
+    uebernimm: (wert) => { merkmale.set(MERKMAL, wert); },   // das tut bds.js, wenn der Beobachter steht
+    feuere: (typ) => {
+      const treffer = lauscher.filter(([t]) => t === typ);
+      for (const [, fn] of treffer) fn({ type: typ });
+      return treffer.length;
+    },
+  };
+}
+
+/* Liefert die Liste dessen, was am Verhalten eines Vorlaufs fehlt — leer
+   heisst: er deckt den Ausfall von bds.js ab. */
+function vorlaufMaengel(code) {
+  const maengel = [];
+  let lauf;
+  try { lauf = laufVorlauf(code); }
+  catch (e) { return [`der Vorlauf wirft beim Ausfuehren (${e.message})`]; }
+
+  if (lauf.merkmal() !== 'bereit')
+    maengel.push(`er spannt den Vorzustand nicht auf (${MERKMAL} steht nach dem Lauf auf ${JSON.stringify(lauf.merkmal())} statt "bereit")`);
+
+  /* Ab hier laeuft KEIN weiteres Skript — das ist der ganze Punkt: genau so
+     sieht die Seite aus, wenn bds.js nicht ankommt. */
+  if (!lauf.feuere('DOMContentLoaded'))
+    maengel.push('er meldet sich nicht auf DOMContentLoaded an — bleibt bds.js aus, nimmt niemand den Vorzustand zurueck');
+  else if (lauf.merkmal() !== null)
+    maengel.push(`er nimmt ${MERKMAL} zu DOMContentLoaded nicht zurueck (steht danach auf ${JSON.stringify(lauf.merkmal())}) — bleibt bds.js aus, bliebe der Inhalt unsichtbar`);
+
+  /* Die Gegenrichtung derselben Zeile: hat bds.js den Vorzustand
+     uebernommen ("an"), darf der Rueckfall ihm nicht dazwischenfahren,
+     sonst faellt das Einblenden bei jedem Aufruf aus. */
+  try {
+    const zweit = laufVorlauf(code);
+    if (zweit.merkmal() === 'bereit') {
+      zweit.uebernimm('an');
+      zweit.feuere('DOMContentLoaded');
+      if (zweit.merkmal() !== 'an')
+        maengel.push(`er raeumt ${MERKMAL} auch dann ab, wenn bds.js es bereits auf "an" uebernommen hat — das Einblenden fiele bei jedem Aufruf aus`);
+    }
+  } catch (e) { maengel.push(`der zweite Lauf wirft (${e.message})`); }
+
+  return maengel;
+}
 
 function pruefeReveal(seite, html, skripte) {
   const css = [...html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((m) => m[1]).join('\n');
@@ -178,8 +261,6 @@ function pruefeReveal(seite, html, skripte) {
 
   if (!regeln.some((r) => gedeckt(r.selektor))) return;   // kein Vorzustand, nichts weiter zu decken
 
-  const setzt = (c) => new RegExp(`setAttribute\\(\\s*["']${MERKMAL}["']`).test(c);
-  const nimmtZurueck = (c) => new RegExp(`removeAttribute\\(\\s*["']${MERKMAL}["']`).test(c);
   const code = skripte.join('\n');
   /* Setzt die Seite das Merkmal gar nicht, kann sie auch nichts verstecken —
      das ist der Zustand von Impressum und Datenschutz, die das gemeinsame
@@ -187,14 +268,24 @@ function pruefeReveal(seite, html, skripte) {
      weiteres Zutun erfuellt. Ab hier geht es nur noch um Seiten, die den
      Vorzustand tatsaechlich aufspannen. */
   if (!setzt(code)) return;
-  if (!nimmtZurueck(code))
-    F(`${seite}: ${MERKMAL} wird von keinem Skript zurueckgenommen — ein Fehlschlag bliebe als leere Seite stehen`);
 
   const kopfEnde = html.search(/<\/head>/i);
   const kopfSkripte = [...html.slice(0, kopfEnde === -1 ? 0 : kopfEnde)
     .matchAll(/<script(?![^>]*\bsrc=)(?![^>]*application\/ld\+json)[^>]*>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
-  if (!kopfSkripte.some(setzt))
+  const vorlaeufe = kopfSkripte.filter(setzt);
+  if (!vorlaeufe.length) {
     F(`${seite}: ${MERKMAL} wird erst nach dem <head> gesetzt — der fertige Inhalt blitzte auf, bevor er sich versteckt`);
+    return;
+  }
+
+  /* Wer den Vorzustand aufspannt, schuldet auch das Zuruecknehmen. Deshalb
+     muss JEDER Vorlauf den Ausfall von bds.js allein abdecken — ein zweiter,
+     der nur setzt, waere ein Loch, das kein anderer stopfen kann. */
+  for (const vorlauf of vorlaeufe) {
+    const maengel = vorlaufMaengel(vorlauf);
+    if (maengel.length)
+      F(`${seite}: der Vorlauf im <head> deckt den Ausfall von bds.js nicht ab — ${maengel.join('; ')}`);
+  }
 }
 
 async function verify() {
