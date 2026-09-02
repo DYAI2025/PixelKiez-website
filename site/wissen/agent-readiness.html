@@ -99,9 +99,68 @@
       <p class="small wissen-platzhalter" data-reveal>Dieser Abschnitt folgt nach fachlicher Prüfung.</p>
     </div>
 
-    <figure class="kiezbot-scene kiezbot-scene--slot" data-reveal>
-      <div class="kiezbot-scene__bild" aria-hidden="true"><span class="small">Bildszene in Vorbereitung</span></div>
-      <figcaption><b>Geplante Szene: Vom Lesen zum Handeln.</b> Die Szene wird zeigen, wie ein Agent eine Website nicht nur betrachtet, sondern einen Weg durch sie nimmt.</figcaption>
+    <!-- SZENE 5 (PXK-27): von links nach rechts vier Reifestufen — Inhalt lesen,
+         Navigation und Bedienelement erkennen, Handlung ausfuehren, Ergebnis
+         zurueck lesen (Erfolgs- ODER Fehlerzustand; erst er zaehlt, ein Klick
+         allein nicht). Links die Systemmarke als handelndes System. Anmeldung,
+         Zahlung oder sensible Transaktion nur als gestrichelter Seitenweg mit
+         zusaetzlicher Schranke (Schloss), nicht als Normalfall. Die Grafik ist
+         dekorativ (aria-hidden), die Aussage traegt die Bildunterschrift. -->
+    <figure class="kiezbot-scene" data-reveal>
+      <div class="kiezbot-scene__bild" aria-hidden="true">
+        <svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <!-- Systemmarke: das handelnde System -->
+          <g class="kb-system">
+            <rect x="24" y="124" width="12" height="12"/><rect x="36" y="124" width="12" height="12"/><rect x="48" y="124" width="12" height="12"/><rect x="60" y="124" width="12" height="12"/><rect x="72" y="124" width="12" height="12"/>
+            <rect x="24" y="136" width="12" height="12"/><rect x="72" y="136" width="12" height="12"/>
+            <rect x="24" y="148" width="12" height="12"/><rect x="48" y="148" width="12" height="12" class="kb-akzent"/><rect x="72" y="148" width="12" height="12"/>
+            <rect x="24" y="160" width="12" height="12"/><rect x="72" y="160" width="12" height="12"/>
+            <rect x="24" y="172" width="12" height="12"/><rect x="36" y="172" width="12" height="12"/><rect x="48" y="172" width="12" height="12"/><rect x="60" y="172" width="12" height="12"/><rect x="72" y="172" width="12" height="12"/>
+          </g>
+          <!-- Hauptweg durchgehend, Stufe fuer Stufe; Seitenweg gestrichelt ueber die Schranke -->
+          <g class="kb-linie">
+            <path d="M84 154 H 108"/><path d="M212 154 H 236"/><path d="M340 154 H 364"/><path d="M468 154 H 492"/>
+            <path d="M480 154 V 49 H 500" class="kb-gestrichelt"/><path d="M524 49 H 544 V 100" class="kb-gestrichelt"/>
+          </g>
+          <!-- Schranke: Anmeldung, Zahlung, sensible Transaktion — hoehere Reifestufe, kein Normalfall -->
+          <g class="kb-schranke">
+            <rect x="500" y="40" width="24" height="18" rx="3"/><path d="M506 40 V 36 a6 6 0 0 1 12 0 V 40"/>
+          </g>
+          <!-- Stufe 1: Inhalt lesen -->
+          <g class="kb-stufe">
+            <rect x="108" y="100" width="104" height="108" rx="6"/>
+            <rect x="122" y="114" width="76" height="80" rx="4"/>
+            <rect x="130" y="124" width="34" height="8" rx="2" class="kb-akzent"/>
+            <line x1="130" y1="142" x2="190" y2="142"/><line x1="130" y1="154" x2="190" y2="154"/><line x1="130" y1="166" x2="176" y2="166"/>
+            <rect x="130" y="178" width="24" height="8" rx="2"/>
+          </g>
+          <!-- Stufe 2: Navigation und Bedienelement erkennen -->
+          <g class="kb-stufe">
+            <rect x="236" y="100" width="104" height="108" rx="6"/>
+            <rect x="250" y="114" width="76" height="80" rx="4"/>
+            <rect x="258" y="122" width="12" height="6" rx="1"/><rect x="274" y="122" width="12" height="6" rx="1"/><rect x="290" y="122" width="12" height="6" rx="1"/>
+            <line x1="258" y1="142" x2="318" y2="142"/><line x1="258" y1="154" x2="318" y2="154"/><line x1="258" y1="166" x2="304" y2="166"/>
+            <rect x="258" y="178" width="24" height="8" rx="2"/><rect x="254" y="174" width="32" height="16" rx="3" class="kb-akzent-linie"/>
+          </g>
+          <!-- Stufe 3: Eingaben setzen, Handlung ausfuehren -->
+          <g class="kb-stufe">
+            <rect x="364" y="100" width="104" height="108" rx="6"/>
+            <rect x="380" y="117" width="72" height="18" rx="3"/><rect x="386" y="122" width="30" height="8" rx="3"/>
+            <rect x="380" y="143" width="72" height="18" rx="3"/><rect x="386" y="148" width="46" height="8" rx="3"/>
+            <rect x="380" y="172" width="44" height="16" rx="3" class="kb-akzent"/>
+          </g>
+          <!-- Stufe 4: Ergebnis zurueck lesen — Erfolg ODER Fehler, eindeutig -->
+          <g class="kb-stufe">
+            <rect x="492" y="100" width="104" height="108" rx="6"/>
+            <rect x="506" y="112" width="76" height="36" rx="4"/><path d="M518 130 l6 6 l12 -12"/><line x1="546" y1="130" x2="574" y2="130"/>
+            <rect x="506" y="160" width="76" height="36" rx="4"/><path d="M518 172 l12 12 M530 172 l-12 12"/><line x1="546" y1="178" x2="574" y2="178"/>
+          </g>
+        </svg>
+      </div>
+      <figcaption>
+        <b>Szene 5 — Vom Lesen zum Handeln.</b>
+        Eine Seite zu verstehen ist nur die erste Stufe. Für einen belastbaren Handlungspfad muss ein System Navigation und Bedienelemente erkennen, Eingaben korrekt setzen und am Ende einen eindeutigen Erfolgs- oder Fehlerzustand lesen können.
+      </figcaption>
     </figure>
   </div>
 </section>

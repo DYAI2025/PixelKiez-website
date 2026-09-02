@@ -99,9 +99,48 @@
       <p class="small wissen-platzhalter" data-reveal>Dieser Abschnitt folgt nach fachlicher Prüfung.</p>
     </div>
 
-    <figure class="kiezbot-scene kiezbot-scene--slot" data-reveal>
-      <div class="kiezbot-scene__bild" aria-hidden="true"><span class="small">Bildszene in Vorbereitung</span></div>
-      <figcaption><b>Geplante Szene: Drei Fragen an eine Website.</b> Die Szene wird zeigen, wie dieselbe Website aus drei verschiedenen Blickwinkeln betrachtet wird.</figcaption>
+    <!-- SZENE 2 (PXK-27): drei gleichwertige Linsen oben — Suche, kontrollierbare
+         Grundlagen, beobachtbare Praesenz in Antwortsystemen —, darunter EINE
+         Website, darunter das gemeinsame Fundament aus vier Bausteinen. Bewusst
+         keine Pfeilkette zwischen den Linsen: kein Funnel. Die Grafik ist
+         dekorativ (aria-hidden), die Aussage traegt die Bildunterschrift. -->
+    <figure class="kiezbot-scene" data-reveal>
+      <div class="kiezbot-scene__bild" aria-hidden="true">
+        <svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <!-- drei Linsen: A Suche, B kontrollierbare Grundlagen, C Praesenz in Antworten -->
+          <g class="kb-linse">
+            <circle cx="160" cy="66" r="34"/>
+            <circle cx="154" cy="60" r="12"/><rect x="149" y="55" width="10" height="10" rx="2" class="kb-akzent"/><line x1="163" y1="69" x2="174" y2="80"/>
+            <circle cx="320" cy="66" r="34"/>
+            <rect x="304" y="50" width="14" height="14" rx="2" class="kb-akzent"/><rect x="322" y="50" width="14" height="14" rx="2"/><rect x="304" y="68" width="14" height="14" rx="2"/><rect x="322" y="68" width="14" height="14" rx="2"/>
+            <circle cx="480" cy="66" r="34"/>
+            <rect x="462" y="50" width="36" height="32" rx="3"/><rect x="468" y="55" width="8" height="8" rx="1" class="kb-akzent"/><line x1="480" y1="59" x2="492" y2="59"/><line x1="468" y1="68" x2="492" y2="68"/><line x1="468" y1="76" x2="486" y2="76"/>
+          </g>
+          <!-- drei gleiche Wege auf dieselbe Website — kein Pfeil, keine Reihenfolge -->
+          <g class="kb-linie">
+            <path d="M160 100 V 116 H 250 V 130"/>
+            <path d="M320 100 V 130"/>
+            <path d="M480 100 V 116 H 390 V 130"/>
+          </g>
+          <!-- eine Website -->
+          <g class="kb-dok">
+            <rect x="240" y="130" width="160" height="84" rx="6"/>
+            <rect x="256" y="146" width="56" height="10" rx="2" class="kb-akzent"/>
+            <line x1="256" y1="168" x2="384" y2="168"/><line x1="256" y1="180" x2="350" y2="180"/>
+            <rect x="256" y="192" width="40" height="12" rx="3"/><rect x="370" y="190" width="14" height="14" rx="2"/>
+          </g>
+          <!-- gemeinsames Fundament: vier Bausteine -->
+          <g class="kb-fundament">
+            <line x1="300" y1="214" x2="300" y2="236" class="kb-leise"/><line x1="340" y1="214" x2="340" y2="236" class="kb-leise"/>
+            <rect x="200" y="236" width="240" height="40" rx="6" class="kb-leise"/>
+            <rect x="212" y="246" width="44" height="20" rx="3"/><rect x="266" y="246" width="44" height="20" rx="3"/><rect x="320" y="246" width="44" height="20" rx="3"/><rect x="374" y="246" width="44" height="20" rx="3"/>
+          </g>
+        </svg>
+      </div>
+      <figcaption>
+        <b>Szene 2 — Drei Fragen an dieselbe Website.</b>
+        SEO, GEO und AI Visibility sind keine drei garantierten Stufen desselben Funnels. SEO betrachtet klassische Auffindbarkeit, GEO die kontrollierbaren Grundlagen für maschinelles Verstehen und AI Visibility die beobachtbare Präsenz in definierten Antwortsystemen.
+      </figcaption>
     </figure>
   </div>
 </section>
