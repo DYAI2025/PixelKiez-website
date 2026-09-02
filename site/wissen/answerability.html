@@ -99,9 +99,65 @@
       <p class="small wissen-platzhalter" data-reveal>Dieser Abschnitt folgt nach fachlicher Prüfung.</p>
     </div>
 
-    <figure class="kiezbot-scene kiezbot-scene--slot" data-reveal>
-      <div class="kiezbot-scene__bild" aria-hidden="true"><span class="small">Bildszene in Vorbereitung</span></div>
-      <figcaption><b>Geplante Szene: Frage trifft Website.</b> Die Szene wird zeigen, wie eine konkrete Kundenfrage auf die Inhalte einer Website trifft.</figcaption>
+    <!-- SZENE 3 (PXK-27): links eine Frage (Eingabe) und die Systemmarke, in der
+         Mitte EINE Website mit einem expliziten Faktenblock samt Belegmarke und
+         verstreuten Hinweisen, rechts zwei Ausgaenge: klar gestuetzte Antwort
+         (durchgehender Weg) und nur erschlossen (verzweigt, gestrichelt,
+         unterbrochen). Unterschied ueber Linienart und Form, nicht nur Farbe.
+         Die Grafik ist dekorativ (aria-hidden), die Aussage traegt die
+         Bildunterschrift. -->
+    <figure class="kiezbot-scene" data-reveal>
+      <div class="kiezbot-scene__bild" aria-hidden="true">
+        <svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <!-- Zone A: Frage (Eingabe) und Systemmarke -->
+          <g class="kb-frage">
+            <rect x="24" y="72" width="88" height="30" rx="15"/>
+            <rect x="38" y="84" width="34" height="6" rx="3" class="kb-akzent"/><line x1="82" y1="80" x2="82" y2="94"/>
+            <path d="M68 102 V 120"/>
+          </g>
+          <g class="kb-system">
+            <rect x="38" y="120" width="12" height="12"/><rect x="50" y="120" width="12" height="12"/><rect x="62" y="120" width="12" height="12"/><rect x="74" y="120" width="12" height="12"/><rect x="86" y="120" width="12" height="12"/>
+            <rect x="38" y="132" width="12" height="12"/><rect x="86" y="132" width="12" height="12"/>
+            <rect x="38" y="144" width="12" height="12"/><rect x="62" y="144" width="12" height="12" class="kb-akzent"/><rect x="86" y="144" width="12" height="12"/>
+            <rect x="38" y="156" width="12" height="12"/><rect x="86" y="156" width="12" height="12"/>
+            <rect x="38" y="168" width="12" height="12"/><rect x="50" y="168" width="12" height="12"/><rect x="62" y="168" width="12" height="12"/><rect x="74" y="168" width="12" height="12"/><rect x="86" y="168" width="12" height="12"/>
+          </g>
+          <!-- Zone B: Website — expliziter Faktenblock mit Belegmarke, dazu verstreute Hinweise -->
+          <g class="kb-dok">
+            <path d="M98 150 H 190"/>
+            <rect x="190" y="60" width="150" height="180" rx="6"/>
+            <rect x="206" y="76" width="70" height="10" rx="2"/>
+            <rect x="206" y="100" width="118" height="36" rx="3"/>
+            <rect x="214" y="108" width="60" height="6" rx="3" class="kb-akzent"/><rect x="214" y="122" width="76" height="6" rx="3" class="kb-akzent"/>
+            <rect x="300" y="106" width="16" height="16" rx="2"/><path d="M304 114 l3 3 l6 -6"/>
+            <line x1="206" y1="156" x2="236" y2="156" class="kb-leise"/><line x1="262" y1="158" x2="300" y2="158" class="kb-leise"/>
+            <line x1="216" y1="178" x2="244" y2="178" class="kb-leise"/><line x1="280" y1="188" x2="300" y2="188" class="kb-leise"/>
+            <line x1="206" y1="206" x2="230" y2="206" class="kb-leise"/><line x1="250" y1="214" x2="300" y2="214" class="kb-leise"/>
+          </g>
+          <!-- Zone C: zwei Ausgaenge — direkt gestuetzt (durchgehend) oder nur erschlossen (verzweigt, gestrichelt, unterbrochen) -->
+          <g class="kb-linie">
+            <path d="M324 118 H 362 C 384 118 384 91 406 91 H 416" class="kb-akzent-linie"/>
+            <path d="M300 158 H 340 C 372 158 360 209 392 209" class="kb-gestrichelt"/>
+            <path d="M300 188 H 340 C 372 188 360 209 392 209" class="kb-gestrichelt"/>
+            <path d="M300 214 H 340 C 372 214 360 209 392 209" class="kb-gestrichelt"/>
+            <path d="M402 209 H 416" class="kb-gestrichelt"/>
+          </g>
+          <g class="kb-ausgang">
+            <rect x="416" y="56" width="200" height="70" rx="6"/>
+            <rect x="432" y="72" width="110" height="8" rx="4" class="kb-akzent"/><line x1="432" y1="98" x2="560" y2="98"/>
+            <rect x="584" y="68" width="16" height="16" rx="2"/><path d="M588 76 l3 3 l6 -6"/>
+            <rect x="416" y="174" width="200" height="70" rx="6" class="kb-gestrichelt"/>
+            <line x1="432" y1="192" x2="476" y2="192"/><line x1="492" y1="192" x2="540" y2="192"/>
+            <line x1="432" y1="210" x2="458" y2="210"/><line x1="474" y1="210" x2="560" y2="210" class="kb-gestrichelt"/>
+            <line x1="432" y1="228" x2="500" y2="228"/>
+            <rect x="584" y="186" width="16" height="16" rx="2" class="kb-gestrichelt"/>
+          </g>
+        </svg>
+      </div>
+      <figcaption>
+        <b>Szene 3 — Frage trifft Website.</b>
+        Eine Website kann technisch vollständig lesbar sein und trotzdem keine klare Antwort liefern. Antwortfähigkeit entsteht, wenn relevante Angaben explizit, im richtigen Kontext und nachvollziehbar gestützt vorliegen.
+      </figcaption>
     </figure>
   </div>
 </section>
