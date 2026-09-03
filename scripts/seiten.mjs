@@ -46,6 +46,28 @@ export const SPRACHPAARE = [
       ['/#website', '/en/#website'],
     ],
   },
+  /* --- Manuelle Analyse-Anfrage (PXK-28).
+     Ein Aufnahmeformular, kein Self-Service: die Anfrage geht als Mail an
+     Pixelkiez, die Analyse entsteht dort von Hand, das Ergebnis kommt per
+     E-Mail zurueck. Es gibt keinen Auftrag, keine Warteschlange und keinen
+     Abrufpunkt fuer ein Ergebnis — die Seite verspricht deshalb auch keinen.
+     entwurf:true wie im Wissensbereich: die Strecke ist gebaut, aber noch
+     nicht freigegeben (siehe Datenschutz-Vorbehalt, PXK-30). Die Freigabe
+     entfernt das Flag und tauscht die robots-Meta.
+     ldTausch: nur die seitenbezogenen Adressen wechseln; #organisation und
+     #website bleiben gleich, es ist dieselbe Sache. */
+  {
+    quelle: 'website-analyse.html',
+    zielDe: 'website-analyse/index.html',
+    zielEn: 'en/website-analyse/index.html',
+    pfadDe: '/website-analyse/',
+    pfadEn: '/en/website-analyse/',
+    entwurf: true,
+    ldTausch: [
+      ['/website-analyse/', '/en/website-analyse/'],
+      ['/website-analyse/#webpage', '/en/website-analyse/#webpage'],
+    ],
+  },
   /* --- Wissensbereich (Slice 2): Entwuerfe. entwurf:true heisst:
      kein Sitemap-Eintrag (build.mjs ueberspringt sie dort), die Quelle
      traegt noindex, kein llms.txt-Eintrag, keine Startseiten-Verlinkung.

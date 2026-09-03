@@ -1980,9 +1980,10 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
 }
 
 /* ---------- 19. Unterseiten-Bausteine: Auftakt, Faktenliste, Leiter --------
-   Bausteine fuer Seiten ausserhalb der Startseite (Wissensbereich): die
-   Faktenliste unter dem Auftakt, der erste Abschnitt mit weniger Luft nach
-   dem Kopf und die Stufenkarten (.leiter). */
+   Bausteine fuer Seiten ausserhalb der Startseite (Analyse-Anfrage und
+   Wissensbereich): die Faktenliste unter dem Auftakt, der erste Abschnitt mit
+   weniger Luft nach dem Kopf, das Raster der Prueffelder (.pruef) und die
+   Stufenkarten (.leiter). */
 .analyse-fakten{display:flex;flex-wrap:wrap;gap:10px 24px;margin-top:clamp(16px,2vw,24px)}
 .analyse-fakten li{
   display:flex;gap:9px;align-items:center;
@@ -1994,6 +1995,11 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
    ein normaler Abschnitt, der Rest kommt aus .section. */
 .auftakt{padding-block:clamp(44px,7vw,92px) var(--sp-section)}
 
+/* Die sechs Prueffelder der Analyse-Seite: eine Spalte, ab 720px zwei,
+   ab 1060px drei. */
+.pruef{display:grid;gap:clamp(22px,3vw,34px);margin-top:clamp(26px,3.5vw,44px)}
+@media(min-width:720px){.pruef{grid-template-columns:1fr 1fr}}
+@media(min-width:1060px){.pruef{grid-template-columns:1fr 1fr 1fr}}
 
 .leiter{display:grid;gap:clamp(14px,2vw,22px);margin-top:clamp(26px,3.5vw,44px)}
 @media(min-width:920px){.leiter{grid-template-columns:1fr 1fr}}
@@ -2013,17 +2019,6 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
    ein Zeichen fuer ein maschinelles System, keine Figur und keine
    Markenperson. Bewusst keine Animation: jede Szene muss im Stillstand
    vollstaendig verstaendlich sein. */
-
-/* Entwurfs-Hinweis: markiert Seiten und Bereiche, deren Inhalt noch nicht
-   freigegeben ist. Mono wie die Kicker, aber mit Rahmen — ein Etikett,
-   keine Ueberschrift. */
-.wissen-status{
-  display:inline-block;margin-top:clamp(16px,2vw,24px);
-  padding:7px 12px;
-  border:1px solid var(--line-strong);border-radius:var(--radius-sm);
-  font-family:var(--font-mono);font-size:.8125rem;letter-spacing:.01em;
-  color:var(--ink-70);
-}
 
 /* Platzhalter fuer Abschnitte, die nach fachlicher Pruefung folgen. Die
    gestrichelte Kante sagt sichtbar "hier fehlt noch etwas" — ehrlicher als

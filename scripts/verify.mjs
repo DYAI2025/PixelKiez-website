@@ -26,6 +26,11 @@ const SEITEN = [
   { pfad: 'en/index.html',                 lang: 'en', kanonisch: '/en/',                    paar: { partner: '/',                    schalter: 'DE' } },
   { pfad: 'impressum.html',                lang: 'de', kanonisch: '/impressum.html' },
   { pfad: 'datenschutz.html',              lang: 'de', kanonisch: '/datenschutz.html' },
+  /* Manuelle Analyse-Anfrage: gebaut, aber noch nicht freigegeben — daher
+     noindex wie der Wissensbereich. Der Vertrag dieser Strecke haengt nicht
+     an dieser Tabelle, sondern am Tor G-1 weiter unten. */
+  { pfad: 'website-analyse/index.html',    lang: 'de', kanonisch: '/website-analyse/',       noindex: true, paar: { partner: '/en/website-analyse/', schalter: 'EN' } },
+  { pfad: 'en/website-analyse/index.html', lang: 'en', kanonisch: '/en/website-analyse/',    noindex: true, paar: { partner: '/website-analyse/',    schalter: 'DE' } },
   /* Entwurfsseiten des Wissensbereichs: noindex ist Pflicht, sie stehen
      weder in der Sitemap noch in llms.txt und sind nicht von der
      Startseite verlinkt. */
@@ -499,127 +504,276 @@ async function verify() {
     }
   }
 
-  /* --- D-1: der Wissensbereich fuehrt nur zum allgemeinen Kontaktweg ---
-     Die Wissensseiten werben nicht mit einem Self-Service-Angebot. Ihr
-     Kopfknopf und ihre Abschluesse fuehren zum Kontakt; eine zugesagte
-     Website-Analyse waere ein Versprechen ohne Gegenstueck dahinter.
+  /* --- G-1: der Vertrag der manuellen Analyse-Anfrage ----------------------
+     Der Wissensbereich darf wieder eine Website-Analyse anbieten, weil es sie
+     gibt: ein Aufnahmeformular, das eine Mail ausloest, nach der ein Mensch
+     die Analyse schreibt und das Ergebnis per E-Mail zurueckschickt. Kein
+     Automat, keine Warteschlange, kein Abrufpunkt.
 
-     Ein eigenes Tor, weil der vorige Stand saemtliche mechanischen Tore
-     bestand und die Zusage trotzdem trug: Adressen und Aufbau waren
-     richtig, nur der Text versprach etwas anderes.
+     Warum ein eigenes Tor: der Fehler, den PXK-28 gefunden hat, war nie ein
+     Adress- oder Aufbaufehler. Adressen und Aufbau waren richtig, nur der
+     Text versprach etwas, das es nicht gab — und solche Fehler bestehen jedes
+     mechanische Tor. Geprueft wird deshalb der Vertrag selbst, in beide
+     Richtungen: was dastehen MUSS und was nicht dastehen DARF. Eine reine
+     Verbotsliste kennt nur die Formulierungen von heute; die von morgen
+     liesse sie durch.
 
-     Geprueft wird beides — dass die verbotenen Wendungen fehlen UND dass
-     die zugesagten Knoepfe dastehen. Eine reine Verbotsliste kennt nur die
-     drei Formulierungen von damals; die vierte haette sie durchgelassen. */
-  const D1_VERBOTEN = [
-    'kostenlose Website-Analyse',
-    'Zur Website-Analyse',
-    'Eigene Website analysieren',
-    'free website analysis',
-    'See the website analysis',
-    'Analyse your own website',
-  ];
-  /* Reihenfolge im Dokument: erst der Kopfknopf, dann der Abschluss. */
-  const D1_ERWARTET = {
-    de: { ziel: '/#kontakt',    knoepfe: ['Schnellkontakt', 'Website besprechen'] },
-    en: { ziel: '/en/#kontakt', knoepfe: ['Quick contact', 'Discuss your website'] },
-  };
+       G-1.1  die Analyse-Knoepfe des Wissensbereichs zeigen auf die
+              Analyse-Route — je Sprache auf ihre eigene, nie auf den
+              allgemeinen Kontaktweg;
+       G-1.2  die Analyse-Route gibt es ueberhaupt, deutsch wie englisch;
+       G-1.3  die Seite sagt, dass ein Mensch die Analyse erstellt und das
+              Ergebnis per E-Mail kommt;
+       G-1.4  und sie sagt nirgends, ein Automat liefere sie sofort;
+       G-1.5  die drei Angaben, ohne die keine Analyse moeglich ist — Adresse
+              der Website, Name, Rueckweg fuer das Ergebnis — stehen als
+              Pflichtfelder im Formular;
+       G-1.6  es gibt kein Auftrags-, Status- oder Abrufwerk: die Seite spricht
+              mit genau einem Endpunkt, dem Kontaktweg, und nennt weder einen
+              Auftrag noch einen Bericht zum Herunterladen.
+
+     Jede Regel faellt aus, wenn ihr Gegenstand fehlt. Eine Regel ohne
+     Gegenstand ist nicht bestanden, sondern ungeprueft. */
 
   /* Woertlich, aber nicht naiv: Grossschreibung, ein Zeilenumbruch mitten im
      Satz oder ein eingeschobenes <em> sollen die Regel nicht aushebeln.
      Darum wird jeder Text zweimal durchsucht — mit Auszeichnung und ohne. */
-  const d1Flach = (s) => s.replace(/\s+/g, ' ').toLowerCase();
-  const d1Blank = (s) => d1Flach(s.replace(/<[^>]*>/g, ' '));
+  const g1Flach = (s) => s.replace(/\s+/g, ' ').toLowerCase();
+  const g1Blank = (s) => g1Flach(s.replace(/<[^>]*>/g, ' '));
   /* Das eingebettete Skriptbuendel ist auf jeder Seite dasselbe und gehoert
-     keiner Seite; JSON-LD dagegen ist Inhalt und bleibt unter Beobachtung. */
-  const d1OhneBuendel = (s) => s
+     keiner Seite; JSON-LD dagegen ist Inhalt und bleibt unter Beobachtung.
+     Nur G-1.6 sieht die Seite ungefiltert — dort ist gerade das Buendel der
+     Gegenstand. */
+  const g1OhneBuendel = (s) => s
     .replace(/<script(?![^>]*application\/ld\+json)[^>]*>[\s\S]*?<\/script>/g, ' ')
     .replace(/<style[^>]*>[\s\S]*?<\/style>/g, ' ');
-  const d1Suche = (text, satz) =>
-    d1Flach(text).includes(d1Flach(satz)) || d1Blank(text).includes(d1Flach(satz));
+  const g1Suche = (text, satz) =>
+    g1Flach(text).includes(g1Flach(satz)) || g1Blank(text).includes(g1Flach(satz));
+  /* Fuer die Zusagen zaehlt nur, was der Besucher liest. Eine Zusage, die
+     allein in der Beschreibung im Kopf oder im JSON-LD steht, waere fuer ihn
+     nicht da — das Tor bliebe gruen, waehrend die Seite sie sichtbar verloren
+     hat. Gemessen an der Beschreibung im Kopf ist genau das passiert. */
+  const g1Rumpf = (s) => {
+    const i = s.search(/<body\b[^>]*>/i);
+    return i < 0 ? null : s.slice(i);
+  };
 
-  /* Welche Routen zum Wissensbereich gehoeren, sagt das Register, nicht ein
-     fest verdrahteter Pfad: die deutsche Fassung erkennt man an ihrer
-     Adresse, die englische an ihrem Partner. Eine spaetere Umbenennung des
-     englischen Pfades nimmt die Regel damit mit. */
+  const G1_ANALYSE = { de: '/website-analyse/', en: '/en/website-analyse/' };
+  const G1_KONTAKTWEG = ['/#kontakt', '/en/#kontakt'];
+
+  /* Kopf- und Abschlussknopf, in Dokumentreihenfolge. Der Abschluss heisst
+     auf der Uebersicht anders als in den Beitraegen — beides ist freigegeben,
+     deshalb eine Liste statt eines einzelnen Wortlauts. */
+  const G1_WISSEN = {
+    de: { kopf: 'Zur Website-Analyse',      schluss: ['Zur Website-Analyse', 'Eigene Website analysieren'] },
+    en: { kopf: 'See the website analysis', schluss: ['See the website analysis', 'Analyse your own website'] },
+  };
+
+  /* Was die Analyse-Seite zusagen MUSS: von Hand erstellt, Rueckweg per Mail. */
+  const G1_ZUSAGE = {
+    de: ['Persönlich erstellt, kein automatischer Score', 'Ergebnis per E-Mail', 'nicht von einem Skript'],
+    en: ['Prepared personally, no automated score', 'Results by email', 'not by a script'],
+  };
+
+  /* Was sie nicht sagen darf. Bewusst ohne "in Sekunden" / "in seconds": das
+     steht legitim in der Rede ueber Ladezeit und waere ein Fehlalarm.
+     "kein automatischer Score" bleibt erlaubt — verboten ist die Zusage,
+     nicht ihre Verneinung. */
+  const G1_VERBOTEN = {
+    de: ['sofort automatisch', 'automatisch fertig', 'automatische Analyse', 'Analyse automatisch',
+         'automatisch erstellt', 'automatisch generiert', 'Analyse sofort', 'sofort fertig',
+         'Ergebnis sofort', 'Score wird berechnet', 'vollautomatisch'],
+    en: ['instant analysis', 'instantly', 'automatically generated', 'automated analysis',
+         'analysis automatically', 'automatically created', 'immediate result', 'fully automated'],
+  };
+
+  /* Pflichtfelder der Aufnahme. Ohne eines davon kann niemand eine Analyse
+     schreiben oder sie zurueckschicken. */
+  const G1_FELDER = [
+    { name: 'url',     typ: 'url',   was: 'Adresse der Website' },
+    { name: 'name',    typ: 'text',  was: 'Name' },
+    { name: 'kontakt', typ: 'email', was: 'Rueckweg fuer das Ergebnis' },
+  ];
+
+  /* Der einzige Endpunkt, den es gibt. Alles andere waere ein Werk, das
+     hinter der Seite nicht existiert. */
+  const G1_ENDPUNKT = '/api/kontakt';
+  const G1_AUTOMAT = ['pxapi', '/api/analyse', 'job-status', 'jobstatus', 'analysejob',
+                      'analyse-job', 'jobid', 'job_id', 'download-report', 'report-download'];
+
+  /* Welche Routen wohin gehoeren, sagt die Pruefliste, nicht ein fest
+     verdrahteter Pfad: die deutsche Fassung erkennt man an ihrer Adresse, die
+     englische an ihrem Partner. Eine spaetere Umbenennung nimmt die Regel mit. */
   const istWissen = (s) => s.kanonisch.startsWith('/wissen/')
     || (s.paar ? s.paar.partner.startsWith('/wissen/') : false);
+  const istAnalyse = (s) => s.kanonisch === G1_ANALYSE[s.lang];
   const wissensrouten = SEITEN.filter(istWissen);
-  /* Eine Regel ohne Gegenstand ist nicht bestanden, sondern ungeprueft. */
+  const analyserouten = SEITEN.filter(istAnalyse);
+
+  /* --- G-1.2: gibt es den Gegenstand ueberhaupt? --- */
   if (!wissensrouten.length) {
-    F('D-1: keine Wissensroute in der Pruefliste — die Regel liefe ins Leere');
+    F('G-1: keine Wissensroute in der Pruefliste — die Regel liefe ins Leere');
+  }
+  for (const l of ['de', 'en']) {
+    if (!analyserouten.some((s) => s.lang === l))
+      F(`G-1.2: keine ${l}-Analyse-Route (${G1_ANALYSE[l]}) in der Pruefliste — ` +
+        'die Analyse-Knoepfe des Wissensbereichs zeigten ins Leere');
   }
 
-  /* Zweite, unabhaengige Quelle: was liegt wirklich unter den Wissenswurzeln?
-     Eine ausgelieferte Seite, die niemand ins Register eingetragen hat,
-     wuerde sonst von der ganzen Abnahme nie angefasst. Die Wurzeln kommen
-     aus dem Register selbst — je Sprache der kuerzeste Wissenspfad. */
-  const d1Registriert = new Set(wissensrouten.map((s) => s.pfad));
-  const d1Wurzeln = ['de', 'en']
-    .map((l) => wissensrouten.filter((s) => s.lang === l)
-      .sort((a, b) => a.pfad.length - b.pfad.length)[0])
-    .filter(Boolean).map((s) => s.pfad.replace(/\/?[^/]*$/, ''));
-  const d1Gefunden = [];
-  const d1Sammle = async (rel) => {
+  /* Zweite, unabhaengige Quelle: was liegt wirklich unter den Wurzeln von
+     Wissen und Analyse? Eine ausgelieferte Seite, die niemand ins Register
+     eingetragen hat, bliebe sonst von der ganzen Abnahme unberuehrt. Die
+     Wurzeln kommen aus der Pruefliste selbst — je Bereich und Sprache der
+     kuerzeste Pfad. */
+  const g1Registriert = new Set([...wissensrouten, ...analyserouten].map((s) => s.pfad));
+  const g1Wurzeln = [];
+  for (const gruppe of [wissensrouten, analyserouten]) {
+    for (const l of ['de', 'en']) {
+      const kuerzeste = gruppe.filter((s) => s.lang === l)
+        .sort((a, b) => a.pfad.length - b.pfad.length)[0];
+      if (kuerzeste) g1Wurzeln.push(kuerzeste.pfad.replace(/\/?[^/]*$/, ''));
+    }
+  }
+  const g1Gefunden = [];
+  const g1Sammle = async (rel) => {
     let eintraege;
     try { eintraege = await readdir(join(ZIEL, rel), { withFileTypes: true }); } catch { return; }
     for (const e of eintraege) {
       const kind = `${rel}/${e.name}`;
-      if (e.isDirectory()) await d1Sammle(kind);
-      else if (e.name.endsWith('.html')) d1Gefunden.push(kind);
+      if (e.isDirectory()) await g1Sammle(kind);
+      else if (e.name.endsWith('.html')) g1Gefunden.push(kind);
     }
   };
-  for (const w of d1Wurzeln) await d1Sammle(w);
-  for (const p of d1Gefunden) {
-    if (!d1Registriert.has(p))
-      F(`D-1: ${p} wird unter einer Wissenswurzel ausgeliefert, steht aber nicht ` +
-        'in der Pruefliste — die Seite bliebe von der gesamten Abnahme unberuehrt');
+  for (const w of g1Wurzeln) await g1Sammle(w);
+  for (const p of g1Gefunden) {
+    if (!g1Registriert.has(p))
+      F(`G-1: ${p} wird unter einer Wissens- oder Analysewurzel ausgeliefert, steht ` +
+        'aber nicht in der Pruefliste — die Seite bliebe von der gesamten Abnahme unberuehrt');
   }
 
+  /* --- G-1.1: die Knoepfe des Wissensbereichs --- */
   for (const eintrag of wissensrouten) {
     const pfad = join(ZIEL, eintrag.pfad);
     if (!(await existiert(pfad))) {
-      F(`D-1: ${eintrag.pfad} fehlt in dist/ — die Regel bleibt dort ungeprueft`);
+      F(`G-1.1: ${eintrag.pfad} fehlt in dist/ — die Regel bleibt dort ungeprueft`);
       continue;
     }
-    const seite = d1OhneBuendel(await readFile(pfad, 'utf8'));
-    for (const satz of D1_VERBOTEN) {
-      if (d1Suche(seite, satz))
-        F(`D-1: ${eintrag.pfad} nennt weiterhin "${satz}" — der Wissensbereich ` +
-          'fuehrt nur zum allgemeinen Kontaktweg, nicht zu einer zugesagten Analyse');
-    }
-    const soll = D1_ERWARTET[eintrag.lang];
+    const seite = g1OhneBuendel(await readFile(pfad, 'utf8'));
+    const soll = G1_WISSEN[eintrag.lang];
+    const ziel = G1_ANALYSE[eintrag.lang];
     const knoepfe = [...seite.matchAll(
       /<a class="btn[^"]*"[^>]*href="([^"]*)"[^>]*>\s*<span class="btn__label">([^<]*)<\/span>/g)];
-    if (knoepfe.length !== soll.knoepfe.length) {
-      F(`D-1: ${eintrag.pfad} traegt ${knoepfe.length} Kontaktknoepfe, erwartet ` +
-        `${soll.knoepfe.length} (Kopf und Abschluss)`);
+    if (knoepfe.length !== 2) {
+      F(`G-1.1: ${eintrag.pfad} traegt ${knoepfe.length} Knoepfe, erwartet 2 (Kopf und Abschluss)`);
       continue;
     }
-    knoepfe.forEach(([, ziel, text], i) => {
-      if (text !== soll.knoepfe[i])
-        F(`D-1: ${eintrag.pfad}: Knopf ${i + 1} heisst "${text}", erwartet "${soll.knoepfe[i]}"`);
-      if (ziel !== soll.ziel)
-        F(`D-1: ${eintrag.pfad}: Knopf "${text}" zeigt auf ${ziel}, erwartet ${soll.ziel}`);
-    });
+    const [[, kopfZiel, kopfText], [, schlussZiel, schlussText]] = knoepfe;
+    if (kopfText !== soll.kopf)
+      F(`G-1.1: ${eintrag.pfad}: Kopfknopf heisst "${kopfText}", erwartet "${soll.kopf}"`);
+    if (!soll.schluss.includes(schlussText))
+      F(`G-1.1: ${eintrag.pfad}: Abschlussknopf heisst "${schlussText}", erwartet eines von ` +
+        soll.schluss.map((s) => `"${s}"`).join(' oder '));
+    for (const [nr, [, zeigtAuf, text]] of knoepfe.entries()) {
+      if (zeigtAuf === ziel) continue;
+      if (G1_KONTAKTWEG.includes(zeigtAuf))
+        F(`G-1.1: ${eintrag.pfad}: Knopf ${nr + 1} "${text}" zeigt auf den allgemeinen ` +
+          `Kontaktweg ${zeigtAuf} — eine Analyse-Zusage gehoert auf ${ziel}`);
+      else
+        F(`G-1.1: ${eintrag.pfad}: Knopf ${nr + 1} "${text}" zeigt auf ${zeigtAuf}, erwartet ${ziel}`);
+    }
   }
 
-  /* Auch die Quelle traegt die Zusage nicht. Ein in einem Kommentar
-     geparkter Satz ueberlebt dort, waehrend der Minifier ihn aus dist/
-     entfernt — die Pruefung oben saehe ihn nie. Deshalb hier, entgegen der
-     sonstigen Regel dieser Datei, ein Blick auf site/. */
-  const D1_QUELLE = join(fileURLToPath(new URL('..', import.meta.url)), 'site', 'wissen');
-  let d1Quellen = [];
-  try { d1Quellen = (await readdir(D1_QUELLE)).filter((n) => n.endsWith('.html')); } catch { /* unten */ }
-  if (!d1Quellen.length) {
-    F('D-1: keine Wissensquelle unter site/wissen/ — die Quellpruefung liefe ins Leere');
-  }
-  for (const name of d1Quellen) {
-    const roh = await readFile(join(D1_QUELLE, name), 'utf8');
-    for (const satz of D1_VERBOTEN) {
-      if (d1Suche(roh, satz))
-        F(`D-1: site/wissen/${name} nennt "${satz}" — auch die Quelle traegt die Zusage nicht`);
+  /* --- G-1.3 bis G-1.6: die Analyse-Seite selbst --- */
+  for (const eintrag of analyserouten) {
+    const pfad = join(ZIEL, eintrag.pfad);
+    if (!(await existiert(pfad))) {
+      F(`G-1.2: ${eintrag.pfad} fehlt in dist/ — die zugesagte Analyse-Route wird nicht ausgeliefert`);
+      continue;
     }
+    const roh = await readFile(pfad, 'utf8');
+    const seite = g1OhneBuendel(roh);
+
+    const rumpf = g1Rumpf(seite);
+    if (rumpf === null)
+      F(`G-1.3: ${eintrag.pfad} hat kein <body> — die Zusagen liessen sich im
+        sichtbaren Teil nicht pruefen`.replace(/\s+/g, ' '));
+    for (const satz of G1_ZUSAGE[eintrag.lang]) {
+      if (rumpf !== null && !g1Suche(rumpf, satz))
+        F(`G-1.3: ${eintrag.pfad} sagt nicht "${satz}" — ohne das steht dort ein ` +
+          'Analyse-Angebot ohne erkennbare menschliche Erstellung');
+    }
+    for (const satz of G1_VERBOTEN[eintrag.lang]) {
+      if (g1Suche(seite, satz))
+        F(`G-1.4: ${eintrag.pfad} nennt "${satz}" — die Analyse entsteht von Hand, ` +
+          'eine Sofort- oder Automatikzusage haette kein Gegenstueck dahinter');
+    }
+
+    /* G-1.5: Pflichtfelder. Gelesen wird das ausgelieferte Formular, nicht die
+       Absicht — ein Feld, das der Minifier verschluckt haette, faellt hier auf. */
+    const felder = new Map();
+    for (const m of seite.matchAll(/<input\b[^>]*>/g)) {
+      const n = m[0].match(/\bname="([^"]*)"/);
+      if (n) felder.set(n[1], m[0]);
+    }
+    for (const { name, typ, was } of G1_FELDER) {
+      const tag = felder.get(name);
+      if (!tag) { F(`G-1.5: ${eintrag.pfad}: Pflichtfeld name="${name}" (${was}) fehlt im Formular`); continue; }
+      if (!new RegExp(`\\btype="${typ}"`).test(tag))
+        F(`G-1.5: ${eintrag.pfad}: Feld name="${name}" (${was}) hat nicht type="${typ}"`);
+      if (!/\brequired\b/.test(tag))
+        F(`G-1.5: ${eintrag.pfad}: Feld name="${name}" (${was}) ist nicht required — ` +
+          'ohne die Angabe kann die Analyse nicht erstellt oder nicht zugestellt werden');
+    }
+
+    /* G-1.6: genau ein Endpunkt, und kein Auftragswerk. Hier bewusst gegen die
+       ungefilterte Seite: das eingebettete Buendel ist der Gegenstand. */
+    for (const m of roh.matchAll(/\/api\/[A-Za-z0-9_-]*/g)) {
+      if (m[0] !== G1_ENDPUNKT)
+        F(`G-1.6: ${eintrag.pfad} spricht mit ${m[0]} — die Aufnahme kennt nur ` +
+          `${G1_ENDPUNKT}; ein zweiter Endpunkt waere ein Werk, das es nicht gibt`);
+    }
+    for (const wort of G1_AUTOMAT) {
+      if (g1Flach(roh).includes(g1Flach(wort)))
+        F(`G-1.6: ${eintrag.pfad} nennt "${wort}" — Auftrag, Status und Berichtabruf ` +
+          'gehoeren zu einer Automatik, die es nicht gibt');
+    }
+  }
+
+  /* Auch die Quelle traegt die Zusage nicht. Ein in einem Kommentar geparkter
+     Satz ueberlebt dort, waehrend der Minifier ihn aus dist/ entfernt — die
+     Pruefung oben saehe ihn nie. Deshalb hier, entgegen der sonstigen Regel
+     dieser Datei, ein Blick auf site/. */
+  const G1_SITE = join(fileURLToPath(new URL('..', import.meta.url)), 'site');
+  let g1Quellen = [];
+  try { g1Quellen = (await readdir(join(G1_SITE, 'wissen'))).filter((n) => n.endsWith('.html')); } catch { /* unten */ }
+  if (!g1Quellen.length) {
+    F('G-1: keine Wissensquelle unter site/wissen/ — die Quellpruefung liefe ins Leere');
+  }
+  const g1Analysequelle = 'website-analyse.html';
+  if (!(await existiert(join(G1_SITE, g1Analysequelle)))) {
+    F(`G-1.2: site/${g1Analysequelle} fehlt — die Analyse-Route haette keine Quelle`);
+  } else {
+    const roh = await readFile(join(G1_SITE, g1Analysequelle), 'utf8');
+    for (const satz of G1_VERBOTEN.de) {
+      if (g1Suche(roh, satz))
+        F(`G-1.4: site/${g1Analysequelle} nennt "${satz}" — auch die Quelle sagt keine Automatik zu`);
+    }
+    for (const wort of G1_AUTOMAT) {
+      if (g1Flach(roh).includes(g1Flach(wort)))
+        F(`G-1.6: site/${g1Analysequelle} nennt "${wort}" — auch die Quelle kennt kein Auftragswerk`);
+    }
+  }
+  for (const name of g1Quellen) {
+    const roh = await readFile(join(G1_SITE, 'wissen', name), 'utf8');
+    for (const satz of G1_VERBOTEN.de) {
+      if (g1Suche(roh, satz))
+        F(`G-1.4: site/wissen/${name} nennt "${satz}" — auch die Quelle sagt keine Automatik zu`);
+    }
+    /* Der Bauhinweis ist mit der Freigabe der Strecke gefallen. Er darf nicht
+       ueber eine Ueberarbeitung zurueckkommen, ohne dass jemand es merkt. */
+    if (/class="[^"]*\bwissen-status\b/.test(roh))
+      F(`G-1: site/wissen/${name} traegt wieder einen wissen-status-Bauhinweis — ` +
+        'der Wissensbereich zeigt keinen Aufbau-Status mehr an');
   }
 
   /* --- verwaiste Schriften --- */
