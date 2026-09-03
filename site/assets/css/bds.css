@@ -1990,7 +1990,7 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
 }
 .analyse-fakten svg{width:15px;height:15px;color:var(--accent-ink);flex:0 0 auto}
 
-/* Erster Abschnitt der Analyse-Seite: etwas weniger Luft nach dem Kopf als
+/* Erster Abschnitt einer Unterseite: etwas weniger Luft nach dem Kopf als
    ein normaler Abschnitt, der Rest kommt aus .section. */
 .auftakt{padding-block:clamp(44px,7vw,92px) var(--sp-section)}
 
