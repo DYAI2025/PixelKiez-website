@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Wie KI Ihre Website wirklich liest · Pixelkiez Wissen</title>
+<meta name="description" content="Crawler, KI-Suchsysteme und Browser-Agenten rufen dieselbe Adresse auf und bekommen nicht dasselbe zu sehen. Was beim ersten Abruf ankommt, warum Rendern nicht überall dasselbe ist, und was daraus für eine Unternehmenswebsite folgt.">
+<meta name="theme-color" content="#B6C7C4">
+<meta name="robots" content="noindex">
+<link rel="canonical" href="https://pixelkiez.de/wissen/wie-ki-websites-liest/"><!-- hreflang setzt der Build -->
+
+<meta property="og:type" content="website">
+<meta property="og:locale" content="de_DE">
+<meta property="og:site_name" content="Pixelkiez">
+<meta property="og:title" content="Wie KI Ihre Website wirklich liest · Pixelkiez Wissen">
+<meta property="og:description" content="Crawler, KI-Suchsysteme und Browser-Agenten rufen dieselbe Adresse auf und bekommen nicht dasselbe zu sehen. Was beim ersten Abruf ankommt, warum Rendern nicht überall dasselbe ist, und was daraus für eine Unternehmenswebsite folgt.">
+<meta property="og:url" content="https://pixelkiez.de/wissen/wie-ki-websites-liest/">
+<meta property="og:image" content="assets/img/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Pixelkiez">
+
+<link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
+<link rel="icon" type="image/png" href="/icon-512.png" sizes="512x512">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+<link rel="preload" href="assets/fonts/archivo-var-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/ibm-plex-sans-var-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/ibm-plex-mono-500-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/css/fonts.css">
+<link rel="stylesheet" href="assets/css/bds.css">
+
+<!-- ENTWURF (Slice 3): Der Text ist ausgeschrieben und gegen Primaerquellen
+     geprueft, aber noch nicht freigegeben — noindex, nicht in Sitemap oder
+     Maschinenlisten, nicht von der Startseite verlinkt.
+     Weiterhin bewusst KEIN JSON-LD: strukturierte Daten werden mit der
+     Freigabe gesetzt, nicht davor. Ein Entwurf, der sich als Artikel
+     auszeichnet, wuerde mehr behaupten, als die Seite freigegeben hat. -->
+</head>
+<body>
+
+<a class="skip" href="#main">Zum Inhalt springen</a>
+
+<!-- Icon-Sprite: Teilmenge des Startseiten-Sets, gleiche Strichstärke -->
+<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true" focusable="false">
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-arrow-ur" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5a2.5 2.5 0 0 1-2.5 2.5H8l-4 3.5v-15A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5Z"/></symbol>
+  <symbol id="i-gate" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v16"/><path d="M8 8h8M8 12h11M8 16h6"/></symbol>
+</svg>
+
+<!-- Unterseiten-Kopf wie auf der Analyse-Seite: Marke, ein Knopf zur
+     Kontakt, Sprachumschalter. Kein Dialog, kein Overlay. -->
+<header class="header" data-scrolled="true">
+  <div class="wrap header__in">
+    <a class="brand" href="/" aria-label="Pixelkiez, Startseite">
+      <img class="brand__mark" src="assets/img/logo-klein.webp" alt="Pixelkiez" width="480" height="111" decoding="async">
+      <span class="brand__sub">Webdesign Berlin</span>
+    </a>
+    <div class="header__act">
+      <a class="btn btn--split btn--primary btn--sm" href="/#kontakt"><span class="btn__label">Zur Website-Analyse</span><span class="btn__ico"><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg></span></a>
+      <a class="lang" href="/en/knowledge/how-ai-reads-websites/" hreflang="en" lang="en" aria-label="Switch to English" data-lang-switch>EN</a>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+<!-- ===================== AUFTAKT ===================== -->
+<section class="section section--flush auftakt">
+  <div class="wrap">
+    <div class="section__head">
+      <p class="kicker" data-reveal>Wissen · Maschinelle Lesbarkeit</p>
+      <h1 class="h-lg" data-reveal>Wie KI Ihre Website wirklich liest</h1>
+      <p class="lead" data-reveal>Crawler, KI-Suchsysteme und Browser-Agenten rufen dieselbe Adresse auf — und bekommen nicht zwangsläufig dasselbe zu sehen. Dieser Beitrag ordnet, was beim ersten Abruf ankommt, warum das nicht bei allen Systemen gleich ist und was daraus für eine Unternehmenswebsite folgt.</p>
+      <p class="wissen-status" data-reveal>Redaktioneller Entwurf · fachliche Quellen geprüft · noch nicht veröffentlicht</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== ORIENTIERUNG ===================== -->
+<section class="section">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 class="h-lg" data-reveal>Was Sie hier verstehen werden.</h2>
+      <ul class="analyse-fakten" data-reveal>
+        <li><svg aria-hidden="true"><use href="#i-check"/></svg>Besuchertypen nach ihrem Zweck unterscheiden</li>
+        <li><svg aria-hidden="true"><use href="#i-check"/></svg>Direkten Abruf und Browser-Rendering trennen</li>
+        <li><svg aria-hidden="true"><use href="#i-check"/></svg>Erreichbarkeit von belegter Sichtbarkeit trennen</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 1. KEINE EINE SICHT ===================== -->
+<section class="section">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 class="h-lg" data-reveal>Es gibt nicht die eine maschinelle Sicht auf Ihre Website.</h2>
+    </div>
+
+    <p class="prose" data-reveal>Wenn ein Mensch Ihre Website öffnet, passiert im Hintergrund einiges: Der Browser lädt das Dokument, führt Skripte aus, holt Bilder und Schriften nach und setzt daraus die Seite zusammen, die am Ende auf dem Bildschirm steht. Dieses Ergebnis ist so selbstverständlich, dass man es leicht für die Website hält.</p>
+
+    <p class="prose" data-reveal>Maschinelle Besucher gehen diesen Weg nicht zwangsläufig mit. Manche holen sich das Dokument und lesen den ausgelieferten Text. Andere führen die Seite in einem echten Browser aus und sehen die fertige Oberfläche. Wieder andere kommen gar nicht in erster Linie zum Lesen, sondern um auf der Seite etwas zu erledigen.</p>
+
+    <p class="prose" data-reveal>Deshalb lässt sich die Frage „Was sieht KI auf meiner Website?“ in dieser Form nicht beantworten. Beantwortbar wird sie erst mit drei Zusätzen: welches System, zu welchem Zweck, auf welchem Weg. Diese drei Fragen ziehen sich durch den ganzen Beitrag.</p>
+  </div>
+</section>
+
+<!-- ===================== 2. BESUCHERTYPEN ===================== -->
+<section class="section">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 class="h-lg" data-reveal>Nicht jeder maschinelle Besucher kommt aus demselben Grund.</h2>
+      <p class="lead" data-reveal>Automatisierte Zugriffe lassen sich nach ihrem Zweck ordnen. Die folgende Einteilung ist eine Orientierungshilfe, keine amtliche Systematik — aber sie erklärt, warum dieselbe Website von verschiedenen Systemen unterschiedlich behandelt wird.</p>
+    </div>
+
+    <ul class="leiter leiter--drei">
+      <li data-reveal>
+        <b>Zweck 1</b>
+        <h3 class="h-sm">Suche und Auffindbarkeit</h3>
+        <p class="small">Ein System erfasst Inhalte, um sie später in Suchergebnissen oder Antworten zeigen und verlinken zu können. OpenAI nennt dafür OAI-SearchBot: Wer möchte, dass Inhalte in Zusammenfassungen und Ausschnitten in ChatGPT auftauchen, darf diesen Zugriff nicht blockieren. Anthropic beschreibt Claude-SearchBot als Bot, der die Qualität von Suchergebnissen verbessern soll. Perplexity beschreibt PerplexityBot als dafür gedacht, Websites in Suchergebnissen zu zeigen und zu verlinken.</p>
+      </li>
+      <li data-reveal>
+        <b>Zweck 2</b>
+        <h3 class="h-sm">Modellentwicklung — und deren Steuerung</h3>
+        <p class="small">Beim zweiten Zweck geht es um Inhalte, die in die Entwicklung von Modellen einfließen können, und vor allem darum, wie ein Websitebetreiber das steuert. OpenAI verweist dafür auf GPTBot: Wer Seiten von möglichem Training ausnehmen möchte, soll diesen User-Agent ausschließen. Anthropic schreibt zu ClaudeBot, er sammle Inhalte, die potenziell zu deren Training beitragen könnten. Perplexity grenzt sich an dieser Stelle ausdrücklich ab: PerplexityBot werde nicht eingesetzt, um Inhalte für KI-Basismodelle zu erfassen.</p>
+      </li>
+      <li data-reveal>
+        <b>Zweck 3</b>
+        <h3 class="h-sm">Abruf im Auftrag eines Nutzers</h3>
+        <p class="small">Beim dritten Fall steht der unmittelbare Nutzerabruf im Vordergrund: Ein Mensch stellt eine Frage, und der Anbieter kann dafür gezielt Webinhalte abrufen. Anthropic beschreibt Claude-User so — wenn Menschen Claude etwas fragen, kann Claude über diesen Agenten Websites aufrufen. Perplexity beschreibt Perplexity-User entsprechend und hält dazu ausdrücklich fest, dass dieser Abrufer robots.txt in der Regel ignoriert, weil ein Nutzer den Abruf ausgelöst hat. Daraus folgt keine allgemeine Aussage darüber, wie Anbieter solche Abrufe anschließend speichern oder weiterverarbeiten.</p>
+      </li>
+    </ul>
+
+    <p class="prose" style="margin-top:clamp(26px,3.5vw,44px)" data-reveal>Für viele automatisierte Crawler ist eine einzige Datei im Wurzelverzeichnis das zentrale Steuerungsmittel: robots.txt. Anthropic schreibt, die eigenen Bots hielten sich an die branchenüblichen Angaben darin. Wie sich nutzerausgelöste Abrufe verhalten, hängt dagegen vom Anbieter und von der Zugriffsart ab: Perplexity hält für Perplexity-User ausdrücklich fest, dass dieser Abrufer robots.txt bei nutzerangeforderten Abrufen in der Regel ignoriert. Robots.txt ist damit eine Steuerung und kein Schloss.</p>
+
+    <p class="prose" data-reveal>Ein häufiges Missverständnis gehört gleich hierher: <strong>Google-Extended ist kein eigener Bot.</strong> Googles Crawler-Dokumentation hält fest, dass Google-Extended keine eigene User-Agent-Zeichenkette in HTTP-Anfragen hat; gecrawlt wird mit den vorhandenen Google-User-Agents, und der Eintrag in der robots.txt wirkt allein steuernd. Er regelt, ob von Google erfasste Inhalte für das Training künftiger Gemini-Modelle und für das Grounding in bestimmten Google-Produkten verwendet werden dürfen. Auf die Aufnahme in die Google-Suche und auf das Ranking dort hat er nach derselben Dokumentation keinen Einfluss.</p>
+
+    <!-- KIEZBOT-PROTOTYP (Slice 2): Design-Beleg fuer das Szenen-Gefaess, keine
+         finale Markenfigur. Nur lokale SVG-Primitive, Farben aus den Tokens per
+         CSS-Klassen. Die Grafik ist dekorativ (aria-hidden) — die Aussage traegt
+         die Bildunterschrift; wer die Grafik nicht sieht, verliert nichts. -->
+    <figure class="kiezbot-scene" data-reveal>
+      <div class="kiezbot-scene__bild" aria-hidden="true">
+        <svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" fill="none" stroke-linecap="round">
+          <!-- links: ein Dokument (die Website) -->
+          <g class="kb-dok">
+            <rect x="24" y="60" width="150" height="180" rx="6"/>
+            <rect x="40" y="78" width="80" height="12" rx="2" class="kb-akzent"/>
+            <line x1="40" y1="110" x2="158" y2="110"/><line x1="40" y1="128" x2="158" y2="128"/>
+            <line x1="40" y1="146" x2="130" y2="146"/><line x1="40" y1="176" x2="158" y2="176"/>
+            <line x1="40" y1="194" x2="158" y2="194"/><rect x="40" y="212" width="60" height="16" rx="3"/>
+          </g>
+          <!-- Mitte: Kiezbot als Pixelraster (Prototyp) -->
+          <g class="kb-bot">
+            <rect x="284" y="118" width="12" height="12"/><rect x="296" y="118" width="12" height="12"/><rect x="308" y="118" width="12" height="12"/><rect x="320" y="118" width="12" height="12"/><rect x="332" y="118" width="12" height="12"/>
+            <rect x="284" y="130" width="12" height="12"/><rect x="332" y="130" width="12" height="12"/>
+            <rect x="284" y="142" width="12" height="12"/><rect x="296" y="142" width="12" height="12" class="kb-akzent"/><rect x="320" y="142" width="12" height="12" class="kb-akzent"/><rect x="332" y="142" width="12" height="12"/>
+            <rect x="284" y="154" width="12" height="12"/><rect x="332" y="154" width="12" height="12"/>
+            <rect x="284" y="166" width="12" height="12"/><rect x="296" y="166" width="12" height="12"/><rect x="308" y="166" width="12" height="12"/><rect x="320" y="166" width="12" height="12"/><rect x="332" y="166" width="12" height="12"/>
+            <rect x="308" y="100" width="12" height="12" class="kb-akzent"/>
+          </g>
+          <!-- Verbindungen -->
+          <g class="kb-linie">
+            <path d="M174 150 H 278"/>
+            <path d="M350 150 H 400 M400 150 C 430 150 430 84 460 84"/>
+            <path d="M400 150 H 460"/>
+            <path d="M400 150 C 430 150 430 216 460 216"/>
+          </g>
+          <!-- rechts: drei Lesarten desselben Dokuments -->
+          <g class="kb-lesart">
+            <rect x="464" y="48" width="152" height="72" rx="6"/>
+            <rect x="478" y="62" width="52" height="30" rx="3" class="kb-akzent"/><line x1="540" y1="68" x2="602" y2="68"/><line x1="540" y1="84" x2="602" y2="84"/><line x1="478" y1="104" x2="602" y2="104"/>
+            <rect x="464" y="132" width="152" height="52" rx="6"/>
+            <line x1="478" y1="148" x2="602" y2="148"/><line x1="478" y1="162" x2="580" y2="162"/><line x1="478" y1="176" x2="602" y2="176"/>
+            <rect x="464" y="196" width="152" height="72" rx="6"/>
+            <rect x="478" y="210" width="124" height="16" rx="3"/><rect x="478" y="234" width="124" height="16" rx="3"/>
+          </g>
+        </svg>
+      </div>
+      <figcaption>
+        <b>Szene 1 — Ein Dokument, mehrere Lesarten.</b>
+        Verschiedene maschinelle Besucher können unterschiedliche Darstellungen derselben Website erhalten: gerendert mit Layout, als reiner Text oder als strukturierte Felder. Welche Lesart ankommt, entscheidet mit darüber, was von einer Website verstanden wird.
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ===================== 3. ERSTER ABRUF ===================== -->
+<section class="section">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 class="h-lg" data-reveal>Was bekommt ein System beim ersten Abruf?</h2>
+      <p class="lead" data-reveal>Am einfachsten wird das an einem Beispiel. Nehmen wir einen erfundenen Betrieb: Elektro König Berlin, Schwerpunkt Wallbox-Installation, Standort Berlin, gewünschte Handlung „Termin anfragen“. Vier Angaben, die ein Mensch in Sekunden findet. Ob eine Maschine sie findet, hängt davon ab, auf welchem Weg sie kommt.</p>
+    </div>
+
+    <ul class="leiter leiter--drei">
+      <li data-reveal>
+        <b>Weg A</b>
+        <h3 class="h-sm">Die Fakten stehen im ausgelieferten Dokument</h3>
+        <p class="wissen-probe"><span>Elektro König Berlin</span><span>Wallbox-Installation · Berlin</span><span>Termin anfragen</span></p>
+        <p class="small">Der Server liefert die Angaben bereits mit. Ein System, das nur das ausgelieferte Dokument liest und keinen Browser ausführt, hat Name, Leistung, Ort und gewünschte Handlung sofort beisammen.</p>
+      </li>
+      <li data-reveal>
+        <b>Weg B</b>
+        <h3 class="h-sm">Der Inhalt entsteht erst im Browser</h3>
+        <p class="wissen-probe"><span>&lt;div id="root"&gt;&lt;/div&gt;</span><span class="aus">— sonst nichts —</span></p>
+        <p class="small">Google nennt diesen Aufbau das App-Shell-Modell: Das erste HTML enthält den eigentlichen Inhalt nicht, er entsteht erst, wenn ein Browser die Skripte ausführt. Wer ohne Browser liest, findet an dieser Stelle ein leeres Gerüst. Wer mit Browser liest, sieht dieselbe Seite wie ein Mensch.</p>
+      </li>
+      <li data-reveal>
+        <b>Weg C</b>
+        <h3 class="h-sm">Die fertig gerenderte Oberfläche</h3>
+        <p class="wissen-probe"><span>Wallbox-Installation in Berlin</span><span class="aus">[ Termin anfragen ]</span></p>
+        <p class="small">Ein System, das die Seite tatsächlich in einem Browser ausführt, bekommt die fertige Oberfläche: Überschrift, Text, Schaltflächen. Es liest nicht nur — es sieht auch, was sich bedienen lässt.</p>
+      </li>
+    </ul>
+
+    <p class="prose" style="margin-top:clamp(26px,3.5vw,44px)" data-reveal>Ein verbreiteter Kurzschluss lautet: Was im Quelltext nicht als Fließtext dasteht, existiere für Maschinen nicht. So einfach ist es nicht. Zum ausgelieferten Dokument gehört mehr als der sichtbare Text — strukturierte Daten, eingebettete Datenblöcke und serverseitig vorbereitete Inhalte stehen ebenfalls darin und sind lesbar. Die Trennlinie verläuft nicht zwischen sichtbar und unsichtbar, sondern zwischen dem, was der Server mitliefert, und dem, was erst der Browser erzeugt.</p>
+
+    <p class="prose" data-reveal>Und eine Einschränkung gehört dazu: Das Beispiel ordnet Wege. Es beschreibt nicht die Architektur eines bestimmten Anbieters — welchen Weg ein konkretes System bei einem konkreten Abruf nimmt, ist damit nicht gesagt.</p>
+  </div>
+</section>
+
+<!-- ===================== 4. RENDERN ===================== -->
+<section class="section">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 class="h-lg" data-reveal>Rendern ist nicht überall dasselbe.</h2>
+      <p class="lead" data-reveal>Ob ein System JavaScript ausführt, ist keine Eigenschaft von „KI“, sondern eine Eigenschaft des jeweiligen Systems. Für einen Teil dieser Systeme gibt es eine belastbare Messung — mit klarem Datum und klaren Grenzen.</p>
+    </div>
+
+    <ol class="leiter leiter--drei">
+      <li data-reveal>
+        <b>Damals gemessen</b>
+        <h3 class="h-sm">Dezember 2024, echte Zugriffsprotokolle</h3>
+        <p class="small">Vercel und MERJ veröffentlichten am 17. Dezember 2024 eine Auswertung tatsächlicher Zugriffe. Für die dort untersuchten spezialisierten KI-Crawler — genannt werden OAI-SearchBot, ChatGPT-User und GPTBot von OpenAI, ClaudeBot von Anthropic, Meta-ExternalAgent, Bytespider und PerplexityBot — lautete das Ergebnis: Sie führten kein JavaScript aus. Teilweise luden sie JavaScript-Dateien sogar herunter, ohne sie auszuführen.</p>
+      </li>
+      <li data-reveal>
+        <b>Was das nicht beweist</b>
+        <h3 class="h-sm">Zwei Gegenbeispiele in derselben Studie</h3>
+        <p class="small">Dieselbe Auswertung nennt zwei Systeme, die sehr wohl rendern: Gemini nutzte Googles Infrastruktur und konnte damit vollständig rendern, und AppleBot rendert nach derselben Quelle über einen browserbasierten Crawler. „Kein JavaScript“ ist also nicht einmal innerhalb dieser Studie eine Eigenschaft aller KI-nahen Zugriffe. Hinzu kommt die Zeitform: Die Studie beschrieb ausdrücklich einen damaligen Stand. Sie ist eine datierte Messung, keine Zusage über jeden heutigen Abruf.</p>
+      </li>
+      <li data-reveal>
+        <b>Was das für eine Website bedeutet</b>
+        <h3 class="h-sm">Eine Frage statt einer Regel</h3>
+        <p class="small">Daraus folgt kein pauschales „alles serverseitig rendern“. Es folgt eine Frage, die jeder Betrieb für sich beantworten kann: Welche Angaben, auf die es geschäftlich ankommt, entstehen erst im Browser? Bei Leistung, Ort, Preisrahmen und Kontaktweg ist eine Abhängigkeit vom Browser ein vermeidbares Risiko. Bei einem Bildwechsler oder einem Chat-Fenster ist sie weniger kritisch, solange über die Komponente keine geschäftlich tragende Angabe und keine notwendige Handlung ausschließlich erreichbar ist.</p>
+      </li>
+    </ol>
+
+    <p class="prose" style="margin-top:clamp(26px,3.5vw,44px)" data-reveal>Für die klassische Google-Suche ist der Fall dokumentiert und anders gelagert: Google Search führt JavaScript aus, mit einer laufend aktualisierten Chromium-Version. Die Dokumentation beschreibt dafür drei Phasen — Crawling, Rendering, Indexierung — und hält zugleich fest, dass diese Phasen nicht sauber nacheinander ablaufen und von außen nicht erkennbar sind.</p>
+
+    <p class="prose" data-reveal>Beides gleichzeitig ist damit möglich: Google kann clientseitig erzeugte Inhalte rendern und für die Indexierung verarbeiten, während ein nicht-rendernder Abruf nur das initial ausgelieferte Dokument erhält. Wer nur auf die Google-Sichtbarkeit schaut, sieht diesen Unterschied nicht.</p>
+  </div>
+</section>
+
+<!-- ===================== 5. LESBAR ≠ SICHTBAR ===================== -->
+<section class="section">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 class="h-lg" data-reveal>Lesbar heißt noch nicht sichtbar.</h2>
+      <p class="lead" data-reveal>Technische Erreichbarkeit ist die erste Stufe, nicht die letzte. Pixelkiez hält in der Analyse vier Fragen auseinander, weil sie sich unterschiedlich beantworten lassen — und weil eine frühe Stufe eine späte nie belegt.</p>
+    </div>
+
+    <ol class="leiter">
+      <li data-reveal>
+        <b>01 · Discoverability</b>
+        <h3 class="h-sm">Kann ein System die Seite überhaupt abrufen?</h3>
+        <p class="small">Zugänge, Weiterleitungen, Statuscodes, robots.txt. Ohne offene Tür passiert nichts Weiteres.</p>
+      </li>
+      <li data-reveal>
+        <b>02 · Extractability</b>
+        <h3 class="h-sm">Lassen sich die Fakten zuverlässig herauslösen?</h3>
+        <p class="small">Leistung, Ort, Zuständigkeit, Kontaktweg — als Text, den ein System eindeutig zuordnen kann, nicht nur als Eindruck.</p>
+      </li>
+      <li data-reveal>
+        <b>03 · Answerability</b>
+        <h3 class="h-sm">Beantwortet die Seite eine konkrete Frage eindeutig?</h3>
+        <p class="small">Aus lesbaren Angaben wird nicht automatisch eine übernehmbare Antwort. Dafür muss die Frage auf der Seite tatsächlich beantwortet sein.</p>
+      </li>
+      <li data-reveal>
+        <b>04 · Observed AI Visibility</b>
+        <h3 class="h-sm">Taucht die Domain in KI-Antworten tatsächlich auf?</h3>
+        <p class="small">Das zeigt sich nur in einem definierten, wiederholbaren Test — beobachtet, nicht abgeleitet.</p>
+      </li>
+    </ol>
+
+    <p class="prose" style="margin-top:clamp(26px,3.5vw,44px)" data-reveal><strong>Erreichbar ist eine Voraussetzung — kein Sichtbarkeitsnachweis.</strong> Stufe 1 belegt Stufe 4 nicht. Dass ein Crawler eine Seite holen darf, sagt nichts darüber, ob sie je in einer Antwort auftaucht.</p>
+
+    <p class="prose" data-reveal>Die Anbieter selbst formulieren das übrigens zurückhaltender, als es in der Branche oft wiedergegeben wird. OpenAI beschreibt das Zulassen von OAI-SearchBot als Voraussetzung dafür, dass eine Website für die Aufnahme überhaupt infrage kommt, und hält im selben Abschnitt fest: Eine Platzierung ist nicht garantiert.</p>
+  </div>
+</section>
+
+<!-- ===================== 6. AGENTEN ===================== -->
+<section class="section">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 class="h-lg" data-reveal>Ein Agent kommt nicht nur zum Lesen.</h2>
+      <p class="lead" data-reveal>Ein Browser-Agent unterscheidet sich grundlegend von einem einfachen Abruf. Er bekommt eine Oberfläche und eine Aufgabe — und dafür braucht er nicht nur Text, sondern Bedienelemente, die sich benennen lassen.</p>
+    </div>
+
+    <p class="prose" data-reveal>Ein Abruf liefert ein Dokument. Ein Agent steht vor einer Oberfläche und soll darauf etwas erledigen. Ob ihm das gelingt, hängt daran, ob die Seite ihre Bedienelemente als das ausweist, was sie sind: eine Schaltfläche als Schaltfläche, ein Formularfeld mit einer Beschriftung, ein Menü mit einem erkennbaren Zustand.</p>
+
+    <p class="prose" data-reveal>OpenAI nennt dafür ein konkretes Beispiel: ChatGPT Atlas nutze ARIA-Auszeichnungen — dieselben Rollen und Beschriftungen, die auch Screenreader auswerten —, um Seitenstruktur und interaktive Elemente zu deuten. Empfohlen wird, den WAI-ARIA-Empfehlungen zu folgen und interaktiven Elementen wie Schaltflächen, Menüs und Formularen aussagekräftige Rollen, Beschriftungen und Zustände zu geben.</p>
+
+    <p class="prose" data-reveal>Dieser Punkt wird leicht falsch verstanden, deshalb deutlich: <strong>Barrierefreiheit ist kein KI-Trick.</strong> Sie ist zuerst dafür da, dass Menschen eine Website benutzen können — mit Screenreader, mit der Tastatur, mit eingeschränkter Sicht. Dass semantische Rollen, Beschriftungen und Zustände zusätzlich Browser-Agenten helfen können, dokumentiert OpenAI derzeit ausdrücklich für den Agentenbetrieb in ChatGPT Atlas — die eben genannte Empfehlung. Eine allgemeine Zusage für beliebige Agenten ist damit nicht verbunden.</p>
+
+    <p class="prose" data-reveal>Geschäftlich interessant wird das dort, wo am Ende eine Handlung steht: eine Kontaktmöglichkeit finden, eine Leistung auswählen, eine Anfrage absenden, eine Buchung anbahnen. Was ein bestimmter Agent davon heute tatsächlich zu Ende bringt, ist damit ausdrücklich nicht gesagt — die Bandbreite ist groß und verändert sich laufend. Die haltbare Aussage ist bescheidener: Eine Seite, deren Bedienelemente nicht benannt sind, macht es einem Agenten schwerer als nötig, der sich an dieser Auszeichnung orientiert — und einem Teil Ihrer menschlichen Besucher ebenfalls.</p>
+  </div>
+</section>
+
+<!-- ===================== 7. GRUNDSAETZE ===================== -->
+<section class="section">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 class="h-lg" data-reveal>Worauf Unternehmen heute achten sollten.</h2>
+      <p class="lead" data-reveal>Fünf robuste Grundsätze für Websites, die über unterschiedliche Zugriffswege verständlich und nutzbar bleiben sollen.</p>
+    </div>
+
+    <ol class="leiter">
+      <li data-reveal>
+        <b>01</b>
+        <h3 class="h-sm">Tragende Angaben gehören ins ausgelieferte Dokument.</h3>
+        <p class="small">Geschäftlich tragende Informationen sollten nicht unnötig von einem bestimmten Rendering-Pfad abhängen. Name, Leistung, Ort, Preisrahmen und Kontaktweg sind typische Beispiele. Welche Informationen geschäftlich tragend sind, hängt von der jeweiligen Website ab.</p>
+      </li>
+      <li data-reveal>
+        <b>02</b>
+        <h3 class="h-sm">Entscheiden Sie Zugänge bewusst statt versehentlich.</h3>
+        <p class="small">In der robots.txt lassen sich Suche und Modellentwicklung getrennt regeln; bei nutzerausgelösten Abrufen hängt die Wirkung vom Anbieter und von der Zugriffsart ab. Ein pauschales Blockieren kann dabei auch Systeme ausschließen, über die Inhalte auffindbar sein sollen.</p>
+      </li>
+      <li data-reveal>
+        <b>03</b>
+        <h3 class="h-sm">Beantworten Sie Fragen dort, wo sie gestellt werden.</h3>
+        <p class="small">Zentrale Angaben, die ausschließlich in PDFs oder Bildern stehen, sind nicht über jeden Abruf- und Antwortpfad gleich zuverlässig zugänglich; was nur auf telefonische Nachfrage existiert, steht auf der Seite gar nicht. Preise, Einzugsgebiete, Fristen und Zuständigkeiten sollten deshalb zusätzlich als klarer HTML-Text auf der Seite stehen.</p>
+      </li>
+      <li data-reveal>
+        <b>04</b>
+        <h3 class="h-sm">Benennen Sie Ihre Bedienelemente.</h3>
+        <p class="small">Beschriftete Schaltflächen und Formularfelder, korrekte Rollen, eine nachvollziehbare Struktur. Das nützt zuerst Menschen — und kann Agenten, die sich an dieser Auszeichnung orientieren, die Bedienung erleichtern.</p>
+      </li>
+      <li data-reveal>
+        <b>05</b>
+        <h3 class="h-sm">Behandeln Sie Sichtbarkeit als Messgröße, nicht als Zusage.</h3>
+        <p class="small">Ob eine Domain in KI-Antworten auftaucht, lässt sich prüfen — mit definierten, wiederholbaren Tests. Wer es ohne solche Tests behauptet, behauptet es lediglich.</p>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<!-- ===================== 8. QUELLEN ===================== -->
+<section class="section">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 class="h-lg" data-reveal>Quellen und Stand.</h2>
+      <p class="lead" data-reveal>Die Aussagen oben stützen sich auf die folgenden Primärquellen. Anbieterangaben beschreiben, was ein Anbieter über sein eigenes System sagt — sie sind damit die beste verfügbare Quelle und zugleich jederzeit änderbar.</p>
+    </div>
+
+    <dl class="wissen-quellen" data-reveal>
+      <div>
+        <dt>OpenAI</dt>
+        <dd>Trägt die Angaben zu OAI-SearchBot und GPTBot, die ARIA-Empfehlung für ChatGPT Atlas und den Satz, dass eine Platzierung nicht garantiert ist.</dd>
+        <dd><a href="https://help.openai.com/en/articles/12627856-publishers-and-developers-faq" rel="noopener noreferrer" target="_blank">Publishers and Developers — FAQ</a> · <a href="https://help.openai.com/en/articles/9237897" rel="noopener noreferrer" target="_blank">Searching the web with ChatGPT</a> <span class="stand">Abgerufen am 31. August 2026</span></dd>
+      </div>
+      <div>
+        <dt>Anthropic</dt>
+        <dd>Trägt die Beschreibung von ClaudeBot, Claude-SearchBot und Claude-User sowie die Angabe zum Umgang mit robots.txt.</dd>
+        <dd><a href="https://support.anthropic.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler" rel="noopener noreferrer" target="_blank">Does Anthropic crawl data from the web, and how can site owners block the crawler?</a> <span class="stand">Seitenstand 7. April 2026, abgerufen am 31. August 2026</span></dd>
+      </div>
+      <div>
+        <dt>Perplexity</dt>
+        <dd>Trägt die Beschreibung von PerplexityBot und Perplexity-User samt der Angabe, dass der nutzerausgelöste Abruf robots.txt in der Regel ignoriert.</dd>
+        <dd><a href="https://docs.perplexity.ai/docs/resources/perplexity-crawlers" rel="noopener noreferrer" target="_blank">Perplexity Crawlers</a> <span class="stand">Ohne Datumsangabe auf der Seite, abgerufen am 31. August 2026</span></dd>
+      </div>
+      <div>
+        <dt>Google — Crawler</dt>
+        <dd>Trägt die Angaben zu Google-Extended: keine eigene User-Agent-Zeichenkette, steuernde Wirkung in der robots.txt, kein Einfluss auf Aufnahme und Ranking in der Google-Suche.</dd>
+        <dd><a href="https://developers.google.com/crawling/docs/crawlers-fetchers/google-common-crawlers" rel="noopener noreferrer" target="_blank">Google crawlers and fetchers</a> <span class="stand">Seitenstand 14. Juli 2026, abgerufen am 31. August 2026</span></dd>
+      </div>
+      <div>
+        <dt>Google — JavaScript</dt>
+        <dd>Trägt die Angaben zur Chromium-Ausführung in der Google-Suche, zu den drei Phasen und zum App-Shell-Modell.</dd>
+        <dd><a href="https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics" rel="noopener noreferrer" target="_blank">Understand the JavaScript SEO basics</a> <span class="stand">Abgerufen am 31. August 2026</span></dd>
+      </div>
+      <div>
+        <dt>Vercel und MERJ</dt>
+        <dd>Trägt die datierte Messung zum Rendering-Verhalten der untersuchten Crawler — einschließlich der beiden Gegenbeispiele Gemini und AppleBot.</dd>
+        <dd><a href="https://vercel.com/blog/the-rise-of-the-ai-crawler" rel="noopener noreferrer" target="_blank">The rise of the AI crawler</a> <span class="stand">Veröffentlicht am 17. Dezember 2024</span></dd>
+      </div>
+    </dl>
+
+    <p class="small" style="margin-top:clamp(16px,2vw,24px)" data-reveal>Stand dieses Beitrags: 31. August 2026. Anbieterangaben können sich ohne Ankündigung ändern; eine Messung bleibt an ihr Datum gebunden. Wo dieser Beitrag ein Datum nennt, ist das keine Formalie, sondern Teil der Aussage.</p>
+  </div>
+</section>
+
+<!-- ===================== ANALYSE-HINWEIS ===================== -->
+<section class="section inv">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 class="h-lg" data-reveal>Welche Inhalte und Strukturen Ihrer Website sind für unterschiedliche Systeme klar zugänglich?</h2>
+      <p class="lead" data-reveal>Die kostenlose Website-Analyse prüft diese Frage an Ihrer eigenen Website und ordnet die Ergebnisse verständlich ein.</p>
+      <div data-reveal>
+        <a class="btn btn--split btn--primary" href="/#kontakt"><span class="btn__label">Eigene Website analysieren</span><span class="btn__ico"><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg></span></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== VERWANDTE THEMEN ===================== -->
+<section class="section">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 class="h-lg" data-reveal>Verwandte Themen.</h2>
+    </div>
+
+    <div class="wissen-weiter">
+      <div class="channel" data-reveal>
+        <span class="channel__i"><svg aria-hidden="true"><use href="#i-chat"/></svg></span>
+        <div>
+          <h3 class="h-sm"><a href="/wissen/answerability/">Answerability: Beantwortet Ihre Website konkrete Fragen?</a></h3>
+          <p class="small" style="margin-top:5px">Kann eine Website Maschinen eine klare, belastbare Antwort auf eine konkrete Kundenfrage geben?</p>
+        </div>
+      </div>
+      <div class="channel" data-reveal>
+        <span class="channel__i"><svg aria-hidden="true"><use href="#i-gate"/></svg></span>
+        <div>
+          <h3 class="h-sm"><a href="/wissen/agent-readiness/">Agent-Readiness: Kann eine KI Ihre Website benutzen?</a></h3>
+          <p class="small" style="margin-top:5px">Kann ein KI-Agent eine Website nicht nur lesen, sondern tatsächlich benutzen?</p>
+        </div>
+      </div>
+    </div>
+
+    <p class="small wissen-alle" data-reveal><a href="/wissen/">Alle Themen im Überblick</a></p>
+  </div>
+</section>
+
+</main>
+
+<!-- ===================== FOOTER ===================== -->
+<footer class="footer inv">
+  <div class="wrap">
+    <div class="footer__bar">
+      <span>© Pixelkiez · Berlin</span>
+      <nav aria-label="Weitere Seiten">
+        <a href="/wissen/" style="text-decoration:none">Wissen</a>
+        <a href="/impressum.html" style="text-decoration:none">Impressum</a>
+        <a href="/datenschutz.html" style="text-decoration:none">Datenschutz</a>
+      </nav>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/js/bds.js" defer></script>
+</body>
+</html>

@@ -1956,3 +1956,198 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
   body{background:#fff;color:#000}
   .section{border-top:1px solid #ccc;padding-block:24px}
 }
+
+/* ---------- 19. Unterseiten-Bausteine: Auftakt, Faktenliste, Leiter --------
+   Bausteine fuer Seiten ausserhalb der Startseite (Wissensbereich): die
+   Faktenliste unter dem Auftakt, der erste Abschnitt mit weniger Luft nach
+   dem Kopf und die Stufenkarten (.leiter). */
+.analyse-fakten{display:flex;flex-wrap:wrap;gap:10px 24px;margin-top:clamp(16px,2vw,24px)}
+.analyse-fakten li{
+  display:flex;gap:9px;align-items:center;
+  font-family:var(--font-mono);font-size:.8125rem;color:var(--ink-70);
+}
+.analyse-fakten svg{width:15px;height:15px;color:var(--accent-ink);flex:0 0 auto}
+
+/* Erster Abschnitt der Analyse-Seite: etwas weniger Luft nach dem Kopf als
+   ein normaler Abschnitt, der Rest kommt aus .section. */
+.auftakt{padding-block:clamp(44px,7vw,92px) var(--sp-section)}
+
+
+.leiter{display:grid;gap:clamp(14px,2vw,22px);margin-top:clamp(26px,3.5vw,44px)}
+@media(min-width:920px){.leiter{grid-template-columns:1fr 1fr}}
+.leiter li{
+  display:grid;gap:7px;align-content:start;
+  padding:clamp(18px,2.5vw,26px);
+  background:var(--paper-2);border:1px solid var(--line);border-radius:var(--radius-sm);
+}
+.leiter b{font-family:var(--font-mono);font-weight:500;font-size:.8125rem;letter-spacing:.01em;color:var(--accent-ink)}
+
+/* ---------- 20. Wissen + Kiezbot-Szene ------------------------------------
+   Editoriale Schicht: Hub /wissen/ und die Wissens-Shells. Baut auf den
+   bestehenden Karten- und Leiter-Mustern auf; Neues nur, wo das Vorhandene
+   nicht reicht. figure.kiezbot-scene ist das wiederverwendbare Gefaess fuer
+   erklaerende Bildszenen; der enthaltene Kiezbot ist ein PROTOTYP als
+   Design-Beleg, keine finale Markenfigur. Bewusst keine Animation: jede
+   Szene muss im Stillstand vollstaendig verstaendlich sein. */
+
+/* Entwurfs-Hinweis: markiert Seiten und Bereiche, deren Inhalt noch nicht
+   freigegeben ist. Mono wie die Kicker, aber mit Rahmen — ein Etikett,
+   keine Ueberschrift. */
+.wissen-status{
+  display:inline-block;margin-top:clamp(16px,2vw,24px);
+  padding:7px 12px;
+  border:1px solid var(--line-strong);border-radius:var(--radius-sm);
+  font-family:var(--font-mono);font-size:.8125rem;letter-spacing:.01em;
+  color:var(--ink-70);
+}
+
+/* Platzhalter fuer Abschnitte, die nach fachlicher Pruefung folgen. Die
+   gestrichelte Kante sagt sichtbar "hier fehlt noch etwas" — ehrlicher als
+   ein Abschnitt, der fertig aussieht und es nicht ist. */
+.wissen-platzhalter{
+  margin-top:clamp(14px,2vw,20px);
+  padding-left:14px;border-left:2px dashed var(--line-strong);
+  color:var(--ink-45);
+}
+
+/* Bildszene: Rahmen und helle Flaeche wie die Leiter-Karten, die Grafik
+   traegt keine Sprache (a11y + Uebersetzung), die Aussage steht in der
+   Bildunterschrift. */
+.kiezbot-scene{
+  /* Kein Seitenrand vom Browser; nach oben der Abstand der uebrigen
+     Inhaltsbloecke (.pruef, .leiter), weil die Szene im Abschnitt auf Text
+     folgt. */
+  margin:clamp(26px,3.5vw,44px) 0 0;
+  padding:clamp(18px,2.5vw,26px);
+  background:var(--paper-2);border:1px solid var(--line);border-radius:var(--radius-sm);
+}
+.kiezbot-scene__bild svg{display:block;width:100%;height:auto;max-width:640px;margin-inline:auto}
+.kiezbot-scene figcaption{
+  margin-top:clamp(14px,2vw,20px);
+  font-size:.9375rem;line-height:1.6;color:var(--ink-45);
+}
+.kiezbot-scene figcaption b{color:var(--ink-70)}
+
+/* Reservierter Szenenplatz: gleiche Huelle, statt der Grafik eine
+   gestrichelte Flaeche mit Hinweis — der Platz ist eingeplant, nicht
+   vergessen. */
+.kiezbot-scene--slot .kiezbot-scene__bild{
+  min-height:160px;
+  display:grid;place-items:center;text-align:center;
+  border:1px dashed var(--line-strong);border-radius:var(--radius-sm);
+  padding:14px;
+}
+
+/* Verwandte Themen: zwei Kanalkarten nebeneinander, darunter untereinander. */
+.wissen-weiter{display:grid;gap:14px;margin-top:clamp(26px,3.5vw,44px)}
+@media(min-width:720px){.wissen-weiter{grid-template-columns:1fr 1fr}}
+
+/* Stiller Rueckweg unter den verwandten Themen: ein Textverweis statt einer
+   dritten Karte — die Uebersicht ist ein Ausweg, kein gleichwertiges Thema. */
+.wissen-alle{margin-top:clamp(16px,2vw,24px)}
+.wissen-alle a{color:var(--ink);text-underline-offset:4px}
+.wissen-alle a:hover{color:var(--accent-ink)}
+
+/* Themenkarten des Hubs: sprechen die Formensprache der Leistungskarten
+   (.crc) — gleiche Kante, gleicher Radius, gleiche Markierung oben rechts,
+   Farbwechsel ueber die vorhandenen tone-Klassen. Bewusst OHNE Vorhang: der
+   Vorhang inszeniert ein buchbares Angebot, diese Karten versprechen
+   Lektuere. Die ganze Karte ist Verweis: der Link sitzt in der Ueberschrift
+   und spannt sich per ::after ueber die Flaeche — fuer Screenreader und
+   Tastatur bleibt es EIN Link mit der Frage als Namen. Keine Interaktion,
+   die es nur beim Zeigen gibt: Zeiger und Fokus heben die Karte nur leicht
+   an und drehen den Pfeil, alles Inhaltliche steht immer da. */
+.wk-grid{display:grid;gap:clamp(14px,1.8vw,20px);margin-top:clamp(26px,3.5vw,44px)}
+@media(min-width:720px){.wk-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(min-width:1060px){.wk-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.wk{
+  position:relative;display:flex;flex-direction:column;
+  padding:clamp(22px,2.4vw,30px);
+  border:1px solid var(--line);border-radius:var(--radius);
+  background:var(--paper);color:var(--ink);
+  transition:border-color var(--dur) var(--ease),transform var(--dur) var(--ease);
+}
+.wk:hover,.wk:focus-within{border-color:var(--ink-45);transform:translateY(-2px)}
+.wk__kat{
+  font-family:var(--font-mono);font-size:.75rem;letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent-ink);display:flex;align-items:center;gap:11px;
+  /* Platz fuer die Markierung oben rechts, damit lange Etiketten nicht
+     darunter geraten */
+  padding-right:52px;
+}
+.wk__kat svg{width:19px;height:19px;flex:0 0 auto}
+.wk__mark{
+  position:absolute;right:clamp(22px,2.4vw,30px);top:clamp(22px,2.4vw,30px);
+  width:38px;height:38px;border-radius:50%;
+  border:1px solid var(--line-strong);display:grid;place-items:center;
+  color:var(--ink);
+  transition:transform 420ms cubic-bezier(.22,.61,.36,1);
+}
+.wk__mark svg{width:16px;height:16px}
+.wk:hover .wk__mark,.wk:focus-within .wk__mark{transform:rotate(45deg)}
+.wk__titel{margin-top:22px}
+.wk__titel a{color:var(--ink);text-decoration:none}
+.wk__titel a::after{content:"";position:absolute;inset:0;border-radius:var(--radius)}
+/* Der Fokusring gehoert um die ganze Karte, nicht um die Textzeile — deshalb
+   wandert er vom Link auf dessen aufgespanntes ::after. */
+.wk__titel a:focus-visible{outline:none}
+.wk__titel a:focus-visible::after{outline:2px solid var(--accent-ink);outline-offset:3px}
+.wk__text{margin-top:9px;color:var(--ink-70)}
+
+/* Kiezbot-Prototyp: Konturen aus dem Text-Schwarz, Akzentflaechen aus der
+   Nebenfarbe — beides ueber Tokens, damit die Szene auch auf inv-Flaechen
+   stimmt. Die Klassen sitzen auf den <g>-Gruppen, die Primitive erben. */
+.kiezbot-scene [class^="kb-"]{stroke:var(--ink);stroke-width:1.7}
+.kiezbot-scene .kb-akzent{fill:var(--accent);stroke:none}
+
+/* ---------- 20b. Ausgeschriebene Wissensbeitraege (Slice 3) ---------------
+   Erst der erste ausformulierte Beitrag zeigt, was ein Fliesstext-Beitrag
+   ueber die Shell hinaus braucht. Bewusst nur drei Zusaetze: alles Uebrige
+   (.leiter, .channel, .prose, .analyse-fakten) trug bereits. */
+
+/* Dreispaltige Leiter. Die Leiter ist zweispaltig, weil vier Stufen so
+   aufgehen; Dreiergruppen — drei Besucherzwecke, drei Abrufwege, Befund /
+   Grenze / Folgerung — brechen darin unguenstig in 2+1. Nur die Spaltenzahl
+   aendert sich, die Karten kommen unveraendert aus .leiter. */
+@media(min-width:920px){.leiter--drei{grid-template-columns:1fr 1fr 1fr}}
+
+/* Abrufprobe: was bei einem Abruf ankommt, in Mono auf eigener Flaeche —
+   sichtbar getrennt von der Erklaerung daneben. Kein <pre>: der Text muss
+   auf schmalen Anzeigen umbrechen duerfen, sonst schiebt eine einzige lange
+   Zeile die ganze Seite quer. Deshalb <span>-Zeilen statt Zeilenumbruechen
+   im Quelltext. */
+.wissen-probe{
+  font-family:var(--font-mono);font-size:.8125rem;line-height:1.7;
+  color:var(--ink-70);
+  padding:12px 14px;
+  background:var(--paper);border:1px solid var(--line);border-radius:var(--radius-sm);
+  overflow-wrap:anywhere;
+}
+.wissen-probe span{display:block}
+.wissen-probe .aus{color:var(--ink-45)}
+
+/* Quellenblock: je Quelle der Beleg, wofuer er steht, und sein Stand. Als
+   <dl>, damit der Zusammenhang zwischen Quelle und Aussage auch vorgelesen
+   erhalten bleibt. Schmal untereinander, ab 720px die Quelle links neben
+   ihren Angaben. Adressen duerfen an jeder Stelle brechen — eine
+   Dokumentations-URL ist laenger als jede Telefonspalte. */
+.wissen-quellen{margin-top:clamp(26px,3.5vw,44px)}
+.wissen-quellen > div{
+  display:grid;gap:6px;
+  padding-block:clamp(16px,2vw,22px);
+  border-top:1px solid var(--line);
+}
+.wissen-quellen > div:last-child{border-bottom:1px solid var(--line)}
+@media(min-width:720px){
+  .wissen-quellen > div{grid-template-columns:minmax(0,22ch) minmax(0,1fr);gap:6px 32px}
+  .wissen-quellen dt{grid-row:span 2}
+}
+.wissen-quellen dt{
+  font-family:var(--font-display);font-weight:600;
+  font-size:1.0625rem;letter-spacing:-.012em;line-height:1.3;
+}
+.wissen-quellen dd{margin:0;color:var(--ink-70);font-size:.9375rem;line-height:1.6}
+.wissen-quellen dd a{color:var(--ink);text-underline-offset:4px;overflow-wrap:anywhere}
+.wissen-quellen dd a:hover{color:var(--accent-ink)}
+.wissen-quellen .stand{color:var(--ink-45);font-family:var(--font-mono);font-size:.75rem;letter-spacing:.01em}
