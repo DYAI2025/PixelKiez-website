@@ -33,11 +33,31 @@ Bauplan, Leistungs-Content) und gehören nicht ins Web-Root.
 npm run deps        # einmalig: installieren und aus dem iCloud-Sync nehmen
 npm run build       # site/ → dist/
 npm run verify      # dist/ abnehmen (Exit 1 bei Fehlern)
+npm run pruefe:formular  # Laufzeitvertrag der Formularstrecke (startet api/)
 npm run serve       # dist/ auf http://localhost:8080 ansehen
 npm run clean       # dist/ löschen
 ```
 
-Vor einem Deploy: `npm run build && npm run verify`.
+Vor einem Deploy: `npm run build && npm run verify && npm run pruefe:formular`.
+
+`npm run pruefe:formular` startet `api/server.mjs` je Prüffall in einem eigenen
+Prozess und misst, was der Dienst tut: dass `MAIL_DRYRUN` jede Zustellung
+verhindert — auch bei vollständig eingerichtetem SMTP- oder Resend-Zugang —,
+dass das Feld `delivered` nur nach echtem Versand `true` ist, und dass kein
+Protokolleintrag übermittelte Angaben enthält. Kein Netz, keine Zugangsdaten:
+`scripts/pruefung/netzsonde.mjs` hängt sich vor `fetch` und
+`net.Socket.prototype.connect` und schneidet jeden Versuch mit. Zwei Prüffälle
+sind Kanarienvögel — ohne `MAIL_DRYRUN` **muss** der Netzverkehr auftreten,
+sonst greift die Sonde nicht und keiner der grünen Fälle beweist etwas.
+Der Gegenbeweis für die Protokollregel lässt sich einzeln fahren:
+
+```bash
+git show <alter-stand>:api/server.mjs > /tmp/alt-server.mjs
+node scripts/pruefe-formular.mjs --kanarienvogel /tmp/alt-server.mjs
+```
+
+Dieser Lauf besteht nur, wenn er die Kennmarken im Protokoll der alten Fassung
+**findet**.
 
 ### Warum `npm run deps` statt `npm install`
 

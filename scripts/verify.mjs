@@ -776,6 +776,193 @@ async function verify() {
         'der Wissensbereich zeigt keinen Aufbau-Status mehr an');
   }
 
+
+  /* --- G-2: was die Analyse-Anfrage ueber sich selbst sagt ----------------
+     G-1 prueft das Produktversprechen: von Hand erstellt, Ergebnis per Mail,
+     kein Automat. G-2 prueft die zweite Sorte Zusage, die dieselbe Seite
+     abgibt — die ueber den Umgang mit den Angaben und ueber die Zeit.
+
+     Der Fehler, den PXK-30 gefunden hat, war wieder keiner der Adressen oder
+     des Aufbaus. Die Seite zaehlte auf, was NICHT geschieht: nicht
+     gespeichert, kein Drittanbieter-Formulardienst, keine Weitergabe, direkt
+     ins Postfach. Belegt war davon nichts — die Strecke laeuft ueber die
+     Hostingumgebung und einen Versanddienst, und im Postfach liegt die
+     Anfrage sehr wohl. Daneben stand eine Frist ("Antwort in 1 Werktag"),
+     die niemand misst.
+
+     Solche Saetze bestehen jedes Tor, das nur Adressen und Aufbau kennt.
+     Geprueft wird deshalb wieder der Vertrag selbst, in beide Richtungen:
+
+       G-2.1  die Analyse-Seite behauptet keine Verarbeitung mehr, fuer die
+              es keinen Beleg gibt;
+       G-2.2  sie sagt stattdessen, was wirklich geschieht — und der Satz,
+              der es sagt, verweist auf die Datenschutzerklaerung;
+       G-2.3  sie sagt keine Frist zu;
+       G-2.4  das Bestaetigungsfeld behauptet keine Rechtsgrundlage;
+       G-2.5  die Datenschutzerklaerung kennt die Analyse-Anfrage und nennt
+              die Felder, die sie wirklich erhebt;
+       G-2.6  der Wissensbereich hat genau so viele Platzhalter wie zuvor —
+              eine Aufraeumaktion an dieser Strecke darf dort nichts loeschen.
+
+     G-2 sieht ausschliesslich die Analyse-Route und die
+     Datenschutzerklaerung. Die Startseite traegt dieselben Saetze im
+     eigenen Formular; sie gehoert nicht zu dieser Strecke und wird hier
+     bewusst nicht mitgeprueft. Was dort steht, ist in PXK-30 ausdruecklich
+     ausserhalb des Auftrags — und ein Tor, das mehr prueft als sein Auftrag
+     deckt, faellt beim naechsten Lauf aus einem Grund um, den niemand
+     bestellt hat.
+
+     Der Laufzeitteil desselben Vertrags — Trockenlauf, delivered, Protokoll
+     ohne Personenbezug — liegt nicht hier: diese Datei sieht nur dist/, und
+     api/server.mjs steht dort nicht. Dafuer gibt es
+     scripts/pruefe-formular.mjs, das den Dienst wirklich startet. */
+
+  /* Was nicht mehr dastehen darf. Die Liste nennt die Behauptung, nicht die
+     Formulierung von gestern: "nicht gespeichert" faengt auch eine spaetere
+     Variante desselben Versprechens. */
+  const G2_VERBOTEN = {
+    de: ['direkt in unser Postfach', 'nicht gespeichert', 'Drittanbieter-Formulardienst',
+         'keine Weitergabe', 'keine Daten an Dritte',
+         'Antwort in 1 Werktag', 'innerhalb eines Werktags', 'in einem Werktag',
+         'Ich bin damit einverstanden', 'Einwilligung ist jederzeit widerrufbar'],
+    en: ['straight into our mailbox', 'not stored', 'third-party form service',
+         'no sharing', 'no data to third parties',
+         'Reply within 1 business day', 'within one business day', 'within one working day',
+         'I consent', 'Consent can be withdrawn'],
+  };
+
+  /* Was dastehen MUSS. Ohne diese Saetze haette die Seite die falschen zwar
+     verloren, aber nichts an ihre Stelle gesetzt — und eine Aufnahme, die
+     ueber den Verbleib der Angaben schweigt, ist keine Verbesserung. */
+  const G2_ZUSAGE = {
+    de: ['Ihre Angaben werden über unsere Website-Infrastruktur verarbeitet',
+         'per E-Mail an unser Postfach übermittelt',
+         'genannten technischen Dienstleister eingebunden sein',
+         'Ich habe zur Kenntnis genommen'],
+    en: ['processed through our website infrastructure',
+         'to our mailbox',
+         'Technical service providers named in our',
+         'I have read how my details are processed'],
+  };
+
+  /* Der Verweis gehoert IN den Satz ueber den Datenfluss, nicht irgendwohin
+     auf die Seite. Ein Link im Fussbereich wuerde die Bedingung sonst
+     miterfuellen, ohne dass der Satz selbst weiterfuehrt. */
+  const G2_FLUSS = { de: 'Website-Infrastruktur', en: 'website infrastructure' };
+  const G2_DATENSCHUTZ = '/datenschutz.html';
+
+  for (const eintrag of analyserouten) {
+    const pfad = join(ZIEL, eintrag.pfad);
+    if (!(await existiert(pfad))) {
+      F(`G-2: ${eintrag.pfad} fehlt in dist/ — die Regel bleibt dort ungeprueft`);
+      continue;
+    }
+    const seite = g1OhneBuendel(await readFile(pfad, 'utf8'));
+    const rumpf = g1Rumpf(seite);
+    if (rumpf === null) {
+      F(`G-2: ${eintrag.pfad} hat kein <body> — die Zusagen liessen sich nicht pruefen`);
+      continue;
+    }
+
+    for (const satz of G2_VERBOTEN[eintrag.lang]) {
+      if (g1Suche(seite, satz))
+        F(`G-2.1/2.3/2.4: ${eintrag.pfad} nennt "${satz}" — diese Zusage hat kein ` +
+          'Gegenstueck im tatsaechlichen Ablauf');
+    }
+    for (const satz of G2_ZUSAGE[eintrag.lang]) {
+      if (!g1Suche(rumpf, satz))
+        F(`G-2.2: ${eintrag.pfad} sagt nicht "${satz}" — ohne das bleibt offen, ` +
+          'was mit den Angaben geschieht');
+    }
+
+    /* G-2.2: der Verweis im Satz selbst. Gesucht wird der Absatz, in dem von
+       der Infrastruktur die Rede ist, und darin der Verweis. */
+    const marke = g1Flach(G2_FLUSS[eintrag.lang]);
+    const absaetze = [...rumpf.matchAll(/<p\b[^>]*>([\s\S]*?)<\/p>/g)].map((m) => m[0]);
+    const fluss = absaetze.filter((p) => g1Flach(p).includes(marke));
+    if (!fluss.length) {
+      F(`G-2.2: ${eintrag.pfad}: kein Absatz spricht vom Datenfluss ` +
+        `("${G2_FLUSS[eintrag.lang]}") — der Verweis liesse sich nicht zuordnen`);
+    } else if (!fluss.some((p) => p.includes(`href="${G2_DATENSCHUTZ}"`))) {
+      F(`G-2.2: ${eintrag.pfad}: der Absatz ueber den Datenfluss verweist nicht auf ` +
+        `${G2_DATENSCHUTZ} — wer die Dienstleister nennt, muss auch sagen wo`);
+    }
+  }
+
+  /* Auch die Quelle darf die alten Zusagen nicht mehr tragen — ein in einem
+     Kommentar geparkter Satz ueberlebt dort, waehrend der Minifier ihn aus
+     dist/ entfernt. */
+  if (await existiert(join(G1_SITE, g1Analysequelle))) {
+    const roh = await readFile(join(G1_SITE, g1Analysequelle), 'utf8');
+    /* Der Kommentar an der reparierten Stelle nennt die alten Formulierungen,
+       um zu erklaeren, warum sie weg sind. Genau dieser Absatz ist ausgenommen
+       — sonst muesste die Begruendung ungeschrieben bleiben. */
+    const ohneBegruendung = roh.replace(/<!--[\s\S]*?-->/g, ' ');
+    for (const satz of G2_VERBOTEN.de) {
+      if (g1Suche(ohneBegruendung, satz))
+        F(`G-2.1: site/${g1Analysequelle} nennt "${satz}" — auch die Quelle gibt ` +
+          'diese Zusage nicht mehr');
+    }
+  }
+
+  /* --- G-2.5: die Datenschutzerklaerung kennt die Aufnahme --------------- */
+  const G2_DS_SEITE = 'datenschutz.html';
+  const G2_DS_UEBERSCHRIFT = 'Anfrage einer Website-Analyse';
+  const G2_DS_PFAD = join(ZIEL, G2_DS_SEITE);
+  if (!(await existiert(G2_DS_PFAD))) {
+    F(`G-2.5: ${G2_DS_SEITE} fehlt in dist/ — die Feldbeschreibung bliebe ungeprueft`);
+  } else {
+    const ds = await readFile(G2_DS_PFAD, 'utf8');
+    const anfang = ds.search(new RegExp(`<h2>[^<]*${regexEscape(G2_DS_UEBERSCHRIFT)}[^<]*</h2>`));
+    if (anfang < 0) {
+      F(`G-2.5: ${G2_DS_SEITE} hat keinen Abschnitt "${G2_DS_UEBERSCHRIFT}" — die ` +
+        'Aufnahme erhebt Angaben, die die Erklaerung nicht kennt');
+    } else {
+      /* Nur der eigene Abschnitt zaehlt. Name und E-Mail-Adresse stehen auch
+         im Kontaktformular-Abschnitt darueber; wuerde die ganze Seite
+         durchsucht, waere die Regel schon vor dieser Aenderung gruen
+         gewesen und haette nie etwas geprueft. */
+      const naechste = ds.slice(anfang + 4).search(/<h2\b/);
+      const abschnitt = naechste < 0 ? ds.slice(anfang) : ds.slice(anfang, anfang + 4 + naechste);
+      const G2_FELDER = [
+        { muster: /<li>[^<]*Adresse \(URL\)[^<]*<\/li>/, was: 'Adresse (URL) der Website' },
+        { muster: /<li>\s*Name\s*<\/li>/,                 was: 'Name' },
+        { muster: /<li>[^<]*E-Mail-Adresse[^<]*<\/li>/,   was: 'E-Mail-Adresse' },
+        { muster: /<li>[^<]*Anmerkungen[^<]*<\/li>/,      was: 'Anmerkungen (freiwillig)' },
+      ];
+      for (const { muster, was } of G2_FELDER) {
+        if (!muster.test(abschnitt))
+          F(`G-2.5: ${G2_DS_SEITE}, Abschnitt "${G2_DS_UEBERSCHRIFT}": das Feld ` +
+            `${was} wird nicht aufgefuehrt — erhoben wird es trotzdem`);
+      }
+      if (!/freiwillig/i.test(abschnitt))
+        F(`G-2.5: ${G2_DS_SEITE}, Abschnitt "${G2_DS_UEBERSCHRIFT}": Pflicht- und ` +
+          'freiwillige Angaben werden nicht unterschieden');
+    }
+    /* Rechtssicherheit ist nichts, was eine Seite ueber sich selbst behaupten
+       kann. Wo sie es doch tut, ist es Werbung im falschen Dokument. */
+    for (const wort of ['DSGVO-konform', 'rechtssicher', 'datenschutzkonform']) {
+      if (g1Flach(ds).includes(g1Flach(wort)))
+        F(`G-2.5: ${G2_DS_SEITE} nennt "${wort}" — eine Erklaerung beschreibt die ` +
+          'Verarbeitung, sie bescheinigt sie nicht');
+    }
+  }
+
+  /* --- G-2.6: der Wissensbereich bleibt unangetastet --------------------- */
+  const G2_PLATZHALTER_SOLL = 24;
+  let g2Platzhalter = 0;
+  for (const name of g1Quellen) {
+    const roh = await readFile(join(G1_SITE, 'wissen', name), 'utf8');
+    g2Platzhalter += (roh.match(/wissen-platzhalter/g) || []).length;
+  }
+  if (!g1Quellen.length) {
+    F('G-2.6: keine Wissensquelle gelesen — die Zaehlung liefe ins Leere');
+  } else if (g2Platzhalter !== G2_PLATZHALTER_SOLL) {
+    F(`G-2.6: site/wissen/ traegt ${g2Platzhalter} Platzhalter, erwartet ` +
+      `${G2_PLATZHALTER_SOLL} — der Wissensbereich gehoert nicht zu dieser Strecke ` +
+      '(seine Platzhalter loest PXK-58)');
+  }
+
   /* --- verwaiste Schriften --- */
   for (const f of fontsVorhanden) {
     if (!fontsBenutzt.has(f)) hinweise.push(`Schrift liegt in dist/, wird aber nie referenziert: ${f}`);

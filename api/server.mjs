@@ -18,16 +18,41 @@
      MAIL_TO        wohin die Anfrage geht
      MAIL_FROM      Absenderadresse, muss zur SMTP-Domain passen
      ALLOWED_ORIGIN erlaubte Herkunft, z. B. https://pixelkiez.de
+     MAIL_DRYRUN    gesetzt: nimmt an, versendet nichts (siehe unten)
      PORT           von Railway gesetzt
 
    Fehlen SMTP_HOST oder MAIL_TO, weist der Dienst Anfragen mit 503 ab. Das
    Formular zeigt dann die Adresse zum direkten Anschreiben. Eine Erfolgs-
    meldung ohne Zustellung gibt es bewusst nicht — eine lautlos verlorene
    Anfrage waere schlimmer als eine sichtbar gescheiterte.
-   MAIL_DRYRUN=1 nimmt zu Testzwecken an, ohne zu versenden.
+
+   Jede Antwort auf /api/kontakt, die eine eingegangene Anfrage beurteilt,
+   traegt seit PXK-30 ein Feld `delivered`. Es sagt genau eines: ob diese
+   Anfrage tatsaechlich versendet wurde. Das Formular haengt seine
+   Erfolgsmeldung daran und nicht mehr am Statuscode — ein angenommener
+   Trockenlauf ist keine Zustellung.
+
+   Zwei Antworten tragen es bewusst nicht: die auf einen unbekannten Pfad
+   oder eine falsche Methode (404/405 — dort gab es keine Anfrage, ueber die
+   sich etwas sagen liesse) und die auf einen gefuellten Honigtopf (unten
+   begruendet).
+
+   MAIL_DRYRUN ist der Riegel dafuer: ist die Variable gesetzt, versendet der
+   Dienst nichts, ganz gleich wie vollstaendig SMTP oder Resend eingerichtet
+   sind. Sie wird bewusst fail-closed gelesen — jeder Wert ausser den
+   ausdruecklichen Aus-Werten (leer, 0, false, nein, off) schaltet den
+   Trockenlauf EIN. Ein Tippfehler in einem Schalter, dessen Aufgabe das
+   Verhindern von Versand ist, darf nicht still versenden.
+
+   Die Protokollzeilen tragen keine uebermittelten Angaben: kein Name, keine
+   Adresse, kein Freitext (PXK-30). Was bleibt, ist eine Vorgangskennung, der
+   Versandweg, das Ergebnis, eine begrenzte Fehlerklasse und die Dauer. Der
+   ausfuehrliche Grund eines Fehlversands steht bewusst nicht im Protokoll —
+   dafuer gibt es `node mailtest.mjs`.
    ========================================================================= */
 
 import { createServer } from 'node:http';
+import { randomUUID } from 'node:crypto';
 import { setDefaultResultOrder } from 'node:dns';
 import { lookup } from 'node:dns/promises';
 import net from 'node:net';
@@ -68,7 +93,6 @@ const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || '';
 // dann als Fehler, damit das Formular auf den E-Mail-Pfad ausweicht und die
 // Adresse zum direkten Anschreiben zeigt. Ein "Angekommen" ohne Zustellung
 // waere die schlimmste Variante: die Anfrage waere lautlos verloren.
-// MAIL_DRYRUN=1 erlaubt bewusstes Annehmen ohne Versand — nur zum Testen.
 /* Zwei Versandwege, der Dienst waehlt selbst:
 
      RESEND_KEY gesetzt → HTTPS an api.resend.com (Port 443)
@@ -89,8 +113,24 @@ const PER_HTTPS = !!RESEND_KEY;
 const NICHT_KONFIGURIERT = !MAIL_TO || (PER_HTTPS
   ? false
   : (!SMTP_HOST || (!!SMTP_USER && !SMTP_PASS)));
-const DRYRUN = /^(1|true|ja)$/i.test(process.env.MAIL_DRYRUN || '');
-const TROCKENLAUF = NICHT_KONFIGURIERT;
+
+/* MAIL_DRYRUN fail-closed lesen.
+
+   Vorher stand hier /^(1|true|ja)$/i. Damit fiel jeder andere Wert — "yes",
+   "on", "wahr", ein Leerzeichen zu viel — still auf "versenden" zurueck.
+   Bei einem Schalter, dessen einzige Aufgabe das VERHINDERN von Versand ist,
+   ist das die falsche Richtung: der Tippfehler muss in den sicheren Zustand
+   fallen, nicht in den gefaehrlichen. Deshalb umgekehrt — nur die
+   ausdruecklichen Aus-Werte schalten ab, alles andere schaltet ein. */
+const DRYRUN = !/^(|0|false|nein|off|aus)$/i.test(String(process.env.MAIL_DRYRUN ?? '').trim());
+
+/* Trockenlauf heisst: dieser Dienst versendet nichts. Zwei Gruende fuehren
+   dorthin, und beide muessen dieselbe Sperre ausloesen — sonst haette der
+   Riegel ein Loch, genau dort wo er gebraucht wird (vollstaendig
+   eingerichteter Dienst, MAIL_DRYRUN gesetzt). Aus TROCKENLAUF folgt weiter
+   unten: keine SMTP-Aufloesung, kein Transport, und im Anfragepfad die
+   Rueckgabe VOR jedem Versandversuch. */
+const TROCKENLAUF = NICHT_KONFIGURIERT || DRYRUN;
 
 /* --- Grenzen ------------------------------------------------------------
    Alles, was von aussen kommt, bekommt eine Obergrenze. Ohne die waere ein
@@ -101,6 +141,28 @@ const FENSTER_MS = 10 * 60 * 1000;     // Ratenbegrenzung: Zeitfenster
 const MAX_PRO_IP = 5;                  // und erlaubte Anfragen darin
 
 const versuche = new Map();            // IP -> Zeitstempel[]
+
+/* --- Protokoll ohne Personenbezug --------------------------------------
+   Was im Protokoll stehen darf, ist seit PXK-30 abschliessend aufgezaehlt:
+   eine Vorgangskennung, der Versandweg, das Ergebnis, eine begrenzte
+   Fehlerklasse und die Dauer. Kein Name, keine Adresse, kein Freitext, keine
+   Webadresse — auch nicht im Trockenlauf, und auch nicht im Fehlerfall.
+
+   Die Kennung verbindet die Zeilen eines Vorgangs miteinander, ohne zu
+   sagen, wer ihn ausgeloest hat. Sie ist zufaellig und wird nirgends
+   gespeichert.
+
+   Die Fehlerklasse ist bewusst eng: bei Resend der Statuscode, bei SMTP der
+   Fehlercode von Node. Der ausfuehrliche Grund des Anbieters bleibt draussen
+   — er kann Adressen enthalten ("the domain X is not verified", eine
+   abgewiesene Empfaengeradresse). Wer ihn braucht, hat mailtest.mjs. */
+const kennung = () => randomUUID().slice(0, 8);
+
+const fehlerklasse = (e) => {
+  const roh = e && (e.code || e.name || '');
+  const k = String(roh).replace(/[^A-Za-z0-9_.-]/g, '').slice(0, 40);
+  return k || 'unbekannt';
+};
 
 function darfSenden(ip) {
   const jetzt = Date.now();
@@ -210,20 +272,37 @@ const server = createServer((req, res) => {
   if (req.method === 'OPTIONS') { res.writeHead(204, kopfzeilen(req)); res.end(); return; }
 
   if (pfad === '/api/health' || pfad === '/health') {
+    /* Die Reihenfolge spiegelt den Anfragepfad: MAIL_DRYRUN sticht, weil es
+       auch bei vollstaendiger Einrichtung den Versand verhindert. Vorher
+       stand die Abfrage andersherum und meldete in genau diesem Fall
+       "versendet" — die Auskunft widersprach dem, was der Dienst tat. */
     return antwort(req, res, 200, {
       ok: true,
       versandbereit: !TROCKENLAUF,
-      modus: NICHT_KONFIGURIERT ? (DRYRUN ? "Trockenlauf — nimmt an, versendet nicht" : "NICHT EINGERICHTET — Anfragen werden abgewiesen") : "versendet",
+      modus: DRYRUN
+        ? 'Trockenlauf — nimmt an, versendet nicht'
+        : NICHT_KONFIGURIERT
+          ? 'NICHT EINGERICHTET — Anfragen werden abgewiesen'
+          : 'versendet',
     });
   }
 
   if (pfad !== '/api/kontakt') return antwort(req, res, 404, { ok: false, fehler: 'unbekannter Pfad' });
   if (req.method !== 'POST')   return antwort(req, res, 405, { ok: false, fehler: 'nur POST' });
 
+  const vorgang = kennung();
+  const begonnen = Date.now();
+  const gedauert = () => Date.now() - begonnen;
+
   const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim()
           || req.socket.remoteAddress || 'unbekannt';
 
-  if (!darfSenden(ip)) return antwort(req, res, 429, { ok: false, fehler: 'zu viele Anfragen' });
+  if (!darfSenden(ip)) {
+    // Auch eine abgewiesene Anfrage gehoert ins Protokoll — ohne Zeile waere
+    // eine Begrenzungswelle dort unsichtbar. Die IP steht bewusst nicht drin.
+    console.warn(`[${vorgang}] abgewiesen — Ratenbegrenzung (${gedauert()} ms)`);
+    return antwort(req, res, 429, { ok: false, delivered: false, fehler: 'zu viele Anfragen' });
+  }
 
   let roh = '', zuGross = false;
   req.on('data', (stueck) => {
@@ -233,7 +312,7 @@ const server = createServer((req, res) => {
       zuGross = true; roh = '';
       // Erst antworten, dann abschneiden. Umgekehrt saehe der Absender nur
       // einen abgerissenen Verbindungsversuch und wuesste nicht, warum.
-      antwort(req, res, 413, { ok: false, fehler: 'Anfrage zu gross' });
+      antwort(req, res, 413, { ok: false, delivered: false, fehler: 'Anfrage zu gross' });
       res.on('finish', () => req.destroy());
     }
   });
@@ -242,11 +321,17 @@ const server = createServer((req, res) => {
     if (zuGross) return;
 
     let d;
-    try { d = JSON.parse(roh); } catch { return antwort(req, res, 400, { ok: false, fehler: 'kein gueltiges JSON' }); }
-    if (!d || typeof d !== 'object') return antwort(req, res, 400, { ok: false, fehler: 'unerwartete Daten' });
+    try { d = JSON.parse(roh); } catch { return antwort(req, res, 400, { ok: false, delivered: false, fehler: 'kein gueltiges JSON' }); }
+    if (!d || typeof d !== 'object') return antwort(req, res, 400, { ok: false, delivered: false, fehler: 'unerwartete Daten' });
 
-    // Honigtopf: fuellt ihn etwas aus, war es kein Mensch. Nach aussen sieht
-    // das aus wie Erfolg — ein Bot soll nicht lernen, woran er gescheitert ist.
+    /* Honigtopf: fuellt ihn etwas aus, war es kein Mensch. Nach aussen sieht
+       das aus wie Erfolg — ein Bot soll nicht lernen, woran er gescheitert ist.
+
+       Bewusst OHNE `delivered`: ein `delivered: true` waere an dieser Stelle
+       eine Behauptung, die nicht stimmt, und ein `delivered: false` verriete
+       dem Bot genau das Feld, ueber das er gestolpert ist. Die Antwort bleibt
+       deshalb wortgleich die von frueher — die Taeuschung liegt im
+       Verschweigen, nicht in einer falschen Angabe. */
     if (einzeilig(d.firma, 200) !== '') return antwort(req, res, 200, { ok: true });
 
     const name     = einzeilig(d.name, MAX_FELD.name);
@@ -258,9 +343,15 @@ const server = createServer((req, res) => {
     const quelle   = einzeilig(d.quelle, MAX_FELD.quelle);
     const anliegen = mehrzeilig(d.anliegen, MAX_FELD.anliegen);
 
-    if (!name)    return antwort(req, res, 400, { ok: false, fehler: 'Name fehlt' });
-    if (!kontakt) return antwort(req, res, 400, { ok: false, fehler: 'Kontaktangabe fehlt' });
-    if (d.consent !== true) return antwort(req, res, 400, { ok: false, fehler: 'Einwilligung fehlt' });
+    if (!name)    return antwort(req, res, 400, { ok: false, delivered: false, fehler: 'Name fehlt' });
+    if (!kontakt) return antwort(req, res, 400, { ok: false, delivered: false, fehler: 'Kontaktangabe fehlt' });
+    /* Das Feld heisst weiter `consent` — aeltere Formularfassungen schicken
+       diesen Namen, und der Dienst wird getrennt von der Website deployt.
+       Was sich geaendert hat, ist die Aussage: angekreuzt heisst, dass der
+       Hinweis auf die Datenschutzerklaerung bestaetigt wurde. Welche
+       Rechtsgrundlage die Verarbeitung traegt, entscheidet nicht diese
+       Checkbox (PXK-30). */
+    if (d.consent !== true) return antwort(req, res, 400, { ok: false, delivered: false, fehler: 'Bestaetigung fehlt' });
 
     const text =
       'Neue Anfrage über die Website\n' +
@@ -272,18 +363,32 @@ const server = createServer((req, res) => {
       'Eingang:       ' + new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin' }) + '\n\n' +
       'Anliegen:\n' + (anliegen || '—') + '\n\n' +
       '─────────────────────────────\n' +
-      'Einwilligung zur Kontaktaufnahme wurde erteilt.\n' +
+      'Das Bestaetigungsfeld im Formular war angekreuzt (Hinweis auf die\n' +
+      'Datenschutzerklaerung). Eine Aussage ueber die Rechtsgrundlage der\n' +
+      'Verarbeitung ist damit nicht getroffen.\n' +
       (istMail(kontakt)
         ? 'Ein Klick auf "Antworten" geht direkt an den Interessenten.'
         : 'Die Kontaktangabe ist keine E-Mail-Adresse — bitte telefonisch antworten.');
 
-    if (NICHT_KONFIGURIERT) {
+    /* Der Riegel. Er steht VOR jeder Verzweigung nach Versandweg — nicht im
+       SMTP-Zweig weiter unten. Laege er dort, ginge der Weg ueber Resend
+       (fetch) im Trockenlauf weiterhin hinaus, und der Riegel waere genau
+       fuer den Fall blind, in dem der Dienst vollstaendig eingerichtet ist.
+
+       TROCKENLAUF deckt beide Gruende ab: nicht eingerichtet ODER
+       MAIL_DRYRUN gesetzt. Welcher der beiden vorliegt, entscheidet nur noch
+       ueber die Antwort — angenommen (200) oder abgewiesen (503). */
+    if (TROCKENLAUF) {
       if (DRYRUN) {
-        console.log('[Trockenlauf] Anfrage angenommen, nicht versendet:\n' + text + '\n');
-        return antwort(req, res, 200, { ok: true, hinweis: 'Trockenlauf — nicht versendet' });
+        console.log(`[${vorgang}] Trockenlauf — angenommen, nicht versendet (${gedauert()} ms)`);
+        return antwort(req, res, 200, {
+          ok: true,
+          delivered: false,
+          hinweis: 'Trockenlauf — nicht versendet',
+        });
       }
-      console.error('Anfrage NICHT zustellbar — Versand nicht eingerichtet (RESEND_KEY oder SMTP-Zugang und MAIL_TO). Von: ' + name);
-      return antwort(req, res, 503, { ok: false, fehler: 'Versand nicht eingerichtet' });
+      console.error(`[${vorgang}] abgewiesen — Versand nicht eingerichtet (RESEND_KEY oder SMTP-Zugang und MAIL_TO)`);
+      return antwort(req, res, 503, { ok: false, delivered: false, fehler: 'Versand nicht eingerichtet' });
     }
 
     const betreff = 'Website-Anfrage: ' + name + (ausgangspunkt ? ' · ' + ausgangspunkt : '');
@@ -327,11 +432,13 @@ const server = createServer((req, res) => {
           signal: AbortSignal.timeout(15000),
         });
         if (!r.ok) {
-          // Grund aus der Antwort holen, damit im Protokoll steht, WORAN es
-          // lag — nicht bestaetigte Domain, falscher Schluessel, Kontingent.
-          let grund = 'HTTP ' + r.status;
-          try { const j = await r.json(); if (j && j.message) grund += ' — ' + j.message; } catch {}
-          throw new Error(grund);
+          /* Nur der Statuscode wird weitergereicht. Der Klartext des Anbieters
+             stand hier frueher mit im Protokoll; er nennt aber je nach Fehler
+             die Empfaenger- oder Absenderadresse und gehoert damit nicht in
+             eine Zeile, die keine Adressen enthalten darf (PXK-30). */
+          const f = new Error('Resend antwortete mit HTTP ' + r.status);
+          f.code = 'HTTP_' + r.status;
+          throw f;
         }
       } else {
         await transport.sendMail({
@@ -342,22 +449,30 @@ const server = createServer((req, res) => {
           replyTo: antwortAn,
         });
       }
-      console.log('Anfrage zugestellt an ' + MAIL_TO + ' — von ' + name);
-      return antwort(req, res, 200, { ok: true });
+      console.log(`[${vorgang}] zugestellt über ${PER_HTTPS ? 'HTTPS' : 'SMTP'} (${gedauert()} ms)`);
+      return antwort(req, res, 200, { ok: true, delivered: true });
     } catch (e) {
-      // Der Grund gehoert ins Protokoll, nicht in die Antwort: er verraet
-      // sonst Einzelheiten der Mailinfrastruktur.
-      console.error('Versand fehlgeschlagen:', e && e.message);
-      return antwort(req, res, 502, { ok: false, fehler: 'Versand fehlgeschlagen' });
+      // Die Fehlerklasse gehoert ins Protokoll, nicht in die Antwort: die
+      // Antwort verriete sonst Einzelheiten der Mailinfrastruktur.
+      console.error(`[${vorgang}] Versand fehlgeschlagen über ${PER_HTTPS ? 'HTTPS' : 'SMTP'} — ${fehlerklasse(e)} (${gedauert()} ms)`);
+      return antwort(req, res, 502, { ok: false, delivered: false, fehler: 'Versand fehlgeschlagen' });
     }
   });
 });
 
+/* Der Startbanner nennt den Zustand, aber keine Adressen mehr: MAIL_FROM und
+   MAIL_TO standen hier vollstaendig im Protokoll. Sie sind zwar Konfiguration
+   und keine uebermittelte Angabe, aber es sind E-Mail-Adressen — und die
+   Aufzaehlung dessen, was protokolliert werden darf, kennt sie nicht. Wohin
+   zugestellt wird, sagt die Konfiguration; ob der Dienst bereit ist, sagt
+   /api/health. */
 server.listen(PORT, () => {
   console.log('BDS-Formulardienst auf Port ' + PORT);
-  console.log(TROCKENLAUF
-    ? 'Modus: TROCKENLAUF — nichts wird versendet (RESEND_KEY oder SMTP-Zugang und MAIL_TO fehlen)'
-    : PER_HTTPS
-      ? 'Modus: Versand über HTTPS (Resend), Absender ' + MAIL_FROM + ', Ziel ' + MAIL_TO
-      : 'Modus: Versand über SMTP ' + SMTP_HOST + ':' + SMTP_PORT + ' an ' + MAIL_TO);
+  console.log(DRYRUN
+    ? 'Modus: TROCKENLAUF (MAIL_DRYRUN gesetzt) — nichts wird versendet'
+    : NICHT_KONFIGURIERT
+      ? 'Modus: TROCKENLAUF — nichts wird versendet (RESEND_KEY oder SMTP-Zugang und MAIL_TO fehlen)'
+      : PER_HTTPS
+        ? 'Modus: Versand über HTTPS (Resend)'
+        : 'Modus: Versand über SMTP ' + SMTP_HOST + ':' + SMTP_PORT);
 });

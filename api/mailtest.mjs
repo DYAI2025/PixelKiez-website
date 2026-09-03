@@ -17,12 +17,22 @@
      node mailtest.mjs
 
    Ohne --senden wird nur die Verbindung geprueft, keine Mail verschickt.
+
+   MAIL_DRYRUN gilt auch hier. Der Dienst versendet nichts, solange die
+   Variable gesetzt ist (siehe server.mjs); dieses Werkzeug ist der zweite
+   Sender im Repository, und ein Riegel, der nur die Haelfte der Sender
+   kennt, ist kein Riegel. Die Verbindungspruefung bleibt erlaubt — sie
+   verschickt nichts —, der echte Versand mit --senden wird abgewiesen.
    ========================================================================= */
 
 import nodemailer from 'nodemailer';
 
 const senden = process.argv.includes('--senden');
 const E = (n) => process.env[n] || '';
+
+// Gleiche fail-closed-Lesart wie in server.mjs: alles ausser den
+// ausdruecklichen Aus-Werten schaltet den Trockenlauf ein.
+const DRYRUN = !/^(|0|false|nein|off|aus)$/i.test(String(process.env.MAIL_DRYRUN ?? '').trim());
 
 const rot = (s) => `\x1b[31m${s}\x1b[0m`;
 const gruen = (s) => `\x1b[32m${s}\x1b[0m`;
@@ -97,6 +107,13 @@ try {
 }
 
 /* --- Stufe 3: echte Testmail ------------------------------------------ */
+if (senden && DRYRUN) {
+  console.log('\n  ' + rot('MAIL_DRYRUN ist gesetzt — es wird nichts versendet.'));
+  console.log('  Der Zugang wurde geprueft und funktioniert. Fuer eine echte');
+  console.log('  Testmail bitte MAIL_DRYRUN entfernen (oder auf 0 setzen).\n');
+  process.exit(1);
+}
+
 if (!senden) {
   console.log('\n  Der Zugang funktioniert. Fuer eine echte Testmail:');
   console.log('  ' + fett('node mailtest.mjs --senden') + '\n');

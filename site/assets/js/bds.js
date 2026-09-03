@@ -1433,13 +1433,37 @@
         body: JSON.stringify(payload)
       }).then(function (r) {
         if (!r.ok) throw new Error('HTTP ' + r.status);
-        form.reset();
+        /* Der Dienst sagt seit PXK-30 im Feld `delivered`, ob die Anfrage
+           wirklich hinausgegangen ist. Ein Trockenlauf antwortet ebenfalls
+           mit 200 — am Statuscode allein liesse sich "Angekommen" also
+           behaupten, ohne dass etwas angekommen waere. */
+        return r.json().then(function (j) { return j; }, function () { return {}; });
+      }).then(function (j) {
         done();
-        say('ok', '<strong>Angekommen.</strong> Sie erhalten innerhalb eines Werktags eine qualifizierte Antwort, kein Newsletter und kein unangekündigter Verkaufsanruf.');
+        /* Nur ein ausdrueckliches false ist ein Nein. Fehlt das Feld ganz,
+           antwortet ein aelterer Dienst — und der schickt 200 erst nach
+           echtem Versand. Wuerde auch das Fehlen als Nein gelten, meldete
+           die Seite waehrend eines getrennten Deploys jede zugestellte
+           Anfrage als Fehler. */
+        if (j && j.delivered === false) {
+          say('err', 'Ihre Anfrage ist angekommen, konnte aber nicht in unser Postfach zugestellt werden. Bitte schreiben Sie uns direkt an <a href="mailto:' + MAILTO + '">' + MAILTO + '</a>.');
+          return;
+        }
+        form.reset();
+        /* Die Analyse-Seite sagt keine Frist zu: sie ist an dem Adressfeld zu
+           erkennen, das nur sie traegt. Auf der Startseite bleibt die
+           gemessene Zusage stehen. */
+        say('ok', urlFeld
+          ? '<strong>Angekommen.</strong> Wir sehen uns Ihre Website an und melden uns per E-Mail.'
+          : '<strong>Angekommen.</strong> Sie erhalten innerhalb eines Werktags eine qualifizierte Antwort, kein Newsletter und kein unangekündigter Verkaufsanruf.');
       }).catch(function () {
         done();
+        /* Der Schlusssatz steht bewusst als eigenes Literal. Zusammen mit dem
+           schliessenden Tag davor hielt ihn i18n-js.mjs fuer Auszeichnung und
+           liess ihn unuebersetzt — auf der englischen Seite endete die
+           Fehlermeldung damit auf Deutsch. */
         say('err', 'Die Übertragung hat nicht geklappt. Schreiben Sie uns bitte direkt an <a href="mailto:' + MAILTO +
-                   '?subject=Anfrage%20über%20die%20Website">' + MAILTO + '</a>, wir antworten genauso schnell.');
+                   '?subject=Anfrage%20über%20die%20Website">' + MAILTO + '</a>' + ', wir antworten genauso schnell.');
       });
     });
   }

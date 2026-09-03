@@ -112,7 +112,7 @@
     <div class="section__head">
       <p class="kicker" data-reveal>Analyse anfragen</p>
       <h2 class="h-lg" data-reveal>Welche Website sollen wir uns ansehen?</h2>
-      <p class="lead" data-reveal>Adresse eintragen, absenden — wir melden uns innerhalb eines Werktags. Die Analyse wird von uns erstellt, nicht von einem Skript: Sie bekommen eine Einschätzung, hinter der jemand steht.</p>
+      <p class="lead" data-reveal>Adresse eintragen, absenden — wir melden uns per E-Mail. Die Analyse wird von uns erstellt, nicht von einem Skript: Sie bekommen eine Einschätzung, hinter der jemand steht.</p>
     </div>
 
     <div class="kontakt">
@@ -131,7 +131,7 @@
           <div class="field">
             <label for="f-kontakt">Wohin schicken wir das Ergebnis?</label>
             <input class="input" type="email" id="f-kontakt" name="kontakt" autocomplete="email" required placeholder="ihre@e-mail-adresse.de" aria-describedby="hint-kontakt">
-            <p class="hint" id="hint-kontakt">Die Analyse kommt per E-Mail. Kein Verteiler, keine Weitergabe.</p>
+            <p class="hint" id="hint-kontakt">Die Analyse kommt per E-Mail. Kein Verteiler, keine Werbung.</p>
           </div>
 
           <div class="field">
@@ -142,14 +142,20 @@
           <!-- Honeypot statt Captcha: für Menschen unsichtbar, für Bots verlockend -->
           <div class="hp" aria-hidden="true"><label for="f-firma">Firma</label><input type="text" id="f-firma" name="firma" tabindex="-1" autocomplete="off"></div>
 
+          <!-- Das Feld heisst weiterhin "consent" — der Formulardienst liest
+               diesen Namen, und Dienst und Website werden getrennt deployt.
+               Der Text sagt aber nur noch, was hier wirklich geschieht: der
+               Hinweis wurde zur Kenntnis genommen. Welche Rechtsgrundlage die
+               Verarbeitung traegt, entscheidet nicht dieses Kaestchen — das
+               steht in der Datenschutzerklaerung (PXK-30). -->
           <div class="consent">
             <input type="checkbox" id="f-consent" name="consent" required>
-            <label for="f-consent">Ich bin damit einverstanden, dass meine Angaben zur Bearbeitung meiner Anfrage verarbeitet werden. Details in der <a href="/datenschutz.html">Datenschutzerklärung</a>. Die Einwilligung ist jederzeit widerrufbar.</label>
+            <label for="f-consent">Ich habe zur Kenntnis genommen, wie meine Angaben zur Bearbeitung meiner Anfrage verarbeitet werden — siehe <a href="/datenschutz.html">Datenschutzerklärung</a>.</label>
           </div>
 
           <div class="btn-row">
             <button type="submit" class="btn btn--split btn--primary" id="form-submit"><span class="btn__label" data-label>Analyse anfragen</span><span class="btn__ico"><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg></span></button>
-            <span class="mono" style="color:var(--ink-45)">Antwort in 1 Werktag</span>
+            <span class="mono" style="color:var(--ink-45)">Ergebnis per E-Mail</span>
           </div>
 
           <p class="form__status" id="form-status" role="status" aria-live="polite" data-show="false"></p>
@@ -175,7 +181,14 @@
           <span class="channel__i"><svg aria-hidden="true"><use href="#i-lock"/></svg></span>
           <div>
             <h3 class="h-sm">Was mit Ihren Daten passiert</h3>
-            <p class="small" style="margin-top:5px">Ihre Angaben gehen verschlüsselt an unseren eigenen Server und von dort direkt in unser Postfach, sie werden dort nicht gespeichert. Kein Drittanbieter-Formulardienst, kein Tracking-Pixel, keine Weitergabe.</p>
+            <!-- Der Absatz stand hier frueher als Aufzaehlung dessen, was NICHT
+                 geschieht: nicht gespeichert, kein Drittanbieter, keine
+                 Weitergabe. Keine dieser Zusagen war belegt — die Strecke
+                 laeuft ueber die Hostingumgebung und einen Versanddienst, und
+                 im Postfach liegt die Anfrage sehr wohl. Was jetzt dasteht,
+                 ist der Weg selbst; wer ihn im Einzelnen traegt, steht in der
+                 Datenschutzerklaerung (PXK-30). -->
+            <p class="small" style="margin-top:5px">Ihre Angaben werden über unsere Website-Infrastruktur verarbeitet und zur Bearbeitung Ihrer Anfrage per E-Mail an unser Postfach übermittelt. Dabei können die in unserer <a href="/datenschutz.html">Datenschutzerklärung</a> genannten technischen Dienstleister eingebunden sein.</p>
           </div>
         </div>
       </div>

@@ -35,8 +35,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Der Formulardienst hat eigene Abhaengigkeiten. Ohne sie liefe der
+      # Laufzeittest unten ins Leere — und ein Tor, das nie rot war, ist
+      # nicht bestanden, sondern ungeprueft.
+      - name: Install form service dependencies
+        run: npm ci --prefix api
+
       - name: Build
         run: npm run build
 
       - name: Verify generated site
         run: npm run verify
+
+      # Startet api/server.mjs wirklich und misst Netzverkehr, Antwort und
+      # Protokoll (PXK-30). Braucht kein Netz und keine Zugangsdaten.
+      - name: Verify form runtime contract
+        run: npm run pruefe:formular
