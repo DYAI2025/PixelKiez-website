@@ -499,6 +499,129 @@ async function verify() {
     }
   }
 
+  /* --- D-1: der Wissensbereich fuehrt nur zum allgemeinen Kontaktweg ---
+     Die Wissensseiten werben nicht mit einem Self-Service-Angebot. Ihr
+     Kopfknopf und ihre Abschluesse fuehren zum Kontakt; eine zugesagte
+     Website-Analyse waere ein Versprechen ohne Gegenstueck dahinter.
+
+     Ein eigenes Tor, weil der vorige Stand saemtliche mechanischen Tore
+     bestand und die Zusage trotzdem trug: Adressen und Aufbau waren
+     richtig, nur der Text versprach etwas anderes.
+
+     Geprueft wird beides — dass die verbotenen Wendungen fehlen UND dass
+     die zugesagten Knoepfe dastehen. Eine reine Verbotsliste kennt nur die
+     drei Formulierungen von damals; die vierte haette sie durchgelassen. */
+  const D1_VERBOTEN = [
+    'kostenlose Website-Analyse',
+    'Zur Website-Analyse',
+    'Eigene Website analysieren',
+    'free website analysis',
+    'See the website analysis',
+    'Analyse your own website',
+  ];
+  /* Reihenfolge im Dokument: erst der Kopfknopf, dann der Abschluss. */
+  const D1_ERWARTET = {
+    de: { ziel: '/#kontakt',    knoepfe: ['Schnellkontakt', 'Website besprechen'] },
+    en: { ziel: '/en/#kontakt', knoepfe: ['Quick contact', 'Discuss your website'] },
+  };
+
+  /* Woertlich, aber nicht naiv: Grossschreibung, ein Zeilenumbruch mitten im
+     Satz oder ein eingeschobenes <em> sollen die Regel nicht aushebeln.
+     Darum wird jeder Text zweimal durchsucht — mit Auszeichnung und ohne. */
+  const d1Flach = (s) => s.replace(/\s+/g, ' ').toLowerCase();
+  const d1Blank = (s) => d1Flach(s.replace(/<[^>]*>/g, ' '));
+  /* Das eingebettete Skriptbuendel ist auf jeder Seite dasselbe und gehoert
+     keiner Seite; JSON-LD dagegen ist Inhalt und bleibt unter Beobachtung. */
+  const d1OhneBuendel = (s) => s
+    .replace(/<script(?![^>]*application\/ld\+json)[^>]*>[\s\S]*?<\/script>/g, ' ')
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/g, ' ');
+  const d1Suche = (text, satz) =>
+    d1Flach(text).includes(d1Flach(satz)) || d1Blank(text).includes(d1Flach(satz));
+
+  /* Welche Routen zum Wissensbereich gehoeren, sagt das Register, nicht ein
+     fest verdrahteter Pfad: die deutsche Fassung erkennt man an ihrer
+     Adresse, die englische an ihrem Partner. Eine spaetere Umbenennung des
+     englischen Pfades nimmt die Regel damit mit. */
+  const istWissen = (s) => s.kanonisch.startsWith('/wissen/')
+    || (s.paar ? s.paar.partner.startsWith('/wissen/') : false);
+  const wissensrouten = SEITEN.filter(istWissen);
+  /* Eine Regel ohne Gegenstand ist nicht bestanden, sondern ungeprueft. */
+  if (!wissensrouten.length) {
+    F('D-1: keine Wissensroute in der Pruefliste — die Regel liefe ins Leere');
+  }
+
+  /* Zweite, unabhaengige Quelle: was liegt wirklich unter den Wissenswurzeln?
+     Eine ausgelieferte Seite, die niemand ins Register eingetragen hat,
+     wuerde sonst von der ganzen Abnahme nie angefasst. Die Wurzeln kommen
+     aus dem Register selbst — je Sprache der kuerzeste Wissenspfad. */
+  const d1Registriert = new Set(wissensrouten.map((s) => s.pfad));
+  const d1Wurzeln = ['de', 'en']
+    .map((l) => wissensrouten.filter((s) => s.lang === l)
+      .sort((a, b) => a.pfad.length - b.pfad.length)[0])
+    .filter(Boolean).map((s) => s.pfad.replace(/\/?[^/]*$/, ''));
+  const d1Gefunden = [];
+  const d1Sammle = async (rel) => {
+    let eintraege;
+    try { eintraege = await readdir(join(ZIEL, rel), { withFileTypes: true }); } catch { return; }
+    for (const e of eintraege) {
+      const kind = `${rel}/${e.name}`;
+      if (e.isDirectory()) await d1Sammle(kind);
+      else if (e.name.endsWith('.html')) d1Gefunden.push(kind);
+    }
+  };
+  for (const w of d1Wurzeln) await d1Sammle(w);
+  for (const p of d1Gefunden) {
+    if (!d1Registriert.has(p))
+      F(`D-1: ${p} wird unter einer Wissenswurzel ausgeliefert, steht aber nicht ` +
+        'in der Pruefliste — die Seite bliebe von der gesamten Abnahme unberuehrt');
+  }
+
+  for (const eintrag of wissensrouten) {
+    const pfad = join(ZIEL, eintrag.pfad);
+    if (!(await existiert(pfad))) {
+      F(`D-1: ${eintrag.pfad} fehlt in dist/ — die Regel bleibt dort ungeprueft`);
+      continue;
+    }
+    const seite = d1OhneBuendel(await readFile(pfad, 'utf8'));
+    for (const satz of D1_VERBOTEN) {
+      if (d1Suche(seite, satz))
+        F(`D-1: ${eintrag.pfad} nennt weiterhin "${satz}" — der Wissensbereich ` +
+          'fuehrt nur zum allgemeinen Kontaktweg, nicht zu einer zugesagten Analyse');
+    }
+    const soll = D1_ERWARTET[eintrag.lang];
+    const knoepfe = [...seite.matchAll(
+      /<a class="btn[^"]*"[^>]*href="([^"]*)"[^>]*>\s*<span class="btn__label">([^<]*)<\/span>/g)];
+    if (knoepfe.length !== soll.knoepfe.length) {
+      F(`D-1: ${eintrag.pfad} traegt ${knoepfe.length} Kontaktknoepfe, erwartet ` +
+        `${soll.knoepfe.length} (Kopf und Abschluss)`);
+      continue;
+    }
+    knoepfe.forEach(([, ziel, text], i) => {
+      if (text !== soll.knoepfe[i])
+        F(`D-1: ${eintrag.pfad}: Knopf ${i + 1} heisst "${text}", erwartet "${soll.knoepfe[i]}"`);
+      if (ziel !== soll.ziel)
+        F(`D-1: ${eintrag.pfad}: Knopf "${text}" zeigt auf ${ziel}, erwartet ${soll.ziel}`);
+    });
+  }
+
+  /* Auch die Quelle traegt die Zusage nicht. Ein in einem Kommentar
+     geparkter Satz ueberlebt dort, waehrend der Minifier ihn aus dist/
+     entfernt — die Pruefung oben saehe ihn nie. Deshalb hier, entgegen der
+     sonstigen Regel dieser Datei, ein Blick auf site/. */
+  const D1_QUELLE = join(fileURLToPath(new URL('..', import.meta.url)), 'site', 'wissen');
+  let d1Quellen = [];
+  try { d1Quellen = (await readdir(D1_QUELLE)).filter((n) => n.endsWith('.html')); } catch { /* unten */ }
+  if (!d1Quellen.length) {
+    F('D-1: keine Wissensquelle unter site/wissen/ — die Quellpruefung liefe ins Leere');
+  }
+  for (const name of d1Quellen) {
+    const roh = await readFile(join(D1_QUELLE, name), 'utf8');
+    for (const satz of D1_VERBOTEN) {
+      if (d1Suche(roh, satz))
+        F(`D-1: site/wissen/${name} nennt "${satz}" — auch die Quelle traegt die Zusage nicht`);
+    }
+  }
+
   /* --- verwaiste Schriften --- */
   for (const f of fontsVorhanden) {
     if (!fontsBenutzt.has(f)) hinweise.push(`Schrift liegt in dist/, wird aber nie referenziert: ${f}`);
