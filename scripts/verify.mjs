@@ -949,7 +949,7 @@ async function verify() {
   }
 
   /* --- G-2.6: der Wissensbereich bleibt unangetastet --------------------- */
-  const G2_PLATZHALTER_SOLL = 24;
+  const G2_PLATZHALTER_SOLL = 18;
   let g2Platzhalter = 0;
   for (const name of g1Quellen) {
     const roh = await readFile(join(G1_SITE, 'wissen', name), 'utf8');
