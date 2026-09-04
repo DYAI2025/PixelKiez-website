@@ -948,7 +948,14 @@ async function verify() {
     }
   }
 
-  /* --- G-2.6: der Wissensbereich bleibt unangetastet --------------------- */
+  /* --- G-2.6: die Platzhalter des Wissensbereichs sind gezaehlt ----------
+     Urspruenglich hielt dieses Tor den Wissensbereich aus der PXK-30-Strecke
+     heraus: 24 Platzhalter, unveraendert. Inzwischen loest PXK-58 sie
+     artikelweise auf, und der Sollwert wandert mit — je ausgeschriebenem
+     Artikel sechs weniger. Die Zahl ist damit kein "unangetastet" mehr,
+     sondern der erreichte Stand: Wer sie senkt, muss im selben Commit
+     Inhalt geliefert haben; wer sie unabsichtlich verschiebt, faellt auf.
+     Task 6 loest dieses Tor durch das benannte Tor G-3 ab. */
   const G2_PLATZHALTER_SOLL = 12;
   let g2Platzhalter = 0;
   for (const name of g1Quellen) {
@@ -959,8 +966,9 @@ async function verify() {
     F('G-2.6: keine Wissensquelle gelesen — die Zaehlung liefe ins Leere');
   } else if (g2Platzhalter !== G2_PLATZHALTER_SOLL) {
     F(`G-2.6: site/wissen/ traegt ${g2Platzhalter} Platzhalter, erwartet ` +
-      `${G2_PLATZHALTER_SOLL} — der Wissensbereich gehoert nicht zu dieser Strecke ` +
-      '(seine Platzhalter loest PXK-58)');
+      `${G2_PLATZHALTER_SOLL} — PXK-58 loest sie artikelweise auf, sechs je ` +
+      'ausgeschriebenem Artikel. Weniger als erwartet: den Sollwert im selben ' +
+      'Commit nachziehen. Mehr als erwartet: es ist Inhalt verloren gegangen');
   }
 
   /* --- verwaiste Schriften --- */
