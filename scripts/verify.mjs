@@ -21,6 +21,10 @@ const ZIEL = join(fileURLToPath(new URL('..', import.meta.url)), 'dist');
    hreflang noch Umschalter. `kanonisch` ist der Pfad, den das canonical der
    fertigen Seite nennen muss. */
 const DOMAIN = 'https://pixelkiez.de';
+/* Dieselbe Adresse einmal zerlegt. Wer Herkunft prueft, vergleicht Protokoll
+   und Wirt getrennt — ein Zeichenkettenvergleich auf den Anfang von DOMAIN
+   wuerde fremde Wirte einschliessen (siehe W-7). */
+const HERKUNFT = new URL(DOMAIN);
 const SEITEN = [
   { pfad: 'index.html',                    lang: 'de', kanonisch: '/',                       paar: { partner: '/en/',                 schalter: 'EN' } },
   { pfad: 'en/index.html',                 lang: 'en', kanonisch: '/en/',                    paar: { partner: '/',                    schalter: 'DE' } },
@@ -614,13 +618,33 @@ async function verify() {
     }
     /* Die seitenbezogenen Kennungen muessen die eigene Adresse tragen —
        sonst truegen die deutsche und die englische Fassung dieselbe @id
-       und eine Suchmaschine wuesste nicht, welches Dokument gemeint ist. */
-    const eigene = [...kennungen].filter((k) => k.startsWith(DOMAIN) && k.includes('#'));
-    for (const k of eigene) {
-      const marke = k.slice(DOMAIN.length).split('#')[0];
-      if (marke === '/' || marke === '') continue;   // #organisation, #website: bewusst geteilt
-      if (marke !== eintrag.kanonisch)
-        F(`${eintrag.pfad}: JSON-LD-Kennung ${k} gehoert zu ${marke}, nicht zu ${eintrag.kanonisch}`);
+       und eine Suchmaschine wuesste nicht, welches Dokument gemeint ist.
+
+       Geprueft wird die zerlegte Adresse, nicht ihr Anfang. Ein Praefixtest
+       (`k.startsWith(DOMAIN)`) haelt fremde Wirte fuer die eigene Domain,
+       weil hinter `https://pixelkiez.de` beliebiger Text folgen darf:
+       `https://pixelkiez.de.evil.example/…` haengt einen Punkt an,
+       `https://pixelkiez.de@evil.example/…` schiebt alles davor in den
+       Benutzernamen. Umgekehrt rutscht `https://evil.example/wissen/…`
+       durch den Filter und wird gar nicht erst geprueft — die gefaehrlichste
+       der drei Luecken. Der WHATWG-Parser trennt Protokoll, Anmeldedaten,
+       Wirt und Pfad; verglichen wird jedes Stueck fuer sich. */
+    for (const k of kennungen) {
+      let u;
+      try { u = new URL(k); } catch {
+        F(`${eintrag.pfad}: JSON-LD-Kennung ${k} ist keine gueltige Adresse`);
+        continue;
+      }
+      if (u.protocol !== HERKUNFT.protocol || u.host !== HERKUNFT.host
+          || u.username !== '' || u.password !== '') {
+        F(`${eintrag.pfad}: JSON-LD-Kennung ${k} gehoert zur fremden Herkunft `
+          + `${u.protocol}//${u.host} statt zu ${DOMAIN}`);
+        continue;
+      }
+      if (!k.includes('#')) continue;                // nur Marken benennen ein Dokument
+      if (u.pathname === '/') continue;              // #organisation, #website: bewusst geteilt
+      if (u.pathname !== eintrag.kanonisch)
+        F(`${eintrag.pfad}: JSON-LD-Kennung ${k} gehoert zu ${u.pathname}, nicht zu ${eintrag.kanonisch}`);
     }
   }
 

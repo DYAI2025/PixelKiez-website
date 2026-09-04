@@ -8,6 +8,11 @@
 # Stamm. Relative Pfade wuerden hier die falsche package.json erwischen.
 FROM node:22-alpine
 
+# Die Alpine-Pakete des Basisimages nachziehen: libcrypto3/libssl3 tragen
+# dort einen HIGH-Fund mit vorhandener Korrektur. Wie beim Website-Image ohne
+# Versionspinning, damit ein Rebuild die naechste Korrektur mitnimmt.
+RUN apk --no-cache upgrade
+
 WORKDIR /app
 COPY api/package.json api/package-lock.json ./
 RUN npm ci --omit=dev
