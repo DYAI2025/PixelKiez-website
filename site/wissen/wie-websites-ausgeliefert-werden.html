@@ -204,7 +204,8 @@
     </div>
 
     <figure class="wissen-tabelle" data-reveal>
-      <div class="wissen-tabelle__rollen">
+      <p class="wissen-tabelle__hinweis" aria-hidden="true">Tabelle seitlich verschiebbar</p>
+      <div class="wissen-tabelle__rollen" tabindex="0" role="region" aria-label="Werkzeuge und ihre dokumentierten Auslieferungswege">
         <table>
           <thead>
             <tr>
@@ -303,85 +304,92 @@
     <figure class="kiezbot-scene" data-reveal>
       <div class="kiezbot-scene__bild" aria-hidden="true">
         <svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" fill="none" stroke-linecap="round" stroke-linejoin="round">
-          <!-- Zone 1: Bausteine — drei gestapelte Ebenen -->
+          <!-- Zone 1 — Bausteine: drei gestapelte Ebenen, HTML oben. -->
           <g class="kb-bausteine">
-            <rect x="24" y="86" width="118" height="30" rx="4"/>
-            <rect x="24" y="124" width="118" height="30" rx="4"/>
-            <rect x="24" y="162" width="118" height="30" rx="4"/>
-            <rect x="36" y="96" width="34" height="10" rx="2" class="kb-akzent"/>
-            <line x1="36" y1="139" x2="94" y2="139"/>
-            <circle cx="44" cy="177" r="5"/><line x1="56" y1="177" x2="106" y2="177"/>
+            <rect x="20" y="86" width="118" height="30" rx="4"/>
+            <rect x="20" y="124" width="118" height="30" rx="4"/>
+            <rect x="20" y="162" width="118" height="30" rx="4"/>
+            <rect x="32" y="96" width="34" height="10" rx="2" class="kb-akzent"/>
+            <line x1="32" y1="139" x2="90" y2="139"/>
+            <circle cx="40" cy="177" r="5"/><line x1="52" y1="177" x2="102" y2="177"/>
           </g>
-          <!-- Sammelstrich: alle drei Bausteine gehen in dieselbe Entscheidung -->
+          <!-- Aus denselben Bausteinen fuehrt EIN Weg zur Entscheidung. -->
           <g class="kb-linie">
-            <path d="M142 101 H 176 V 139"/>
-            <path d="M142 139 H 176"/>
-            <path d="M142 177 H 176 V 139"/>
-            <path d="M176 139 H 206"/>
+            <path d="M138 101 H 162 V 139"/>
+            <path d="M138 139 H 162"/>
+            <path d="M138 177 H 162 V 139"/>
+            <path d="M162 139 H 182"/>
+            <path d="M182 57 V 261"/>
+            <path d="M182 57 H 200"/><path d="M182 125 H 200"/>
+            <path d="M182 193 H 200"/><path d="M182 261 H 200"/>
           </g>
-          <!-- Zone 2: vier gleichwertige Auslieferungswege, gleiche Groesse,
-               gleicher Abstand — bewusst keine Leiter und keine Stufen -->
+          <!-- Zone 2 — vier Auslieferungswege. Gleiche Groesse, gleicher
+               Abstand, gemeinsame Senkrechte: keine Stufen, keine Reifegrade.
+               Der dritte traegt die Akzentmarke, weil sein Inhalt erst im
+               Client entsteht — die gestrichelte Linie dahinter sagt
+               dasselbe noch einmal ohne Farbe. -->
           <g class="kb-weg">
-            <rect x="206" y="44" width="26" height="26" rx="4"/>
-            <rect x="206" y="112" width="26" height="26" rx="4"/>
-            <rect x="206" y="180" width="26" height="26" rx="4"/>
-            <rect x="206" y="248" width="26" height="26" rx="4"/>
-            <line x1="212" y1="57" x2="226" y2="57"/>
-            <path d="M212 119 h14 M212 125 h14 M212 131 h10"/>
-            <circle cx="219" cy="193" r="6" class="kb-akzent"/>
-            <path d="M212 255 h14 M212 267 h14"/>
+            <rect x="200" y="44" width="28" height="26" rx="4"/>
+            <rect x="200" y="112" width="28" height="26" rx="4"/>
+            <rect x="200" y="180" width="28" height="26" rx="4"/>
+            <rect x="200" y="248" width="28" height="26" rx="4"/>
+            <line x1="207" y1="57" x2="221" y2="57"/>
+            <path d="M207 119 h14 M207 125 h14 M207 131 h10"/>
+            <circle cx="214" cy="193" r="6" class="kb-akzent"/>
+            <path d="M207 255 h14 M207 261 h10 M217 267 h4"/>
           </g>
+          <!-- Alle vier muenden in dieselbe Auslieferung: welcher Weg zu
+               welchem Ergebnis fuehrt, ist keine feste Zuordnung. -->
           <g class="kb-linie">
-            <path d="M206 139 V 57 H 206"/>
-            <path d="M206 139 V 125"/>
-            <path d="M206 139 V 193"/>
-            <path d="M206 139 V 261"/>
-          </g>
-          <!-- Wege nach rechts: der dritte gestrichelt, weil der Inhalt dort
-               erst im Client entsteht -->
-          <g class="kb-linie">
-            <path d="M232 57 H 300 V 96"/>
-            <path d="M232 125 H 300 V 110"/>
+            <path d="M262 57 V 261"/>
+            <path d="M228 57 H 262"/>
+            <path d="M228 125 H 262"/>
+            <path d="M228 261 H 262"/>
+            <path d="M262 152 H 286"/>
           </g>
           <g class="kb-linie kb-gestrichelt">
-            <path d="M232 193 H 268 V 210 H 300"/>
+            <path d="M228 193 H 262"/>
           </g>
           <g class="kb-linie">
-            <path d="M232 261 H 268 V 210 H 300"/>
-            <path d="M268 210 V 110 H 300"/>
+            <path d="M286 152 V 78 H 306"/>
+            <path d="M286 152 H 306"/>
+            <path d="M286 152 V 268 H 306"/>
           </g>
-          <!-- Zone 3: drei Ergebnisformen -->
+          <!-- Zone 3 — drei Ergebnisformen derselben Auslieferung:
+               direkt zugaengliches Dokument, browsererweiterte Oberflaeche,
+               maschinell nutzbare Struktur. -->
           <g class="kb-ergebnis">
-            <!-- direkt zugaengliches Dokument -->
-            <rect x="316" y="34" width="140" height="88" rx="6"/>
-            <rect x="332" y="50" width="52" height="10" rx="2" class="kb-akzent"/>
-            <line x1="332" y1="72" x2="440" y2="72"/><line x1="332" y1="84" x2="416" y2="84"/>
-            <rect x="332" y="96" width="38" height="12" rx="3"/>
-            <!-- browsererweiterte Oberflaeche -->
-            <rect x="316" y="140" width="140" height="88" rx="6"/>
-            <path d="M316 158 H 456" class="kb-leise"/>
-            <circle cx="330" cy="149" r="3" class="kb-leise"/><circle cx="342" cy="149" r="3" class="kb-leise"/>
-            <rect x="332" y="172" width="60" height="16" rx="4"/>
-            <rect x="332" y="198" width="90" height="12" rx="3" class="kb-leise"/>
-            <circle cx="436" cy="204" r="9"/><path d="M432 204 h8 M436 200 v8"/>
-            <!-- maschinell nutzbare Struktur -->
-            <rect x="316" y="246" width="140" height="44" rx="6"/>
-            <line x1="332" y1="262" x2="368" y2="262"/><line x1="380" y1="262" x2="440" y2="262"/>
-            <line x1="332" y1="276" x2="360" y2="276"/><line x1="372" y1="276" x2="428" y2="276"/>
+            <rect x="306" y="38" width="150" height="80" rx="6"/>
+            <rect x="322" y="54" width="52" height="10" rx="2" class="kb-akzent"/>
+            <line x1="322" y1="76" x2="440" y2="76"/><line x1="322" y1="88" x2="414" y2="88"/>
+            <rect x="322" y="98" width="38" height="12" rx="3"/>
+
+            <rect x="306" y="130" width="150" height="80" rx="6"/>
+            <path d="M306 148 H 456" class="kb-leise"/>
+            <circle cx="320" cy="139" r="3" class="kb-leise"/><circle cx="332" cy="139" r="3" class="kb-leise"/>
+            <rect x="322" y="162" width="62" height="16" rx="4"/>
+            <rect x="322" y="188" width="90" height="10" rx="3" class="kb-leise"/>
+            <circle cx="432" cy="186" r="10"/><path d="M427 186 h10 M432 181 v10"/>
+
+            <rect x="306" y="222" width="150" height="56" rx="6"/>
+            <line x1="322" y1="240" x2="356" y2="240"/><line x1="368" y1="240" x2="440" y2="240"/>
+            <line x1="322" y1="258" x2="348" y2="258"/><line x1="360" y1="258" x2="428" y2="258"/>
           </g>
-          <!-- Empfaenger: drei neutrale Systemmarken, ohne Gesicht -->
+          <!-- Empfaenger: drei neutrale Systemmarken ohne Gesicht. Sie
+               unterscheiden sich nicht — welches System welche Form nutzt,
+               behauptet diese Szene nicht. -->
           <g class="kb-linie">
-            <path d="M456 78 H 512"/>
-            <path d="M456 184 H 512"/>
-            <path d="M456 268 H 512"/>
+            <path d="M456 78 H 508"/>
+            <path d="M456 170 H 508"/>
+            <path d="M456 250 H 508"/>
           </g>
           <g class="kb-system">
-            <rect x="512" y="58" width="40" height="40" rx="5"/>
-            <rect x="522" y="68" width="8" height="8" rx="1"/><rect x="534" y="68" width="8" height="8" rx="1"/><rect x="522" y="80" width="20" height="8" rx="1"/>
-            <rect x="512" y="164" width="40" height="40" rx="5"/>
-            <rect x="522" y="174" width="8" height="8" rx="1"/><rect x="534" y="174" width="8" height="8" rx="1" class="kb-akzent"/><rect x="522" y="186" width="20" height="8" rx="1"/>
-            <rect x="512" y="248" width="40" height="40" rx="5"/>
-            <rect x="522" y="258" width="8" height="8" rx="1"/><rect x="534" y="258" width="8" height="8" rx="1"/><rect x="522" y="270" width="20" height="8" rx="1"/>
+            <rect x="508" y="58" width="40" height="40" rx="5"/>
+            <rect x="518" y="68" width="8" height="8" rx="1"/><rect x="530" y="68" width="8" height="8" rx="1"/><rect x="518" y="80" width="20" height="8" rx="1"/>
+            <rect x="508" y="150" width="40" height="40" rx="5"/>
+            <rect x="518" y="160" width="8" height="8" rx="1"/><rect x="530" y="160" width="8" height="8" rx="1"/><rect x="518" y="172" width="20" height="8" rx="1"/>
+            <rect x="508" y="230" width="40" height="40" rx="5"/>
+            <rect x="518" y="240" width="8" height="8" rx="1"/><rect x="530" y="240" width="8" height="8" rx="1"/><rect x="518" y="252" width="20" height="8" rx="1"/>
           </g>
         </svg>
       </div>
