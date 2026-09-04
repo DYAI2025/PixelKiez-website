@@ -744,7 +744,9 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
 .pv__svg{width:100%;height:auto;overflow:visible}
 .pv__noise{fill:var(--ink);opacity:.28}
 .pv__rule{stroke:var(--ink);stroke-width:1.5;opacity:.55}
-.pv__c{opacity:0;transform:scale(.4);transform-origin:center;transform-box:fill-box}
+.pv__c{transform-origin:center;transform-box:fill-box}
+/* Vorzustand nur, wenn das Skript ihn auch wieder aufloesen kann — PXK-23. */
+:root[data-reveal-anim] .pv__c{opacity:0;transform:scale(.4)}
 .pv__c--w{fill:#FFFFFF}
 .pv__c--k{fill:#0E1413}
 .pv__c--o{fill:#EC5D43}
@@ -823,8 +825,9 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
 .weg__raster i{
   aspect-ratio:1;border-radius:2px;
   background:color-mix(in srgb,var(--ink) 12%,transparent);
-  opacity:0;transform:scale(.4);
 }
+/* Vorzustand nur, wenn das Skript ihn auch wieder aufloesen kann — PXK-23. */
+:root[data-reveal-anim] .weg__raster i{opacity:0;transform:scale(.4)}
 .weg__raster i.on{background:var(--ink)}
 .weg__st.in .weg__raster i{
   animation:wegZelle 420ms var(--ease) forwards;
@@ -1296,7 +1299,10 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
 
 /* Die Merkmale kommen einzeln, nicht als Block. 45ms Abstand: genug, dass man
    die Reihenfolge wahrnimmt, zu wenig, um darauf zu warten. */
-.pack ul li{opacity:0;transform:translate3d(-6px,0,0)}
+/* Vorzustand nur, wenn das Skript ihn auch wieder aufloesen kann — PXK-23.
+   Hier haengt Geschaeftsinhalt daran: ohne die Bindung standen die Merkmale
+   der Preiskarten ohne JavaScript dauerhaft auf opacity:0. */
+:root[data-reveal-anim] .pack ul li{opacity:0;transform:translate3d(-6px,0,0)}
 .pack.in ul li{animation:packMerkmal 380ms var(--ease) forwards}
 .pack.in ul li:nth-child(1){animation-delay:240ms}
 .pack.in ul li:nth-child(2){animation-delay:285ms}
@@ -1306,7 +1312,9 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
 
 /* Das Schild kommt zuletzt und aus 0.8 — nicht aus dem Nichts, sondern aus
    etwas, das schon da war. */
-.pack__badge{opacity:0;transform:translateY(-50%) scale(.8)}
+/* Vorzustand nur, wenn das Skript ihn auch wieder aufloesen kann — PXK-23.
+   Das Schild nennt die empfohlene Karte; ohne JavaScript blieb es weg. */
+:root[data-reveal-anim] .pack__badge{opacity:0;transform:translateY(-50%) scale(.8)}
 .pack.in .pack__badge{
   animation:packSchild 320ms var(--ease) 520ms forwards;
 }
@@ -1369,11 +1377,12 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
   position:absolute;
   width:var(--punkt);height:var(--punkt);border-radius:50%;
   background:var(--paper);border:1px solid var(--line-strong);
-  transform:scale(.35);opacity:0;
   transition:transform 420ms var(--ease),opacity 300ms var(--ease),
              background-color 240ms var(--ease),border-color 240ms var(--ease);
   transition-delay:calc(var(--i) * 130ms);
 }
+/* Vorzustand nur, wenn das Skript ihn auch wieder aufloesen kann — PXK-23. */
+:root[data-reveal-anim] .lauf__punkt{transform:scale(.35);opacity:0}
 .lauf__st.in .lauf__punkt{transform:scale(1);opacity:1}
 /* Der letzte Schritt ist optional — hohl statt gefuellt, damit man sieht,
    dass der Weg auch vorher enden darf. */
@@ -1866,9 +1875,22 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
    es nicht: kuerzere Dauer bei gleicher Strecke sieht nach nichts aus. Etwas
    mehr Weg in weniger Zeit liest sich als Zug, nicht als Hast.
 
-   Die Staffelung (--d, 55ms je Element) bleibt, wie sie war. */
-[data-reveal]{opacity:0;transform:translate3d(0,18px,0)}
-[data-reveal].in{
+   Die Staffelung (--d, 55ms je Element) bleibt, wie sie war.
+
+   Die Richtung der Abhaengigkeit ist dabei umgedreht (PXK-23). Vorher galt
+   der Vorzustand — unsichtbar, 18 Punkte tiefer — unbedingt, und erst das
+   Skript holte den Inhalt mit .in wieder hervor. Lief das Skript nicht,
+   blieb die Seite leer: Text im Quelltext, nichts auf dem Schirm. Damit
+   haengt Lesbarkeit an einer Animation, und das ist die falsche Richtung.
+
+   Jetzt ist sichtbar der Grundzustand. Der Vorzustand gilt nur, solange
+   das Dokument selbst data-reveal-anim traegt — ein Merkmal, das kein
+   Markup mitbringt, sondern allein das Skript setzt (Vorlauf im <head>,
+   siehe scripts/build.mjs) und bei jedem Fehlschlag wieder abraeumt.
+   Kein Skript, kein Merkmal, kein Verstecken. */
+[data-reveal]{opacity:1;transform:none}
+:root[data-reveal-anim] [data-reveal]{opacity:0;transform:translate3d(0,18px,0)}
+:root[data-reveal-anim] [data-reveal].in{
   opacity:1;transform:none;
   transition:opacity 420ms var(--ease),transform 420ms var(--ease);
   transition-delay:var(--d,0ms);
@@ -1956,3 +1978,210 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
   body{background:#fff;color:#000}
   .section{border-top:1px solid #ccc;padding-block:24px}
 }
+
+/* ---------- 19. Website-Analyse: Einstieg und Seite -----------------------
+   Der Einstieg auf der Startseite ist ein schmales Band nach dem Hero; die
+   Analyse-Seite nutzt die vorhandenen Bausteine (section, form, channel) und
+   ergaenzt nur, was es dort nicht gibt: die Adresszeile im Band, das
+   Prueffeld-Raster und die Stufenkarten. */
+.analyse-band{padding-block:clamp(26px,3.5vw,42px);border-top:1px solid var(--line)}
+.analyse-band__in{display:grid;gap:16px 40px}
+@media(min-width:920px){
+  .analyse-band__in{grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);align-items:center}
+}
+.analyse-band__form{display:flex;flex-wrap:wrap;gap:10px}
+.analyse-band__form .input{flex:1 1 240px}
+
+.analyse-fakten{display:flex;flex-wrap:wrap;gap:10px 24px;margin-top:clamp(16px,2vw,24px)}
+.analyse-fakten li{
+  display:flex;gap:9px;align-items:center;
+  font-family:var(--font-mono);font-size:.8125rem;color:var(--ink-70);
+}
+.analyse-fakten svg{width:15px;height:15px;color:var(--accent-ink);flex:0 0 auto}
+
+/* Erster Abschnitt der Analyse-Seite: etwas weniger Luft nach dem Kopf als
+   ein normaler Abschnitt, der Rest kommt aus .section. */
+.auftakt{padding-block:clamp(44px,7vw,92px) var(--sp-section)}
+
+.pruef{display:grid;gap:clamp(22px,3vw,34px);margin-top:clamp(26px,3.5vw,44px)}
+@media(min-width:720px){.pruef{grid-template-columns:1fr 1fr}}
+@media(min-width:1060px){.pruef{grid-template-columns:1fr 1fr 1fr}}
+
+.leiter{display:grid;gap:clamp(14px,2vw,22px);margin-top:clamp(26px,3.5vw,44px)}
+@media(min-width:920px){.leiter{grid-template-columns:1fr 1fr}}
+.leiter li{
+  display:grid;gap:7px;align-content:start;
+  padding:clamp(18px,2.5vw,26px);
+  background:var(--paper-2);border:1px solid var(--line);border-radius:var(--radius-sm);
+}
+.leiter b{font-family:var(--font-mono);font-weight:500;font-size:.8125rem;letter-spacing:.01em;color:var(--accent-ink)}
+
+/* ---------- 20. Wissen + Kiezbot-Szene ------------------------------------
+   Editoriale Schicht: Hub /wissen/ und die Wissens-Shells. Baut auf den
+   bestehenden Karten- und Leiter-Mustern auf; Neues nur, wo das Vorhandene
+   nicht reicht. figure.kiezbot-scene ist das wiederverwendbare Gefaess fuer
+   erklaerende Bildszenen (PXK-27: fuenf Szenen, eine Grammatik). Die darin
+   wiederkehrende Systemmarke ist ein reduziertes Pixelraster ohne Gesicht —
+   ein Zeichen fuer ein maschinelles System, keine Figur und keine
+   Markenperson. Bewusst keine Animation: jede Szene muss im Stillstand
+   vollstaendig verstaendlich sein. */
+
+/* Entwurfs-Hinweis: markiert Seiten und Bereiche, deren Inhalt noch nicht
+   freigegeben ist. Mono wie die Kicker, aber mit Rahmen — ein Etikett,
+   keine Ueberschrift. */
+.wissen-status{
+  display:inline-block;margin-top:clamp(16px,2vw,24px);
+  padding:7px 12px;
+  border:1px solid var(--line-strong);border-radius:var(--radius-sm);
+  font-family:var(--font-mono);font-size:.8125rem;letter-spacing:.01em;
+  color:var(--ink-70);
+}
+
+/* Platzhalter fuer Abschnitte, die nach fachlicher Pruefung folgen. Die
+   gestrichelte Kante sagt sichtbar "hier fehlt noch etwas" — ehrlicher als
+   ein Abschnitt, der fertig aussieht und es nicht ist. */
+.wissen-platzhalter{
+  margin-top:clamp(14px,2vw,20px);
+  padding-left:14px;border-left:2px dashed var(--line-strong);
+  color:var(--ink-45);
+}
+
+/* Bildszene: Rahmen und helle Flaeche wie die Leiter-Karten, die Grafik
+   traegt keine Sprache (a11y + Uebersetzung), die Aussage steht in der
+   Bildunterschrift. */
+.kiezbot-scene{
+  /* Kein Seitenrand vom Browser; nach oben der Abstand der uebrigen
+     Inhaltsbloecke (.pruef, .leiter), weil die Szene im Abschnitt auf Text
+     folgt. */
+  margin:clamp(26px,3.5vw,44px) 0 0;
+  padding:clamp(18px,2.5vw,26px);
+  background:var(--paper-2);border:1px solid var(--line);border-radius:var(--radius-sm);
+}
+.kiezbot-scene__bild svg{display:block;width:100%;height:auto;max-width:640px;margin-inline:auto}
+.kiezbot-scene figcaption{
+  margin-top:clamp(14px,2vw,20px);
+  font-size:.9375rem;line-height:1.6;color:var(--ink-45);
+}
+.kiezbot-scene figcaption b{color:var(--ink-70)}
+
+/* Verwandte Themen: zwei Kanalkarten nebeneinander, darunter untereinander. */
+.wissen-weiter{display:grid;gap:14px;margin-top:clamp(26px,3.5vw,44px)}
+@media(min-width:720px){.wissen-weiter{grid-template-columns:1fr 1fr}}
+
+/* Stiller Rueckweg unter den verwandten Themen: ein Textverweis statt einer
+   dritten Karte — die Uebersicht ist ein Ausweg, kein gleichwertiges Thema. */
+.wissen-alle{margin-top:clamp(16px,2vw,24px)}
+.wissen-alle a{color:var(--ink);text-underline-offset:4px}
+.wissen-alle a:hover{color:var(--accent-ink)}
+
+/* Themenkarten des Hubs: sprechen die Formensprache der Leistungskarten
+   (.crc) — gleiche Kante, gleicher Radius, gleiche Markierung oben rechts,
+   Farbwechsel ueber die vorhandenen tone-Klassen. Bewusst OHNE Vorhang: der
+   Vorhang inszeniert ein buchbares Angebot, diese Karten versprechen
+   Lektuere. Die ganze Karte ist Verweis: der Link sitzt in der Ueberschrift
+   und spannt sich per ::after ueber die Flaeche — fuer Screenreader und
+   Tastatur bleibt es EIN Link mit der Frage als Namen. Keine Interaktion,
+   die es nur beim Zeigen gibt: Zeiger und Fokus heben die Karte nur leicht
+   an und drehen den Pfeil, alles Inhaltliche steht immer da. */
+.wk-grid{display:grid;gap:clamp(14px,1.8vw,20px);margin-top:clamp(26px,3.5vw,44px)}
+@media(min-width:720px){.wk-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(min-width:1060px){.wk-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.wk{
+  position:relative;display:flex;flex-direction:column;
+  padding:clamp(22px,2.4vw,30px);
+  border:1px solid var(--line);border-radius:var(--radius);
+  background:var(--paper);color:var(--ink);
+  transition:border-color var(--dur) var(--ease),transform var(--dur) var(--ease);
+}
+.wk:hover,.wk:focus-within{border-color:var(--ink-45);transform:translateY(-2px)}
+.wk__kat{
+  font-family:var(--font-mono);font-size:.75rem;letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent-ink);display:flex;align-items:center;gap:11px;
+  /* Platz fuer die Markierung oben rechts, damit lange Etiketten nicht
+     darunter geraten */
+  padding-right:52px;
+}
+.wk__kat svg{width:19px;height:19px;flex:0 0 auto}
+.wk__mark{
+  position:absolute;right:clamp(22px,2.4vw,30px);top:clamp(22px,2.4vw,30px);
+  width:38px;height:38px;border-radius:50%;
+  border:1px solid var(--line-strong);display:grid;place-items:center;
+  color:var(--ink);
+  transition:transform 420ms cubic-bezier(.22,.61,.36,1);
+}
+.wk__mark svg{width:16px;height:16px}
+.wk:hover .wk__mark,.wk:focus-within .wk__mark{transform:rotate(45deg)}
+.wk__titel{margin-top:22px}
+.wk__titel a{color:var(--ink);text-decoration:none}
+.wk__titel a::after{content:"";position:absolute;inset:0;border-radius:var(--radius)}
+/* Der Fokusring gehoert um die ganze Karte, nicht um die Textzeile — deshalb
+   wandert er vom Link auf dessen aufgespanntes ::after. */
+.wk__titel a:focus-visible{outline:none}
+.wk__titel a:focus-visible::after{outline:2px solid var(--accent-ink);outline-offset:3px}
+.wk__text{margin-top:9px;color:var(--ink-70)}
+
+/* Szenengrammatik: Konturen aus dem Text-Schwarz, Akzentflaechen aus der
+   Nebenfarbe — beides ueber Tokens, damit die Szene auch auf inv-Flaechen
+   stimmt. Die Klassen sitzen auf den <g>-Gruppen, die Primitive erben.
+   Drei Zusaetze, jeder von mindestens zwei Szenen genutzt: gestrichelt fuer
+   erschlossene, widerspruechliche oder optionale Wege (Szenen 3, 4, 5),
+   leise fuer Nebenstruktur wie Fundament und verstreute Hinweise (2, 3, 4),
+   Akzentlinie fuer den semantisch wichtigen Weg oder Fokus (3, 5). Bedeutung
+   haengt nie allein an der Farbe — Linienart und Form tragen sie mit. */
+.kiezbot-scene [class^="kb-"]{stroke:var(--ink);stroke-width:1.7}
+.kiezbot-scene .kb-akzent{fill:var(--accent);stroke:none}
+.kiezbot-scene .kb-gestrichelt{stroke-dasharray:3 6}
+.kiezbot-scene .kb-leise{stroke:var(--line-strong)}
+.kiezbot-scene .kb-akzent-linie{stroke:var(--accent)}
+
+/* ---------- 20b. Ausgeschriebene Wissensbeitraege (Slice 3) ---------------
+   Erst der erste ausformulierte Beitrag zeigt, was ein Fliesstext-Beitrag
+   ueber die Shell hinaus braucht. Bewusst nur drei Zusaetze: alles Uebrige
+   (.leiter, .channel, .prose, .analyse-fakten) trug bereits. */
+
+/* Dreispaltige Leiter. Die Leiter ist zweispaltig, weil vier Stufen so
+   aufgehen; Dreiergruppen — drei Besucherzwecke, drei Abrufwege, Befund /
+   Grenze / Folgerung — brechen darin unguenstig in 2+1. Nur die Spaltenzahl
+   aendert sich, die Karten kommen unveraendert aus .leiter. */
+@media(min-width:920px){.leiter--drei{grid-template-columns:1fr 1fr 1fr}}
+
+/* Abrufprobe: was bei einem Abruf ankommt, in Mono auf eigener Flaeche —
+   sichtbar getrennt von der Erklaerung daneben. Kein <pre>: der Text muss
+   auf schmalen Anzeigen umbrechen duerfen, sonst schiebt eine einzige lange
+   Zeile die ganze Seite quer. Deshalb <span>-Zeilen statt Zeilenumbruechen
+   im Quelltext. */
+.wissen-probe{
+  font-family:var(--font-mono);font-size:.8125rem;line-height:1.7;
+  color:var(--ink-70);
+  padding:12px 14px;
+  background:var(--paper);border:1px solid var(--line);border-radius:var(--radius-sm);
+  overflow-wrap:anywhere;
+}
+.wissen-probe span{display:block}
+.wissen-probe .aus{color:var(--ink-45)}
+
+/* Quellenblock: je Quelle der Beleg, wofuer er steht, und sein Stand. Als
+   <dl>, damit der Zusammenhang zwischen Quelle und Aussage auch vorgelesen
+   erhalten bleibt. Schmal untereinander, ab 720px die Quelle links neben
+   ihren Angaben. Adressen duerfen an jeder Stelle brechen — eine
+   Dokumentations-URL ist laenger als jede Telefonspalte. */
+.wissen-quellen{margin-top:clamp(26px,3.5vw,44px)}
+.wissen-quellen > div{
+  display:grid;gap:6px;
+  padding-block:clamp(16px,2vw,22px);
+  border-top:1px solid var(--line);
+}
+.wissen-quellen > div:last-child{border-bottom:1px solid var(--line)}
+@media(min-width:720px){
+  .wissen-quellen > div{grid-template-columns:minmax(0,22ch) minmax(0,1fr);gap:6px 32px}
+  .wissen-quellen dt{grid-row:span 2}
+}
+.wissen-quellen dt{
+  font-family:var(--font-display);font-weight:600;
+  font-size:1.0625rem;letter-spacing:-.012em;line-height:1.3;
+}
+.wissen-quellen dd{margin:0;color:var(--ink-70);font-size:.9375rem;line-height:1.6}
+.wissen-quellen dd a{color:var(--ink);text-underline-offset:4px;overflow-wrap:anywhere}
+.wissen-quellen dd a:hover{color:var(--accent-ink)}
+.wissen-quellen .stand{color:var(--ink-45);font-family:var(--font-mono);font-size:.75rem;letter-spacing:.01em}

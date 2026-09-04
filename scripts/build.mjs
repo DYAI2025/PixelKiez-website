@@ -21,18 +21,17 @@
 import { readFile, writeFile, mkdir, rm, readdir, copyFile, stat } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { brotliCompressSync, gzipSync, constants as zlibKonstanten } from 'node:zlib';
-import { join, basename, extname } from 'node:path';
+import { join, dirname, basename, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as esbuild from 'esbuild';
 import { minify as minifyHtml } from 'html-minifier-terser';
 import { uebersetze } from './i18n.mjs';
 import { uebersetzeJs } from './i18n-js.mjs';
+import { EINSPRACHIG, SPRACHPAARE } from './seiten.mjs';
 
 const WURZEL = fileURLToPath(new URL('..', import.meta.url));
 const QUELLE = join(WURZEL, 'site');
 const ZIEL   = join(WURZEL, 'dist');
-
-const SEITEN = ['index.html', 'impressum.html', 'datenschutz.html'];
 
 /* html-minifier-terser: die beiden erstgenannten Schalter sind hier nicht
    optional. Ohne caseSensitive werden SVG-Attribute kleingeschrieben und
@@ -59,6 +58,47 @@ const kb = (n) => (n / 1024).toFixed(1).padStart(6) + ' KB';
 const log = (...a) => console.log(...a);
 
 const DOMAIN = 'https://pixelkiez.de';
+
+/* -------------------------------------------------------------------------
+   Vorlauf fuer das Einblenden beim Scrollen (PXK-23).
+
+   Der Inhalt ist im CSS unbedingt sichtbar. Versteckt wird nur, solange das
+   <html>-Element data-reveal-anim traegt, und dieses Merkmal bringt kein
+   Markup mit — es entsteht ausschliesslich hier, im Browser, aus laufendem
+   JavaScript. Laeuft keines, gibt es nichts zu verstecken: die Seite steht
+   da, ohne Bewegung, aber vollstaendig.
+
+   Warum im <head> und nicht in bds.js: bds.js steht als letztes vor
+   </body>. Bis dorthin hat der Browser den sichtbaren Teil der Seite laengst
+   gemalt. Wuerde erst dort versteckt, saehe man den fertigen Inhalt kurz und
+   danach verschwaende er wieder, um eingeblendet zu werden — schlechter als
+   gar keine Animation. Der Vorzustand muss vor dem ersten Bild stehen.
+
+   Drei Wege fuehren hier zurueck zu sichtbar, und alle drei brauchen es:
+   fehlender IntersectionObserver und reduzierte Bewegung heben das Merkmal
+   gar nicht erst; und wer es setzt, muss es auch wieder abraeumen koennen,
+   falls bds.js danach nicht ankommt (blockiert, Ausnahme, Syntaxfehler).
+   Dafuer steht der Rueckfall auf DOMContentLoaded — kein willkuerlicher
+   Zeitgeber, sondern der Punkt, an dem feststeht, dass jedes Skript des
+   Dokuments seine Gelegenheit hatte. Bis dahin ist "bereit" gesetzt; wer
+   den Zustand uebernimmt, schreibt "an" darueber (siehe bds.js, Abschnitt
+   2) und schuetzt ihn damit vor dem Rueckfall.
+   ------------------------------------------------------------------------- */
+const REVEAL_VORLAUF = '<script>' + [
+  '(function(){var d=document.documentElement;try{',
+  'if(!("IntersectionObserver" in window))return;',
+  'if(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches)return;',
+  'd.setAttribute("data-reveal-anim","bereit");',
+  'document.addEventListener("DOMContentLoaded",function(){',
+  'if(d.getAttribute("data-reveal-anim")==="bereit")d.removeAttribute("data-reveal-anim");',
+  '});}catch(e){d.removeAttribute("data-reveal-anim");}})();',
+].join('') + '</script>';
+
+/* Nur Seiten, die bds.js mitbringen, duerfen den Vorzustand ueberhaupt
+   aufspannen. Auf Impressum und Datenschutz laeuft kein Skript; dort waere
+   ein Merkmal, das niemand zuruecknimmt, genau der Fehler, den PXK-23
+   behebt. */
+const SKRIPT_TAG = '<script src="assets/js/bds.js" defer></script>';
 
 /* -------------------------------------------------------------------------
    Bildverweise mit VOLLSTAENDIGER Adresse auf den gehashten Namen ziehen.
@@ -94,13 +134,13 @@ function absoluteBilder(html, bildKarte, seite) {
    ohne x-default weiss eine Suchmaschine nicht, welche sie Besuchern ohne
    passende Spracheinstellung zeigen soll.
    ------------------------------------------------------------------------- */
-function setzeAlternates(html, sprache) {
+function setzeAlternates(html, sprache, paar) {
   const zeilen = [
-    `<link rel="alternate" hreflang="de" href="${DOMAIN}/">`,
-    `<link rel="alternate" hreflang="en" href="${DOMAIN}/en/">`,
-    `<link rel="alternate" hreflang="x-default" href="${DOMAIN}/">`,
+    `<link rel="alternate" hreflang="de" href="${DOMAIN}${paar.pfadDe}">`,
+    `<link rel="alternate" hreflang="en" href="${DOMAIN}${paar.pfadEn}">`,
+    `<link rel="alternate" hreflang="x-default" href="${DOMAIN}${paar.pfadDe}">`,
   ].join('\n');
-  const kanonisch = sprache === 'en' ? `${DOMAIN}/en/` : `${DOMAIN}/`;
+  const kanonisch = DOMAIN + (sprache === 'en' ? paar.pfadEn : paar.pfadDe);
   // Kanonische Adresse auf die eigene Fassung ziehen, danach die Verweise
   return html.replace(/<link rel="canonical" href="[^"]*">/, () =>
     `<link rel="canonical" href="${kanonisch}">\n${zeilen}`);
@@ -109,57 +149,63 @@ function setzeAlternates(html, sprache) {
 /* -------------------------------------------------------------------------
    Englische Fassung. Erzeugt aus derselben Quelle wie die deutsche — es gibt
    bewusst keine zweite HTML-Datei, die man vergessen koennte nachzupflegen.
+
+   `mittel` traegt das einmal Vorbereitete: cssMin, jsEn (bereits uebersetzt
+   und minifiziert), fontKarte, bildKarte, tabHtml. Zurueck kommt neben dem
+   HTML die Menge der benutzten Tabelleneintraege — erst wer die Ergebnisse
+   ALLER Sprachpaare kennt, kann sagen, welche Eintraege veraltet sind.
    ------------------------------------------------------------------------- */
-async function baueEnglisch(cssMin, jsRoh, fontKarte, bildKarte) {
-  const tabHtml = JSON.parse(await readFile(join(QUELLE, 'i18n', 'en.json'), 'utf8'));
-  const tabJs   = JSON.parse(await readFile(join(QUELLE, 'i18n', 'en.js.json'), 'utf8'));
-  let html = await readFile(join(QUELLE, 'index.html'), 'utf8');
+async function baueEnglisch(paar, mittel) {
+  const { cssMin, jsEn, fontKarte, bildKarte, tabHtml } = mittel;
+  let html = await readFile(join(QUELLE, paar.quelle), 'utf8');
 
   /* Aenderungsdatum wie bei der deutschen Fassung — beide entstehen aus
      derselben Quelldatei und sind damit gleich alt. */
-  const { mtime: geaendert } = await stat(join(QUELLE, 'index.html'));
+  const { mtime: geaendert } = await stat(join(QUELLE, paar.quelle));
   html = html.replace(/"dateModified": "[^"]*"/g,
     `"dateModified": "${geaendert.toISOString().slice(0, 10)}"`);
 
   /* --- Text --- */
   const t = uebersetze(html, tabHtml);
   if (t.fehlend.length) throw new Error(
-    'index.html enthaelt Text ohne Uebersetzung. Nach einer Aenderung am\n' +
+    `${paar.quelle} enthaelt Text ohne Uebersetzung. Nach einer Aenderung am\n` +
     '    deutschen Text bitte "npm run i18n" ausfuehren und en.json ergaenzen:\n    · ' +
     t.fehlend.slice(0, 6).map((s) => s.slice(0, 90)).join('\n    · '));
   html = t.html;
   const benutzt = new Set(t.benutzt);   // wird unten um das JSON-LD ergaenzt
 
-  /* --- Skript --- */
-  const j = uebersetzeJs(jsRoh, tabJs);
-  if (j.fehlend.length) throw new Error(
-    'bds.js enthaelt Zeichenketten ohne Uebersetzung (en.js.json ergaenzen):\n    · ' +
-    j.fehlend.slice(0, 6).map((s) => s.slice(0, 90)).join('\n    · '));
-  if (j.veraltet.length) throw new Error(
-    'en.js.json enthaelt Zeichenketten, die es in bds.js nicht mehr gibt:\n    · ' +
-    j.veraltet.slice(0, 6).map((s) => s.slice(0, 90)).join('\n    · '));
-  const jsEn = (await esbuild.transform(j.js, { loader: 'js', minify: true, target: 'es2015' })).code.trim();
-
   /* --- Dokumentsprache --- */
   html = html.replace('<html lang="de">', '<html lang="en">');
-  if (!html.includes('<html lang="en">')) throw new Error('en: <html lang="de"> nicht gefunden');
+  if (!html.includes('<html lang="en">')) throw new Error(`${paar.zielEn}: <html lang="de"> nicht gefunden`);
+
+  /* --- Verweise auf deutsche Fassungen zeigen auf die englischen — fuer
+         JEDES Sprachpaar, in href wie action, samt Ankern (/#leistungen →
+         /en/#leistungen). Muss VOR dem Umschalter-Ersatz laufen: der wird
+         danach als Ganzes neu gesetzt und zeigt bewusst auf die deutsche
+         Fassung. Die Rechtsseiten stehen nicht im Register und bleiben
+         damit deutsch verlinkt — das ist Absicht. --- */
+  for (const p of SPRACHPAARE) {
+    const von = p.pfadDe.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    html = html.replace(new RegExp(`(href|action)="${von}(#[^"]*)?"`, 'g'),
+      (m, attribut, anker) => `${attribut}="${p.pfadEn}${anker || ''}"`);
+  }
 
   /* --- Umschalter zeigt jetzt zurueck aufs Deutsche --- */
   const schalter = /<a class="lang"[^>]*data-lang-switch>[^<]*<\/a>/;
-  if (!schalter.test(html)) throw new Error('en: Sprachumschalter nicht gefunden');
+  if (!schalter.test(html)) throw new Error(`${paar.zielEn}: Sprachumschalter nicht gefunden`);
   html = html.replace(schalter, () =>
-    '<a class="lang" href="/" hreflang="de" lang="de" aria-label="Auf Deutsch wechseln" data-lang-switch>DE</a>');
+    `<a class="lang" href="${paar.pfadDe}" hreflang="de" lang="de" aria-label="Auf Deutsch wechseln" data-lang-switch>DE</a>`);
 
   /* --- Rechtsseiten bleiben deutsch und liegen im Wurzelverzeichnis.
          Ein relativer Verweis zeigte von /en/ aus auf /en/impressum.html. --- */
   html = html.replace(/href="(impressum|datenschutz)\.html"/g, (m, n) => `href="/${n}.html"`);
 
   /* --- Sprachverweise und kanonische Adresse --- */
-  html = setzeAlternates(html, 'en');
+  html = setzeAlternates(html, 'en', paar);
   html = html.replace(/<meta property="og:locale" content="[^"]*">/, () =>
     '<meta property="og:locale" content="en_GB">');
   html = html.replace(/<meta property="og:url" content="[^"]*">/, () =>
-    `<meta property="og:url" content="${DOMAIN}/en/">`);
+    `<meta property="og:url" content="${DOMAIN}${paar.pfadEn}">`);
 
   /* --- JSON-LD: die Beschreibungen darin sind ebenfalls Inhalt --- */
   html = html.replace(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/, (treffer, roh) => {
@@ -178,65 +224,58 @@ async function baueEnglisch(cssMin, jsRoh, fontKarte, bildKarte) {
       return o;
     };
     const uebersetzt = geh(daten);
-    // Sprache und Adresse im strukturierten Datensatz mitziehen
+    // Sprache im strukturierten Datensatz mitziehen
     let s = JSON.stringify(uebersetzt)
-      .replace(/"inLanguage":"de(-DE)?"/g, '"inLanguage":"en"')
-      .replace(new RegExp(`"${DOMAIN}/"`, 'g'), `"${DOMAIN}/en/"`);
+      .replace(/"inLanguage":"de(-DE)?"/g, '"inLanguage":"en"');
 
-    /* Seitenbezogene Kennungen muessen sich unterscheiden: die englische und
-       die deutsche Startseite sind zwei Dokumente. Truegen beide dieselbe
-       @id, waere fuer eine Suchmaschine unklar, welches gemeint ist.
+    /* Seitenbezogene Adressen und Kennungen muessen sich unterscheiden: die
+       englische und die deutsche Fassung sind zwei Dokumente. Truegen beide
+       dieselbe @id, waere fuer eine Suchmaschine unklar, welches gemeint ist.
 
        Entitaetsbezogene Kennungen bleiben dagegen bewusst gleich —
        Unternehmen, Gruender, Logo und die Leistungen sind auf beiden Seiten
        dieselbe Sache, und genau diese Gleichheit verknuepft die Fassungen.
 
-       Der Austausch laeuft ueber die Zeichenkette und trifft damit die
-       Definition und jeden Verweis darauf in einem Zug. */
-    for (const anker of ['seite', 'pfad', 'faq', 'website']) {
-      s = s.split(`"${DOMAIN}/#${anker}"`).join(`"${DOMAIN}/en/#${anker}"`);
+       Welche Adressen wechseln, sagt das Seitenregister (ldTausch). Der
+       Austausch laeuft ueber die exakte, in Anfuehrungszeichen stehende
+       Zeichenkette und trifft damit Definition und jeden Verweis in einem
+       Zug. */
+    for (const [von, nach] of paar.ldTausch) {
+      s = s.split(`"${DOMAIN}${von}"`).join(`"${DOMAIN}${nach}"`);
     }
     if (offen.length) throw new Error(
-      'JSON-LD enthaelt deutschen Text ohne Uebersetzung:\n    · ' +
+      `${paar.quelle}: JSON-LD enthaelt deutschen Text ohne Uebersetzung:\n    · ` +
       offen.slice(0, 5).map((x) => x.slice(0, 90)).join('\n    · '));
     return `<script type="application/ld+json">${s}</script>`;
   });
 
-  /* --- Erst jetzt, mit beiden Ergebnissen, laesst sich sagen, welche
-         Eintraege niemand mehr braucht. --- */
-  const veraltet = Object.keys(tabHtml).filter((k) => !benutzt.has(k));
-  if (veraltet.length) throw new Error(
-    'en.json enthaelt Saetze, die weder im Text noch im JSON-LD vorkommen.\n' +
-    '    Vermutlich wurde der deutsche Text geaendert — bitte "npm run i18n"\n' +
-    '    ausfuehren und die Eintraege anpassen:\n    · ' +
-    veraltet.slice(0, 6).map((x) => x.slice(0, 90)).join('\n    · '));
-
   /* --- Mittel einbetten, wie bei der deutschen Fassung --- */
+  const hatSkript = html.includes(SKRIPT_TAG);
   const linkMuster = /[ \t]*<link rel="stylesheet" href="assets\/css\/fonts\.css">\s*\n[ \t]*<link rel="stylesheet" href="assets\/css\/bds\.css">/;
-  html = html.replace(linkMuster, () => `<style>${cssMin}</style>`);
+  html = html.replace(linkMuster, () => `<style>${cssMin}</style>` + (hatSkript ? REVEAL_VORLAUF : ''));
   html = html.replace(/href="assets\/fonts\/([^"]+\.woff2)"/g, (m, datei) => {
     const neu = fontKarte.get(datei);
-    if (!neu) throw new Error(`en: Vorladehinweis auf unbekannte Schrift ${datei}`);
+    if (!neu) throw new Error(`${paar.zielEn}: Vorladehinweis auf unbekannte Schrift ${datei}`);
     return `href="/assets/fonts/${neu}"`;
   });
   html = html.replace(/(href|src|content)="assets\/img\/([^"]+)"/g, (treffer, attr, datei) => {
     const n = bildKarte.get(datei);
-    if (!n) throw new Error(`en: Verweis auf unbekanntes Bild assets/img/${datei}`);
+    if (!n) throw new Error(`${paar.zielEn}: Verweis auf unbekanntes Bild assets/img/${datei}`);
     const ziel = attr === 'content' ? `${DOMAIN}/assets/img/${n}` : `/assets/img/${n}`;
     return `${attr}="${ziel}"`;
   });
-  html = absoluteBilder(html, bildKarte, 'en/index.html');
-  html = html.replace('<script src="assets/js/bds.js" defer></script>', () => `<script>${jsEn}</script>`);
+  html = absoluteBilder(html, bildKarte, paar.zielEn);
+  html = html.replace(SKRIPT_TAG, () => `<script>${jsEn}</script>`);
 
   html = await minifyHtml(html, HTML_OPTIONEN);
-  pruefe('en/index.html', html, jsEn);
+  pruefe(paar.zielEn, html, jsEn);
 
   /* Letzte Gegenprobe: kein offensichtliches Deutsch im sichtbaren Text */
   const sichtbar = html.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>|<[^>]+>/g, ' ');
   const deutsch = sichtbar.match(/\b(werden|wurde|nicht|Ihre|Ihnen|wir|unsere|Betriebe|Anfragen|Website ist)\b/g);
-  if (deutsch) throw new Error(`en/index.html enthaelt noch deutschen Text: ${[...new Set(deutsch)].join(', ')}`);
+  if (deutsch) throw new Error(`${paar.zielEn} enthaelt noch deutschen Text: ${[...new Set(deutsch)].join(', ')}`);
 
-  return html;
+  return { html, benutzt };
 }
 
 /* -------------------------------------------------------------------------
@@ -391,17 +430,23 @@ async function build() {
      priority ist ersatzlos raus: Google wertet es nach eigener Angabe nicht
      aus, und je weniger Elemente, desto weniger kann in der falschen
      Reihenfolge stehen. */
-  const sitemapEintraege = [
-    { pfad: '/',                  quelle: 'index.html',       sprachen: true },
-    { pfad: '/en/',               quelle: 'index.html',       sprachen: true },
-    { pfad: '/impressum.html',    quelle: 'impressum.html',   sprachen: false },
-    { pfad: '/datenschutz.html',  quelle: 'datenschutz.html', sprachen: false },
-  ];
-  const alternates = [
-    `    <xhtml:link rel="alternate" hreflang="de" href="${DOMAIN}/"/>`,
-    `    <xhtml:link rel="alternate" hreflang="en" href="${DOMAIN}/en/"/>`,
-    `    <xhtml:link rel="alternate" hreflang="x-default" href="${DOMAIN}/"/>`,
-  ].join('\n');
+  /* Beide Fassungen jedes Sprachpaars stehen mit demselben Alternates-Block
+     drin; die einsprachigen Rechtsseiten ohne. Die Liste kommt aus dem
+     Seitenregister — eine neue Seite traegt sich hier von selbst ein. */
+  const sitemapEintraege = [];
+  for (const paar of SPRACHPAARE) {
+    if (paar.entwurf) continue;   // Entwuerfe (noindex) stehen nicht in der Sitemap
+    const alternates = [
+      `    <xhtml:link rel="alternate" hreflang="de" href="${DOMAIN}${paar.pfadDe}"/>`,
+      `    <xhtml:link rel="alternate" hreflang="en" href="${DOMAIN}${paar.pfadEn}"/>`,
+      `    <xhtml:link rel="alternate" hreflang="x-default" href="${DOMAIN}${paar.pfadDe}"/>`,
+    ].join('\n');
+    sitemapEintraege.push({ pfad: paar.pfadDe, quelle: paar.quelle, alternates });
+    sitemapEintraege.push({ pfad: paar.pfadEn, quelle: paar.quelle, alternates });
+  }
+  for (const seite of EINSPRACHIG) {
+    sitemapEintraege.push({ pfad: `/${seite}`, quelle: seite });
+  }
 
   const urls = [];
   for (const e of sitemapEintraege) {
@@ -410,7 +455,7 @@ async function build() {
       '  <url>\n' +
       `    <loc>${DOMAIN}${e.pfad}</loc>\n` +
       `    <lastmod>${mtime.toISOString().slice(0, 10)}</lastmod>\n` +
-      (e.sprachen ? alternates + '\n' : '') +
+      (e.alternates ? e.alternates + '\n' : '') +
       '  </url>'
     );
   }
@@ -462,7 +507,15 @@ async function build() {
   log('─'.repeat(66));
   let summeVorher = 0, summeNachher = 0;
 
-  for (const seite of SEITEN) {
+  /* Deutsche Fassungen: die Sprachpaar-Quellen und die einsprachigen
+     Rechtsseiten. `ziel` darf in einem Unterverzeichnis liegen — saubere
+     Adressen wie /website-analyse/ entstehen als website-analyse/index.html. */
+  const deutscheSeiten = [
+    ...SPRACHPAARE.map((p) => ({ quelle: p.quelle, ziel: p.zielDe, paar: p })),
+    ...EINSPRACHIG.map((s) => ({ quelle: s, ziel: s })),
+  ];
+
+  for (const { quelle: seite, ziel, paar } of deutscheSeiten) {
     let html = await readFile(join(QUELLE, seite), 'utf8');
     const vorher = Buffer.byteLength(html);
 
@@ -478,13 +531,16 @@ async function build() {
 
     /* 4a. Beide Stylesheet-Verweise durch einen <style>-Block ersetzen.
            fonts.css steht zuerst — die Reihenfolge bleibt erhalten, weil
-           beim Zusammenlegen genauso vorgegangen wurde. */
+           beim Zusammenlegen genauso vorgegangen wurde. Direkt dahinter,
+           noch im <head>, der Reveal-Vorlauf — aber nur auf Seiten, die
+           bds.js auch mitbringen (siehe REVEAL_VORLAUF). */
+    const hatSkript = html.includes(SKRIPT_TAG);
     const linkMuster = /[ \t]*<link rel="stylesheet" href="assets\/css\/fonts\.css">\s*\n[ \t]*<link rel="stylesheet" href="assets\/css\/bds\.css">/;
     if (!linkMuster.test(html)) throw new Error(`${seite}: Stylesheet-Verweise nicht gefunden`);
     // Ersetzungs-FUNKTION, nicht -Zeichenkette: in einer Ersetzungszeichenkette
     // sind $&, $', $`, $1..$9 Sonderfolgen. Minifiziertes CSS/JS enthaelt sie
     // ohne weiteres — $&& entsteht schon aus einer Variablen namens $.
-    html = html.replace(linkMuster, () => `<style>${cssMin}</style>`);
+    html = html.replace(linkMuster, () => `<style>${cssMin}</style>` + (hatSkript ? REVEAL_VORLAUF : ''));
 
     /* 4b. Schrift-Vorladehinweise auf die gehashten Namen ziehen, ebenfalls
            wurzelabsolut — siehe Begruendung beim CSS. */
@@ -507,32 +563,61 @@ async function build() {
     html = absoluteBilder(html, bildKarte, seite);
 
     /* 4c. Skript einbetten, an genau derselben Stelle */
-    if (html.includes('<script src="assets/js/bds.js" defer></script>')) {
-      html = html.replace('<script src="assets/js/bds.js" defer></script>', () => `<script>${jsMin}</script>`);
+    if (hatSkript) {
+      html = html.replace(SKRIPT_TAG, () => `<script>${jsMin}</script>`);
     } else if (seite === 'index.html') {
       throw new Error('index.html: Skriptverweis nicht gefunden');
     }
 
     /* 4d. Sprachverweise: jede Seite nennt ihre Gegenstuecke. Auf den
            Rechtsseiten gibt es keine englische Fassung, dort entfaellt es. */
-    if (seite === 'index.html') html = setzeAlternates(html, 'de');
+    if (paar) html = setzeAlternates(html, 'de', paar);
 
     /* 4e. HTML minifizieren */
     html = await minifyHtml(html, HTML_OPTIONEN);
     pruefe(seite, html, jsMin);
 
-    await writeFile(join(ZIEL, seite), html, 'utf8');
+    await mkdir(dirname(join(ZIEL, ziel)), { recursive: true });
+    await writeFile(join(ZIEL, ziel), html, 'utf8');
     const nachher = Buffer.byteLength(html);
     summeVorher += vorher; summeNachher += nachher;
-    log(`${seite.padEnd(20)} ${kb(vorher)} → ${kb(nachher)}   (mit eingebettetem CSS/JS)`);
+    log(`${ziel.padEnd(20)} ${kb(vorher)} → ${kb(nachher)}   (mit eingebettetem CSS/JS)`);
   }
 
-  /* ---- 4f. Englische Fassung ------------------------------------------- */
-  const enHtml = await baueEnglisch(cssMin, jsRoh, fontKarte, bildKarte);
-  await mkdir(join(ZIEL, 'en'), { recursive: true });
-  await writeFile(join(ZIEL, 'en', 'index.html'), enHtml, 'utf8');
-  summeNachher += Buffer.byteLength(enHtml);
-  log(`en/index.html        ${'—'.padStart(9)} → ${kb(Buffer.byteLength(enHtml))}   (aus der deutschen Quelle erzeugt)`);
+  /* ---- 4f. Englische Fassungen ------------------------------------------
+     Skript und Tabellen einmal vorbereiten, dann je Sprachpaar bauen. Ob
+     Eintraege der Tabelle veraltet sind, laesst sich erst sagen, wenn alle
+     Fassungen gebaut sind — jede meldet, was sie benutzt hat. */
+  const tabHtml = JSON.parse(await readFile(join(QUELLE, 'i18n', 'en.json'), 'utf8'));
+  const tabJs   = JSON.parse(await readFile(join(QUELLE, 'i18n', 'en.js.json'), 'utf8'));
+  const j = uebersetzeJs(jsRoh, tabJs);
+  if (j.fehlend.length) throw new Error(
+    'bds.js enthaelt Zeichenketten ohne Uebersetzung (en.js.json ergaenzen):\n    · ' +
+    j.fehlend.slice(0, 6).map((s) => s.slice(0, 90)).join('\n    · '));
+  if (j.veraltet.length) throw new Error(
+    'en.js.json enthaelt Zeichenketten, die es in bds.js nicht mehr gibt:\n    · ' +
+    j.veraltet.slice(0, 6).map((s) => s.slice(0, 90)).join('\n    · '));
+  const jsEn = (await esbuild.transform(j.js, { loader: 'js', minify: true, target: 'es2015' })).code.trim();
+
+  const benutztGesamt = new Set();
+  for (const paar of SPRACHPAARE) {
+    const { html: enHtml, benutzt } = await baueEnglisch(paar,
+      { cssMin, jsEn, fontKarte, bildKarte, tabHtml });
+    for (const k of benutzt) benutztGesamt.add(k);
+    await mkdir(dirname(join(ZIEL, paar.zielEn)), { recursive: true });
+    await writeFile(join(ZIEL, paar.zielEn), enHtml, 'utf8');
+    summeNachher += Buffer.byteLength(enHtml);
+    log(`${paar.zielEn.padEnd(20)} ${'—'.padStart(9)} → ${kb(Buffer.byteLength(enHtml))}   (aus der deutschen Quelle erzeugt)`);
+  }
+
+  /* --- Erst jetzt, mit den Ergebnissen aller Fassungen, laesst sich sagen,
+         welche Tabelleneintraege niemand mehr braucht. --- */
+  const veraltet = Object.keys(tabHtml).filter((k) => !benutztGesamt.has(k));
+  if (veraltet.length) throw new Error(
+    'en.json enthaelt Saetze, die auf keiner Seite mehr vorkommen.\n' +
+    '    Vermutlich wurde der deutsche Text geaendert — bitte "npm run i18n"\n' +
+    '    ausfuehren und die Eintraege anpassen:\n    · ' +
+    veraltet.slice(0, 6).map((x) => x.slice(0, 90)).join('\n    · '));
 
   /* ---- 4g. Vorkomprimierte Nachbarn ------------------------------------
      Caddy kann Brotli nicht selbst erzeugen — "encode" beherrscht nur gzip

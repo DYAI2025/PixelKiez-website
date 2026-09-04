@@ -22,5 +22,13 @@ FROM caddy:2-alpine
 COPY --from=build /app/dist /srv
 COPY Caddyfile /etc/caddy/Caddyfile
 
+# Das offizielle Caddy-Alpine-Image startet standardmaessig als root. Fuer
+# statische Auslieferung und Reverse-Proxying braucht Pixelkiez keine Root-
+# Identitaet. Das Basisimage setzt cap_net_bind_service auf das Caddy-Binary
+# und stellt /config/caddy sowie /data/caddy beschreibbar bereit.
+RUN addgroup -S caddy-runtime \
+    && adduser -S -D -H -G caddy-runtime caddy-runtime
+USER caddy-runtime
+
 EXPOSE 80
 CMD ["caddy", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]

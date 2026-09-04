@@ -1,0 +1,106 @@
+name: Website gates
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: website-gates-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '22'
+
+jobs:
+  build-and-verify:
+    name: Build and verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Verify generated site
+        run: npm run verify
+
+      - name: Check whitespace errors
+        run: git diff --check
+
+  api-contract:
+    name: API contract tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: api/package-lock.json
+
+      - name: Install API dependencies
+        working-directory: api
+        run: npm ci
+
+      - name: Syntax check API
+        working-directory: api
+        run: npm run check
+
+      - name: Run API contract tests
+        working-directory: api
+        run: npm test
+
+  container-integration:
+    name: Container integration smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs:
+      - build-and-verify
+      - api-contract
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Build website image
+        run: docker build --pull -t pixelkiez-web-ci .
+
+      - name: Build API image
+        run: docker build --pull -f api/Dockerfile -t pixelkiez-api-ci .
+
+      - name: Validate Caddy configuration
+        run: docker run --rm --entrypoint caddy pixelkiez-web-ci validate --config /etc/caddy/Caddyfile --adapter caddyfile
+
+      - name: Run website/API integration smoke
+        run: bash scripts/ci-container-smoke.sh

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Agent-Readiness · Pixelkiez Wissen</title>
+<meta name="description" content="Kann ein KI-Agent eine Website nicht nur lesen, sondern tatsächlich benutzen — Navigation, Formulare, bedienbare Elemente? Eine Einordnung des Begriffs Agent-Readiness.">
+<meta name="theme-color" content="#B6C7C4">
+<meta name="robots" content="noindex">
+<link rel="canonical" href="https://pixelkiez.de/wissen/agent-readiness/"><!-- hreflang setzt der Build -->
+
+<meta property="og:type" content="website">
+<meta property="og:locale" content="de_DE">
+<meta property="og:site_name" content="Pixelkiez">
+<meta property="og:title" content="Agent-Readiness · Pixelkiez Wissen">
+<meta property="og:description" content="Kann ein KI-Agent eine Website nicht nur lesen, sondern tatsächlich benutzen — Navigation, Formulare, bedienbare Elemente? Eine Einordnung des Begriffs Agent-Readiness.">
+<meta property="og:url" content="https://pixelkiez.de/wissen/agent-readiness/">
+<meta property="og:image" content="assets/img/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Pixelkiez">
+
+<link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
+<link rel="icon" type="image/png" href="/icon-512.png" sizes="512x512">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+<link rel="preload" href="assets/fonts/archivo-var-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/ibm-plex-sans-var-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/ibm-plex-mono-500-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/css/fonts.css">
+<link rel="stylesheet" href="assets/css/bds.css">
+
+<!-- ENTWURF (Slice 2): Content-Shell ohne freigegebene Fakten — noindex,
+     nicht in Sitemap oder Maschinenlisten, nicht von der Startseite verlinkt.
+     Bewusst KEIN JSON-LD, bis der Inhalt steht: strukturierte Daten sollen
+     nie mehr behaupten, als die Seite leistet. -->
+</head>
+<body>
+
+<a class="skip" href="#main">Zum Inhalt springen</a>
+
+<!-- Icon-Sprite: Teilmenge des Startseiten-Sets, gleiche Strichstärke -->
+<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true" focusable="false">
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-arrow-ur" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></symbol>
+  <symbol id="i-layout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 20V9"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5a2.5 2.5 0 0 1-2.5 2.5H8l-4 3.5v-15A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5Z"/></symbol>
+</svg>
+
+<!-- Unterseiten-Kopf wie auf der Analyse-Seite: Marke, ein Knopf zur
+     Website-Analyse, Sprachumschalter. Kein Dialog, kein Overlay. -->
+<header class="header" data-scrolled="true">
+  <div class="wrap header__in">
+    <a class="brand" href="/" aria-label="Pixelkiez, Startseite">
+      <img class="brand__mark" src="assets/img/logo-klein.webp" alt="Pixelkiez" width="480" height="111" decoding="async">
+      <span class="brand__sub">Webdesign Berlin</span>
+    </a>
+    <div class="header__act">
+      <a class="btn btn--split btn--primary btn--sm" href="/website-analyse/"><span class="btn__label">Zur Website-Analyse</span><span class="btn__ico"><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg></span></a>
+      <a class="lang" href="/en/knowledge/agent-readiness/" hreflang="en" lang="en" aria-label="Switch to English" data-lang-switch>EN</a>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+<!-- ===================== AUFTAKT ===================== -->
+<section class="section section--flush auftakt">
+  <div class="wrap">
+    <div class="section__head">
+      <p class="kicker" data-reveal>Wissen · Nutzbarkeit</p>
+      <h1 class="h-lg" data-reveal>Agent-Readiness: Kann eine KI Ihre Website benutzen?</h1>
+      <p class="lead" data-reveal>Kann ein KI-Agent eine Website nicht nur lesen, sondern tatsächlich benutzen? Dieser Beitrag ordnet, was heute praktikabel ist und was Experiment bleibt.</p>
+      <p class="wissen-status" data-reveal>Dieser Beitrag ist in Vorbereitung. Die inhaltlichen Abschnitte werden nach fachlicher Prüfung ergänzt.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== ORIENTIERUNG ===================== -->
+<section class="section">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 class="h-lg" data-reveal>Was Sie hier verstehen werden.</h2>
+      <ul class="analyse-fakten" data-reveal>
+        <li><svg aria-hidden="true"><use href="#i-check"/></svg>Lesen von Handeln unterscheiden</li>
+        <li><svg aria-hidden="true"><use href="#i-check"/></svg>Bedienbarkeit einordnen</li>
+        <li><svg aria-hidden="true"><use href="#i-check"/></svg>Praktikables von Experimentellem trennen</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== GEPLANTE ABSCHNITTE ===================== -->
+<section class="section">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 class="h-lg" data-reveal>Lesen oder handeln.</h2>
+      <p class="lead" data-reveal>Eine Seite zu verstehen und auf ihr etwas zu erledigen, sind zwei verschiedene Fähigkeiten — dieser Abschnitt grenzt sie voneinander ab.</p>
+      <p class="small wissen-platzhalter" data-reveal>Dieser Abschnitt folgt nach fachlicher Prüfung.</p>
+    </div>
+
+    <!-- SZENE 5 (PXK-27): von links nach rechts vier Reifestufen — Inhalt lesen,
+         Navigation und Bedienelement erkennen, Handlung ausfuehren, Ergebnis
+         zurueck lesen (Erfolgs- ODER Fehlerzustand; erst er zaehlt, ein Klick
+         allein nicht). Links die Systemmarke als handelndes System. Anmeldung,
+         Zahlung oder sensible Transaktion nur als gestrichelter Seitenweg mit
+         zusaetzlicher Schranke (Schloss), nicht als Normalfall. Die Grafik ist
+         dekorativ (aria-hidden), die Aussage traegt die Bildunterschrift. -->
+    <figure class="kiezbot-scene" data-reveal>
+      <div class="kiezbot-scene__bild" aria-hidden="true">
+        <svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <!-- Systemmarke: das handelnde System -->
+          <g class="kb-system">
+            <rect x="24" y="124" width="12" height="12"/><rect x="36" y="124" width="12" height="12"/><rect x="48" y="124" width="12" height="12"/><rect x="60" y="124" width="12" height="12"/><rect x="72" y="124" width="12" height="12"/>
+            <rect x="24" y="136" width="12" height="12"/><rect x="72" y="136" width="12" height="12"/>
+            <rect x="24" y="148" width="12" height="12"/><rect x="48" y="148" width="12" height="12" class="kb-akzent"/><rect x="72" y="148" width="12" height="12"/>
+            <rect x="24" y="160" width="12" height="12"/><rect x="72" y="160" width="12" height="12"/>
+            <rect x="24" y="172" width="12" height="12"/><rect x="36" y="172" width="12" height="12"/><rect x="48" y="172" width="12" height="12"/><rect x="60" y="172" width="12" height="12"/><rect x="72" y="172" width="12" height="12"/>
+          </g>
+          <!-- Hauptweg durchgehend, Stufe fuer Stufe; Seitenweg gestrichelt ueber die Schranke -->
+          <g class="kb-linie">
+            <path d="M84 154 H 108"/><path d="M212 154 H 236"/><path d="M340 154 H 364"/><path d="M468 154 H 492"/>
+            <path d="M480 154 V 49 H 500" class="kb-gestrichelt"/><path d="M524 49 H 544 V 100" class="kb-gestrichelt"/>
+          </g>
+          <!-- Schranke: Anmeldung, Zahlung, sensible Transaktion — hoehere Reifestufe, kein Normalfall -->
+          <g class="kb-schranke">
+            <rect x="500" y="40" width="24" height="18" rx="3"/><path d="M506 40 V 36 a6 6 0 0 1 12 0 V 40"/>
+          </g>
+          <!-- Stufe 1: Inhalt lesen -->
+          <g class="kb-stufe">
+            <rect x="108" y="100" width="104" height="108" rx="6"/>
+            <rect x="122" y="114" width="76" height="80" rx="4"/>
+            <rect x="130" y="124" width="34" height="8" rx="2" class="kb-akzent"/>
+            <line x1="130" y1="142" x2="190" y2="142"/><line x1="130" y1="154" x2="190" y2="154"/><line x1="130" y1="166" x2="176" y2="166"/>
+            <rect x="130" y="178" width="24" height="8" rx="2"/>
+          </g>
+          <!-- Stufe 2: Navigation und Bedienelement erkennen -->
+          <g class="kb-stufe">
+            <rect x="236" y="100" width="104" height="108" rx="6"/>
+            <rect x="250" y="114" width="76" height="80" rx="4"/>
+            <rect x="258" y="122" width="12" height="6" rx="1"/><rect x="274" y="122" width="12" height="6" rx="1"/><rect x="290" y="122" width="12" height="6" rx="1"/>
+            <line x1="258" y1="142" x2="318" y2="142"/><line x1="258" y1="154" x2="318" y2="154"/><line x1="258" y1="166" x2="304" y2="166"/>
+            <rect x="258" y="178" width="24" height="8" rx="2"/><rect x="254" y="174" width="32" height="16" rx="3" class="kb-akzent-linie"/>
+          </g>
+          <!-- Stufe 3: Eingaben setzen, Handlung ausfuehren -->
+          <g class="kb-stufe">
+            <rect x="364" y="100" width="104" height="108" rx="6"/>
+            <rect x="380" y="117" width="72" height="18" rx="3"/><rect x="386" y="122" width="30" height="8" rx="3"/>
+            <rect x="380" y="143" width="72" height="18" rx="3"/><rect x="386" y="148" width="46" height="8" rx="3"/>
+            <rect x="380" y="172" width="44" height="16" rx="3" class="kb-akzent"/>
+          </g>
+          <!-- Stufe 4: Ergebnis zurueck lesen — Erfolg ODER Fehler, eindeutig -->
+          <g class="kb-stufe">
+            <rect x="492" y="100" width="104" height="108" rx="6"/>
+            <rect x="506" y="112" width="76" height="36" rx="4"/><path d="M518 130 l6 6 l12 -12"/><line x1="546" y1="130" x2="574" y2="130"/>
+            <rect x="506" y="160" width="76" height="36" rx="4"/><path d="M518 172 l12 12 M530 172 l-12 12"/><line x1="546" y1="178" x2="574" y2="178"/>
+          </g>
+        </svg>
+      </div>
+      <figcaption>
+        <b>Szene 5 — Vom Lesen zum Handeln.</b>
+        Eine Seite zu verstehen ist nur die erste Stufe. Für einen belastbaren Handlungspfad muss ein System Navigation und Bedienelemente erkennen, Eingaben korrekt setzen und am Ende einen eindeutigen Erfolgs- oder Fehlerzustand lesen können.
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 class="h-lg" data-reveal>Navigation und semantische Struktur.</h2>
+      <p class="lead" data-reveal>Wer sich auf einer Website bewegt, braucht Orientierung — dieser Abschnitt betrachtet, was Struktur dazu beiträgt.</p>
+      <p class="small wissen-platzhalter" data-reveal>Dieser Abschnitt folgt nach fachlicher Prüfung.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 class="h-lg" data-reveal>Formulare und bedienbare Elemente.</h2>
+      <p class="lead" data-reveal>Anfragen, Buchungen, Kontakt: vieles läuft über Formulare — dieser Abschnitt sieht sich an, was Bedienbarkeit für Maschinen bedeutet.</p>
+      <p class="small wissen-platzhalter" data-reveal>Dieser Abschnitt folgt nach fachlicher Prüfung.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 class="h-lg" data-reveal>Anmeldung und Transaktionen als spätere Reifestufe.</h2>
+      <p class="lead" data-reveal>Manche Handlungen setzen Konten oder Zahlungen voraus — dieser Abschnitt ordnet sie als eigene Reifestufe ein.</p>
+      <p class="small wissen-platzhalter" data-reveal>Dieser Abschnitt folgt nach fachlicher Prüfung.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 class="h-lg" data-reveal>Was heute praktikabel ist — und was Experiment bleibt.</h2>
+      <p class="lead" data-reveal>Zwischen Vorführung und Alltag liegt ein weiter Weg — dieser Abschnitt trennt beides nüchtern.</p>
+      <p class="small wissen-platzhalter" data-reveal>Dieser Abschnitt folgt nach fachlicher Prüfung.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== ANALYSE-HINWEIS ===================== -->
+<section class="section inv">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 class="h-lg" data-reveal>Wie gut lässt sich Ihre Website nicht nur lesen, sondern auch bedienen?</h2>
+      <p class="lead" data-reveal>Die kostenlose Website-Analyse prüft diese Frage an Ihrer eigenen Website und ordnet die Ergebnisse verständlich ein.</p>
+      <div data-reveal>
+        <a class="btn btn--split btn--primary" href="/website-analyse/"><span class="btn__label">Eigene Website analysieren</span><span class="btn__ico"><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg></span></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== VERWANDTE THEMEN ===================== -->
+<section class="section">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 class="h-lg" data-reveal>Verwandte Themen.</h2>
+    </div>
+
+    <div class="wissen-weiter">
+      <div class="channel" data-reveal>
+        <span class="channel__i"><svg aria-hidden="true"><use href="#i-layout"/></svg></span>
+        <div>
+          <h3 class="h-sm"><a href="/wissen/wie-ki-websites-liest/">Wie KI eine Website liest</a></h3>
+          <p class="small" style="margin-top:5px">Was sehen Crawler, KI-Suchsysteme und Browser-Agenten, wenn sie eine Website abrufen?</p>
+        </div>
+      </div>
+      <div class="channel" data-reveal>
+        <span class="channel__i"><svg aria-hidden="true"><use href="#i-chat"/></svg></span>
+        <div>
+          <h3 class="h-sm"><a href="/wissen/answerability/">Answerability: Beantwortet Ihre Website konkrete Fragen?</a></h3>
+          <p class="small" style="margin-top:5px">Kann eine Website Maschinen eine klare, belastbare Antwort auf eine konkrete Kundenfrage geben?</p>
+        </div>
+      </div>
+    </div>
+
+    <p class="small wissen-alle" data-reveal><a href="/wissen/">Alle Themen im Überblick</a></p>
+
+    <p class="small wissen-platzhalter" data-reveal>Belege und Quellen werden mit den geprüften Inhalten ergänzt.</p>
+  </div>
+</section>
+
+</main>
+
+<!-- ===================== FOOTER ===================== -->
+<footer class="footer inv">
+  <div class="wrap">
+    <div class="footer__bar">
+      <span>© Pixelkiez · Berlin</span>
+      <nav aria-label="Weitere Seiten">
+        <a href="/wissen/" style="text-decoration:none">Wissen</a>
+        <a href="/impressum.html" style="text-decoration:none">Impressum</a>
+        <a href="/datenschutz.html" style="text-decoration:none">Datenschutz</a>
+      </nav>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/js/bds.js" defer></script>
+</body>
+</html>
