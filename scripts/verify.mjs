@@ -800,9 +800,7 @@ async function verify() {
        G-2.3  sie sagt keine Frist zu;
        G-2.4  das Bestaetigungsfeld behauptet keine Rechtsgrundlage;
        G-2.5  die Datenschutzerklaerung kennt die Analyse-Anfrage und nennt
-              die Felder, die sie wirklich erhebt;
-       G-2.6  der Wissensbereich hat genau so viele Platzhalter wie zuvor —
-              eine Aufraeumaktion an dieser Strecke darf dort nichts loeschen.
+              die Felder, die sie wirklich erhebt.
 
      G-2 sieht ausschliesslich die Analyse-Route und die
      Datenschutzerklaerung. Die Startseite traegt dieselben Saetze im
@@ -948,29 +946,44 @@ async function verify() {
     }
   }
 
-  /* --- G-2.6: die Platzhalter des Wissensbereichs sind gezaehlt ----------
-     Urspruenglich hielt dieses Tor den Wissensbereich aus der PXK-30-Strecke
-     heraus: 24 Platzhalter, unveraendert. Inzwischen loest PXK-58 sie
-     artikelweise auf, und der Sollwert wanderte mit — je ausgeschriebenem
-     Artikel sechs weniger. Alle vier Artikel sind ausgeschrieben, der
-     Sollwert ist damit auf 0 angekommen und wandert nicht weiter. Die Zahl
-     ist der erreichte Endstand: Jeder Platzhalter, der wieder auftaucht,
-     bedeutet verlorenen Inhalt.
-     Task 6 loest dieses Tor durch das benannte Tor G-3 ab. */
-  const G2_PLATZHALTER_SOLL = 0;
-  let g2Platzhalter = 0;
-  for (const name of g1Quellen) {
-    const roh = await readFile(join(G1_SITE, 'wissen', name), 'utf8');
-    g2Platzhalter += (roh.match(/wissen-platzhalter/g) || []).length;
-  }
-  if (!g1Quellen.length) {
-    F('G-2.6: keine Wissensquelle gelesen — die Zaehlung liefe ins Leere');
-  } else if (g2Platzhalter !== G2_PLATZHALTER_SOLL) {
-    F(`G-2.6: site/wissen/ traegt ${g2Platzhalter} Platzhalter, erwartet ` +
-      `${G2_PLATZHALTER_SOLL} — alle vier Artikel sind ausgeschrieben, PXK-58 ` +
-      'hat jeden Platzhalter aufgeloest. Ein wieder aufgetauchter Platzhalter ' +
-      'bedeutet verlorenen Inhalt: den Abschnitt wiederherstellen, nicht den ' +
-      'Sollwert anheben');
+  /* --- G-3: die vier fachlich vervollstaendigten Wissensartikel (PXK-58) ---
+     G-2.6 hat den Wissensbereich waehrend PXK-30 eingefroren: genau so viele
+     Platzhalter wie zuvor, damit eine Aufraeumaktion an der Analyse-Strecke
+     dort nichts loescht. Dieser Auftrag ist erledigt — die vier Artikel sind
+     ausgeschrieben, und die Zahl, die das Tor huetete, ist null.
+
+     Was jetzt zu hueten ist, ist das Gegenteil: diese vier Artikel duerfen
+     ihren Bauzustand nicht zurueckbekommen. Ein Platzhalter oder ein
+     wissen-status-Hinweis in einem von ihnen behauptet weniger Reife, als
+     der Text hat — oder, schlimmer, eine spaetere Ueberarbeitung hat Inhalt
+     durch einen Platzhalter ersetzt und niemand hat es gemerkt.
+
+     Bewusst an genau diese vier Dateien gebunden und nicht an "alles unter
+     site/wissen/": eine kuenftige sechste Wissensseite darf als Shell
+     beginnen. Das Tor prueft einen erfuellten Vertrag, keine Hausregel.
+
+     Fehlt eine der vier Dateien, ist die Regel nicht bestanden, sondern
+     ungeprueft — und das ist ein Fehler, kein Durchlassgrund. */
+  const G3_ARTIKEL = [
+    'seo-geo-ai-visibility.html',
+    'answerability.html',
+    'entity-trust.html',
+    'agent-readiness.html',
+  ];
+  for (const name of G3_ARTIKEL) {
+    const pfad = join(G1_SITE, 'wissen', name);
+    if (!(await existiert(pfad))) {
+      F(`G-3: site/wissen/${name} fehlt — der PXK-58-Vertrag bleibt dort ungeprueft`);
+      continue;
+    }
+    const roh = await readFile(pfad, 'utf8');
+    const platzhalter = (roh.match(/wissen-platzhalter/g) || []).length;
+    if (platzhalter)
+      F(`G-3: site/wissen/${name} traegt ${platzhalter} wissen-platzhalter — ` +
+        'der Artikel ist ausgeschrieben, ein Abschnittsplatzhalter behauptet das Gegenteil');
+    if (/class="[^"]*\bwissen-status\b/.test(roh))
+      F(`G-3: site/wissen/${name} traegt einen wissen-status-Bauhinweis — ` +
+        'der Wissensbereich zeigt keinen Aufbau-Status mehr an');
   }
 
   /* --- verwaiste Schriften --- */
