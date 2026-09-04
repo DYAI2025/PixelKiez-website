@@ -44,13 +44,31 @@ FROM caddy:2.11.4-builder-alpine AS caddybuild
 ENV CGO_ENABLED=0
 WORKDIR /caddy
 COPY caddy/main.go ./main.go
+# Reihenfolge ist hier keine Geschmacksfrage: `go mod tidy` laeuft VOR den
+# Anhebungen. Umgekehrt setzt tidy die vier Module auf das Minimum zurueck,
+# das der Modulgraph verlangt, und macht die Anhebung stillschweigend wieder
+# rueckgaengig. Gemessen am 04.09.2026 im CI-Lauf 33882838213: angefordert
+# golang.org/x/crypto v0.55.0, gebaut wurde v0.53.0 — und mit ihm blieb
+# CVE-2026-56854 (CRITICAL) im Binary.
+#
+# Weil eine solche Ruecknahme lautlos passiert, steht danach eine Gegenprobe:
+# stimmt eine der vier Versionen nicht, bricht der Bauschritt ab, statt ein
+# Binary auszuliefern, das anders zusammengesetzt ist als angegeben.
 RUN go mod init pixelkiez/caddy \
  && go get github.com/caddyserver/caddy/v2@v2.11.4 \
+ && go mod tidy \
  && go get golang.org/x/crypto@v0.55.0 \
  && go get golang.org/x/net@v0.56.0 \
  && go get golang.org/x/text@v0.39.0 \
  && go get google.golang.org/grpc@v1.83.1 \
- && go mod tidy \
+ && for paar in golang.org/x/crypto@v0.55.0 golang.org/x/net@v0.56.0 \
+                golang.org/x/text@v0.39.0 google.golang.org/grpc@v1.83.1; do \
+      modul="${paar%@*}"; soll="${paar#*@}"; ist="$(go list -m -f '{{.Version}}' "$modul")"; \
+      if [ "$ist" != "$soll" ]; then \
+        echo "Abbruch: ${modul} steht auf ${ist} statt ${soll}"; exit 1; \
+      fi; \
+      echo "geprueft: ${modul} ${ist}"; \
+    done \
  && go build -trimpath -ldflags "-s -w" -o /out/caddy . \
  && go version \
  && go list -m github.com/caddyserver/caddy/v2 golang.org/x/crypto \
