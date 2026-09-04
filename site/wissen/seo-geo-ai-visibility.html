@@ -6,10 +6,10 @@
 <title>SEO, GEO, AI Visibility · Pixelkiez Wissen</title>
 <meta name="description" content="Was klassisches SEO, GEO und AI Visibility unterscheidet, wo sie sich überschneiden und wie sie zusammenhängen — eine Einordnung der drei Begriffe.">
 <meta name="theme-color" content="#B6C7C4">
-<meta name="robots" content="noindex">
+<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
 <link rel="canonical" href="https://pixelkiez.de/wissen/seo-geo-ai-visibility/"><!-- hreflang setzt der Build -->
 
-<meta property="og:type" content="website">
+<meta property="og:type" content="article">
 <meta property="og:locale" content="de_DE">
 <meta property="og:site_name" content="Pixelkiez">
 <meta property="og:title" content="SEO, GEO, AI Visibility · Pixelkiez Wissen">
@@ -30,12 +30,79 @@
 <link rel="stylesheet" href="assets/css/fonts.css">
 <link rel="stylesheet" href="assets/css/bds.css">
 
-<!-- ENTWURF (Slice 2): Der Text ist ausgeschrieben und gegen Primaerquellen
-     geprueft, aber noch nicht freigegeben — noindex, nicht in Sitemap oder
-     Maschinenlisten, nicht von der Startseite verlinkt.
-     Weiterhin bewusst KEIN JSON-LD: strukturierte Daten werden mit der
-     Freigabe gesetzt, nicht davor. Ein Entwurf, der sich als Artikel
-     auszeichnet, wuerde mehr behaupten, als die Seite freigegeben hat. -->
+<!-- Strukturierte Daten nur fuer das, was sichtbar auf der Seite steht:
+     der Beitrag, die Seite und der Weg dorthin. Kein datePublished — das
+     Veroeffentlichungsdatum steht erst mit dem Merge fest, und ein Datum,
+     das sich nicht belegen laesst, gehoert nicht in maschinenlesbare
+     Angaben. dateModified setzt der Build aus der Aenderungszeit der
+     Quelldatei. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "@id": "https://pixelkiez.de/wissen/seo-geo-ai-visibility/#artikel",
+      "headline": "SEO, GEO, AI Visibility: drei Begriffe, drei Fragen",
+      "description": "Was klassisches SEO, GEO und AI Visibility unterscheidet, wo sie sich überschneiden und wie sie zusammenhängen — eine Einordnung der drei Begriffe.",
+      "inLanguage": "de-DE",
+      "mainEntityOfPage": {
+        "@id": "https://pixelkiez.de/wissen/seo-geo-ai-visibility/#webpage"
+      },
+      "isPartOf": {
+        "@id": "https://pixelkiez.de/wissen/seo-geo-ai-visibility/#webpage"
+      },
+      "author": {
+        "@id": "https://pixelkiez.de/#organisation"
+      },
+      "publisher": {
+        "@id": "https://pixelkiez.de/#organisation"
+      },
+      "dateModified": "2026-09-04"
+    },
+    {
+      "@type": "WebPage",
+      "@id": "https://pixelkiez.de/wissen/seo-geo-ai-visibility/#webpage",
+      "url": "https://pixelkiez.de/wissen/seo-geo-ai-visibility/",
+      "name": "SEO, GEO, AI Visibility",
+      "inLanguage": "de-DE",
+      "isPartOf": {
+        "@id": "https://pixelkiez.de/#website"
+      },
+      "about": {
+        "@id": "https://pixelkiez.de/#organisation"
+      },
+      "breadcrumb": {
+        "@id": "https://pixelkiez.de/wissen/seo-geo-ai-visibility/#breadcrumb"
+      },
+      "dateModified": "2026-09-04"
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://pixelkiez.de/wissen/seo-geo-ai-visibility/#breadcrumb",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Startseite",
+          "item": "https://pixelkiez.de/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Wissen",
+          "item": "https://pixelkiez.de/wissen/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "SEO, GEO, AI Visibility"
+        }
+      ]
+    }
+  ]
+}
+</script>
 </head>
 <body>
 
@@ -58,7 +125,7 @@
       <span class="brand__sub">Webdesign Berlin</span>
     </a>
     <div class="header__act">
-      <a class="btn btn--split btn--primary btn--sm" href="/website-analyse/"><span class="btn__label">Zur Website-Analyse</span><span class="btn__ico"><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg></span></a>
+      <a class="btn btn--split btn--primary btn--sm" href="/#kontakt"><span class="btn__label">Gespräch anfragen</span><span class="btn__ico"><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg></span></a>
       <a class="lang" href="/en/knowledge/seo-geo-ai-visibility/" hreflang="en" lang="en" aria-label="Switch to English" data-lang-switch>EN</a>
     </div>
   </div>
@@ -69,6 +136,13 @@
 <!-- ===================== AUFTAKT ===================== -->
 <section class="section section--flush auftakt">
   <div class="wrap">
+    <nav class="krumen" aria-label="Sie sind hier">
+      <ol>
+        <li><a href="/">Startseite</a></li>
+        <li><a href="/wissen/">Wissen</a></li>
+        <li aria-current="page">SEO, GEO, AI Visibility</li>
+      </ol>
+    </nav>
     <div class="section__head">
       <p class="kicker" data-reveal>Wissen · Auffindbarkeit</p>
       <h1 class="h-lg" data-reveal>SEO, GEO, AI Visibility: drei Begriffe, drei Fragen</h1>
@@ -88,11 +162,26 @@
         <li><svg aria-hidden="true"><use href="#i-check"/></svg>Messbares von Behauptetem trennen</li>
       </ul>
     </div>
+
+    <!-- Inhaltsverzeichnis: reine Sprungmarken. Kein Skript, keine
+         Aufklappmechanik — die Liste steht im ausgelieferten HTML und
+         funktioniert damit auch ohne JavaScript und mit der Tastatur. -->
+    <nav class="inhalt" aria-labelledby="inhalt-titel" data-reveal>
+      <h2 class="inhalt__t" id="inhalt-titel">In diesem Artikel</h2>
+      <ol>
+        <li><a href="#begriffe">Drei Begriffe, drei Fragen</a></li>
+        <li><a href="#ueberschneidung">Wo sie sich überschneiden</a></li>
+        <li><a href="#messung">AI Visibility: Messung, nicht Optimierung</a></li>
+        <li><a href="#klassische-suche">Warum klassische Suche weiter zählt</a></li>
+        <li><a href="#beobachtbar">Was sich beobachten lässt — und was nicht</a></li>
+        <li><a href="#quellen">Quellen und Stand</a></li>
+      </ol>
+    </nav>
   </div>
 </section>
 
 <!-- ===================== 1. DREI BEGRIFFE, DREI FRAGEN ===================== -->
-<section class="section">
+<section class="section" id="begriffe">
   <div class="wrap">
     <div class="section__head">
       <h2 class="h-lg" data-reveal>Drei Begriffe, drei Fragen.</h2>
@@ -170,7 +259,7 @@
 </section>
 
 <!-- ===================== 2. WO SIE SICH UEBERSCHNEIDEN ===================== -->
-<section class="section">
+<section class="section" id="ueberschneidung">
   <div class="wrap">
     <div class="section__head">
       <h2 class="h-lg" data-reveal>Wo sie sich überschneiden.</h2>
@@ -219,11 +308,13 @@
     <p class="prose" data-reveal>Bei OpenAI kommt zur Freigabe eine zweite Bedingung hinzu. Damit eine Website in Suchergebnissen erscheint, empfiehlt OpenAI, OAI-SearchBot in der robots.txt zuzulassen und Anfragen aus den veröffentlichten IP-Bereichen durchzulassen. Auf Anthropics unten genannter Hilfeseite steht eine vergleichbare Bedingung nicht. Über weitere Anbieter sagen diese beiden Seiten nichts.</p>
 
     <p class="prose" data-reveal>Über allem steht ein Satz, den Google selbst in die Search Essentials geschrieben hat: Auch wenn eine Seite alle dortigen Anforderungen und Empfehlungen erfüllt, bedeutet das nicht, dass Google ihre Inhalte crawlt, indexiert oder ausspielt.</p>
+
+    <p class="prose" data-reveal>Der erste dieser Bausteine — erreichbar — hängt technisch daran, was eine Adresse überhaupt ausliefert. Welche Wege es dafür gibt und warum ein Frameworkname darüber nichts aussagt, steht in der Vertiefung <a href="/wissen/wie-websites-ausgeliefert-werden/">Wie moderne Websites gebaut und ausgeliefert werden</a>.</p>
   </div>
 </section>
 
 <!-- ===================== 3. MESSUNG STATT OPTIMIERUNG ===================== -->
-<section class="section">
+<section class="section" id="messung">
   <div class="wrap">
     <div class="section__head">
       <h2 class="h-lg" data-reveal>AI Visibility: Messung, nicht Optimierung.</h2>
@@ -263,7 +354,7 @@
 </section>
 
 <!-- ===================== 4. KLASSISCHE SUCHE ===================== -->
-<section class="section">
+<section class="section" id="klassische-suche">
   <div class="wrap">
     <div class="section__head">
       <h2 class="h-lg" data-reveal>Warum klassische Suche weiter zählt.</h2>
@@ -287,7 +378,7 @@
 </section>
 
 <!-- ===================== 5. BEOBACHTBAR UND NICHT ===================== -->
-<section class="section">
+<section class="section" id="beobachtbar">
   <div class="wrap">
     <div class="section__head">
       <h2 class="h-lg" data-reveal>Was sich beobachten lässt — und was nicht.</h2>
@@ -327,7 +418,7 @@
 </section>
 
 <!-- ===================== 6. QUELLEN ===================== -->
-<section class="section">
+<section class="section" id="quellen">
   <div class="wrap">
     <div class="section__head">
       <h2 class="h-lg" data-reveal>Quellen und Stand.</h2>
@@ -421,21 +512,21 @@
   </div>
 </section>
 
-<!-- ===================== ANALYSE-HINWEIS ===================== -->
-<section class="section inv">
+<!-- ===================== NAECHSTER SCHRITT ===================== -->
+<section class="section inv" id="naechster-schritt">
   <div class="wrap">
     <div class="section__head">
       <h2 class="h-lg" data-reveal>Wie sichtbar ist Ihre Website heute für klassische Suche und KI-Systeme?</h2>
-      <p class="lead" data-reveal>Die kostenlose Website-Analyse prüft diese Frage an Ihrer eigenen Website und ordnet die Ergebnisse verständlich ein.</p>
+      <p class="lead" data-reveal>Diese Frage lässt sich an einer Website nur nachsehen, nicht raten. Schreiben Sie uns, um welche Adresse es geht — wir sehen sie uns an und antworten mit einer Einschätzung, hinter der jemand steht.</p>
       <div data-reveal>
-        <a class="btn btn--split btn--primary" href="/website-analyse/"><span class="btn__label">Eigene Website analysieren</span><span class="btn__ico"><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg></span></a>
+        <a class="btn btn--split btn--primary" href="/#kontakt"><span class="btn__label">Gespräch anfragen</span><span class="btn__ico"><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg></span></a>
       </div>
     </div>
   </div>
 </section>
 
 <!-- ===================== VERWANDTE THEMEN ===================== -->
-<section class="section">
+<section class="section" id="verwandt">
   <div class="wrap">
     <div class="section__head">
       <h2 class="h-lg" data-reveal>Verwandte Themen.</h2>

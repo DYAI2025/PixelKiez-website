@@ -6,10 +6,10 @@
 <title>Entity Trust · Pixelkiez Wissen</title>
 <meta name="description" content="Können Maschinen Unternehmen, Leistungen, Ort und Personen hinter einer Website zuverlässig zuordnen? Eine Einordnung des Begriffs Entity Trust.">
 <meta name="theme-color" content="#B6C7C4">
-<meta name="robots" content="noindex">
+<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
 <link rel="canonical" href="https://pixelkiez.de/wissen/entity-trust/"><!-- hreflang setzt der Build -->
 
-<meta property="og:type" content="website">
+<meta property="og:type" content="article">
 <meta property="og:locale" content="de_DE">
 <meta property="og:site_name" content="Pixelkiez">
 <meta property="og:title" content="Entity Trust · Pixelkiez Wissen">
@@ -30,12 +30,79 @@
 <link rel="stylesheet" href="assets/css/fonts.css">
 <link rel="stylesheet" href="assets/css/bds.css">
 
-<!-- ENTWURF (Slice 2): Der Text ist ausgeschrieben und gegen Primaerquellen
-     geprueft, aber noch nicht freigegeben — noindex, nicht in Sitemap oder
-     Maschinenlisten, nicht von der Startseite verlinkt.
-     Weiterhin bewusst KEIN JSON-LD: strukturierte Daten werden mit der
-     Freigabe gesetzt, nicht davor. Ein Entwurf, der sich als Artikel
-     auszeichnet, wuerde mehr behaupten, als die Seite freigegeben hat. -->
+<!-- Strukturierte Daten nur fuer das, was sichtbar auf der Seite steht:
+     der Beitrag, die Seite und der Weg dorthin. Kein datePublished — das
+     Veroeffentlichungsdatum steht erst mit dem Merge fest, und ein Datum,
+     das sich nicht belegen laesst, gehoert nicht in maschinenlesbare
+     Angaben. dateModified setzt der Build aus der Aenderungszeit der
+     Quelldatei. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "@id": "https://pixelkiez.de/wissen/entity-trust/#artikel",
+      "headline": "Entity Trust: Weiß die Maschine, wer Sie sind?",
+      "description": "Können Maschinen Unternehmen, Leistungen, Ort und Personen hinter einer Website zuverlässig zuordnen? Eine Einordnung des Begriffs Entity Trust.",
+      "inLanguage": "de-DE",
+      "mainEntityOfPage": {
+        "@id": "https://pixelkiez.de/wissen/entity-trust/#webpage"
+      },
+      "isPartOf": {
+        "@id": "https://pixelkiez.de/wissen/entity-trust/#webpage"
+      },
+      "author": {
+        "@id": "https://pixelkiez.de/#organisation"
+      },
+      "publisher": {
+        "@id": "https://pixelkiez.de/#organisation"
+      },
+      "dateModified": "2026-09-04"
+    },
+    {
+      "@type": "WebPage",
+      "@id": "https://pixelkiez.de/wissen/entity-trust/#webpage",
+      "url": "https://pixelkiez.de/wissen/entity-trust/",
+      "name": "Entity Trust",
+      "inLanguage": "de-DE",
+      "isPartOf": {
+        "@id": "https://pixelkiez.de/#website"
+      },
+      "about": {
+        "@id": "https://pixelkiez.de/#organisation"
+      },
+      "breadcrumb": {
+        "@id": "https://pixelkiez.de/wissen/entity-trust/#breadcrumb"
+      },
+      "dateModified": "2026-09-04"
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://pixelkiez.de/wissen/entity-trust/#breadcrumb",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Startseite",
+          "item": "https://pixelkiez.de/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Wissen",
+          "item": "https://pixelkiez.de/wissen/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Entity Clarity"
+        }
+      ]
+    }
+  ]
+}
+</script>
 </head>
 <body>
 
@@ -58,7 +125,7 @@
       <span class="brand__sub">Webdesign Berlin</span>
     </a>
     <div class="header__act">
-      <a class="btn btn--split btn--primary btn--sm" href="/website-analyse/"><span class="btn__label">Zur Website-Analyse</span><span class="btn__ico"><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg></span></a>
+      <a class="btn btn--split btn--primary btn--sm" href="/#kontakt"><span class="btn__label">Gespräch anfragen</span><span class="btn__ico"><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg></span></a>
       <a class="lang" href="/en/knowledge/entity-trust/" hreflang="en" lang="en" aria-label="Switch to English" data-lang-switch>EN</a>
     </div>
   </div>
@@ -69,6 +136,13 @@
 <!-- ===================== AUFTAKT ===================== -->
 <section class="section section--flush auftakt">
   <div class="wrap">
+    <nav class="krumen" aria-label="Sie sind hier">
+      <ol>
+        <li><a href="/">Startseite</a></li>
+        <li><a href="/wissen/">Wissen</a></li>
+        <li aria-current="page">Entity Clarity</li>
+      </ol>
+    </nav>
     <div class="section__head">
       <p class="kicker" data-reveal>Wissen · Identität &amp; Vertrauen</p>
       <h1 class="h-lg" data-reveal>Entity Trust: Weiß die Maschine, wer Sie sind?</h1>
@@ -88,11 +162,26 @@
         <li><svg aria-hidden="true"><use href="#i-check"/></svg>Beobachtung von Vermutung trennen</li>
       </ul>
     </div>
+
+    <!-- Inhaltsverzeichnis: reine Sprungmarken. Kein Skript, keine
+         Aufklappmechanik — die Liste steht im ausgelieferten HTML und
+         funktioniert damit auch ohne JavaScript und mit der Tastatur. -->
+    <nav class="inhalt" aria-labelledby="inhalt-titel" data-reveal>
+      <h2 class="inhalt__t" id="inhalt-titel">In diesem Artikel</h2>
+      <ol>
+        <li><a href="#zuordnung">Weiß das System, wer Sie sind?</a></li>
+        <li><a href="#angaben">Unternehmen, Ort, Leistungen, Personen</a></li>
+        <li><a href="#konsistenz">Konsistenz über Quellen hinweg</a></li>
+        <li><a href="#strukturierte-daten">Strukturierte Daten und externe Bestätigung</a></li>
+        <li><a href="#beobachtbar">Beobachtbar oder erschlossen</a></li>
+        <li><a href="#quellen">Quellen und Stand</a></li>
+      </ol>
+    </nav>
   </div>
 </section>
 
 <!-- ===================== 1. ZUORDNUNG, NICHT BEWERTUNG ===================== -->
-<section class="section">
+<section class="section" id="zuordnung">
   <div class="wrap">
     <div class="section__head">
       <h2 class="h-lg" data-reveal>Weiß das System, wer Sie sind?</h2>
@@ -173,7 +262,7 @@
 </section>
 
 <!-- ===================== 2. VIER ARTEN VON ANGABEN ===================== -->
-<section class="section">
+<section class="section" id="angaben">
   <div class="wrap">
     <div class="section__head">
       <h2 class="h-lg" data-reveal>Unternehmen, Ort, Leistungen, Personen.</h2>
@@ -209,12 +298,14 @@
 
     <p class="prose" data-reveal><strong>Und in der Organization-Auszeichnung ist keine dieser Angaben ein Pflichtfeld.</strong> Google schreibt zur Organization-Auszeichnung, dass es keine erforderlichen Eigenschaften gibt; man solle stattdessen die Eigenschaften ergänzen, die auf die eigene Organisation zutreffen. Wer hier „Google verlangt“ liest, wo „empfiehlt“ steht, baut sich eine Vorschrift, die es nicht gibt.</p>
 
+    <p class="prose" data-reveal>Damit ein System diese Angaben überhaupt zusammenbringen kann, müssen sie beim Abruf ankommen. Ob Name, Ort und Leistung im ausgelieferten Dokument stehen oder erst danach entstehen, ist deshalb keine Nebenfrage — <a href="/wissen/wie-ki-websites-liest/">Wie KI Ihre Website wirklich liest</a> ordnet diesen Unterschied ein.</p>
+
     <p class="prose" data-reveal>Wie das im Alltag aussieht, zeigt ein Beispiel. Keine der unten genannten Quellen beschreibt kleine Betriebe im deutschsprachigen Raum; der folgende Fall ist deshalb unserer und ausdrücklich erfunden. Elektro Kranz in Lichtenberg steht im Handelsregister als „Kranz Elektroinstallation GmbH“, auf dem Ladenschild steht „Elektro Kranz“, und im Unternehmensprofil ist der Betrieb als „Elektro Kranz Berlin“ eingetragen. Drei Schreibweisen, ein Betrieb. Welche Angabe wohin gehört, entscheidet sich an genau den Feldern oben: legalName für die Registereintragung, name für den geführten Namen — und im Profil der reale Name, wie ihn Kundinnen und Kunden kennen.</p>
   </div>
 </section>
 
 <!-- ===================== 3. KONSISTENZ ===================== -->
-<section class="section">
+<section class="section" id="konsistenz">
   <div class="wrap">
     <div class="section__head">
       <h2 class="h-lg" data-reveal>Konsistenz über Quellen hinweg.</h2>
@@ -242,7 +333,7 @@
 </section>
 
 <!-- ===================== 4. AUSZEICHNUNG UND EXTERNE VERWEISE ===================== -->
-<section class="section">
+<section class="section" id="strukturierte-daten">
   <div class="wrap">
     <div class="section__head">
       <h2 class="h-lg" data-reveal>Strukturierte Daten und externe Bestätigung.</h2>
@@ -290,7 +381,7 @@
 </section>
 
 <!-- ===================== 5. BEOBACHTBAR ODER ERSCHLOSSEN ===================== -->
-<section class="section">
+<section class="section" id="beobachtbar">
   <div class="wrap">
     <div class="section__head">
       <h2 class="h-lg" data-reveal>Beobachtbar oder erschlossen.</h2>
@@ -328,7 +419,7 @@
 </section>
 
 <!-- ===================== 6. QUELLEN ===================== -->
-<section class="section">
+<section class="section" id="quellen">
   <div class="wrap">
     <div class="section__head">
       <h2 class="h-lg" data-reveal>Quellen und Stand.</h2>
@@ -417,21 +508,21 @@
   </div>
 </section>
 
-<!-- ===================== ANALYSE-HINWEIS ===================== -->
-<section class="section inv">
+<!-- ===================== NAECHSTER SCHRITT ===================== -->
+<section class="section inv" id="naechster-schritt">
   <div class="wrap">
     <div class="section__head">
       <h2 class="h-lg" data-reveal>Sind Unternehmen, Leistungen und Standort auf Ihrer Website eindeutig zuordenbar?</h2>
-      <p class="lead" data-reveal>Die kostenlose Website-Analyse prüft diese Frage an Ihrer eigenen Website und ordnet die Ergebnisse verständlich ein.</p>
+      <p class="lead" data-reveal>Diese Frage lässt sich an einer Website nur nachsehen, nicht raten. Schreiben Sie uns, um welche Adresse es geht — wir sehen sie uns an und antworten mit einer Einschätzung, hinter der jemand steht.</p>
       <div data-reveal>
-        <a class="btn btn--split btn--primary" href="/website-analyse/"><span class="btn__label">Eigene Website analysieren</span><span class="btn__ico"><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg></span></a>
+        <a class="btn btn--split btn--primary" href="/#kontakt"><span class="btn__label">Gespräch anfragen</span><span class="btn__ico"><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg></span></a>
       </div>
     </div>
   </div>
 </section>
 
 <!-- ===================== VERWANDTE THEMEN ===================== -->
-<section class="section">
+<section class="section" id="verwandt">
   <div class="wrap">
     <div class="section__head">
       <h2 class="h-lg" data-reveal>Verwandte Themen.</h2>

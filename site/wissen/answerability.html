@@ -6,10 +6,10 @@
 <title>Answerability · Pixelkiez Wissen</title>
 <meta name="description" content="Beantwortet eine Website konkrete Kundenfragen so klar, dass auch Maschinen die Antwort übernehmen können? Eine Einordnung des Begriffs Answerability.">
 <meta name="theme-color" content="#B6C7C4">
-<meta name="robots" content="noindex">
+<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
 <link rel="canonical" href="https://pixelkiez.de/wissen/answerability/"><!-- hreflang setzt der Build -->
 
-<meta property="og:type" content="website">
+<meta property="og:type" content="article">
 <meta property="og:locale" content="de_DE">
 <meta property="og:site_name" content="Pixelkiez">
 <meta property="og:title" content="Answerability · Pixelkiez Wissen">
@@ -30,10 +30,79 @@
 <link rel="stylesheet" href="assets/css/fonts.css">
 <link rel="stylesheet" href="assets/css/bds.css">
 
-<!-- ENTWURF (Slice 2): Content-Shell ohne freigegebene Fakten — noindex,
-     nicht in Sitemap oder Maschinenlisten, nicht von der Startseite verlinkt.
-     Bewusst KEIN JSON-LD, bis der Inhalt steht: strukturierte Daten sollen
-     nie mehr behaupten, als die Seite leistet. -->
+<!-- Strukturierte Daten nur fuer das, was sichtbar auf der Seite steht:
+     der Beitrag, die Seite und der Weg dorthin. Kein datePublished — das
+     Veroeffentlichungsdatum steht erst mit dem Merge fest, und ein Datum,
+     das sich nicht belegen laesst, gehoert nicht in maschinenlesbare
+     Angaben. dateModified setzt der Build aus der Aenderungszeit der
+     Quelldatei. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "@id": "https://pixelkiez.de/wissen/answerability/#artikel",
+      "headline": "Answerability: Beantwortet Ihre Website konkrete Fragen?",
+      "description": "Beantwortet eine Website konkrete Kundenfragen so klar, dass auch Maschinen die Antwort übernehmen können? Eine Einordnung des Begriffs Answerability.",
+      "inLanguage": "de-DE",
+      "mainEntityOfPage": {
+        "@id": "https://pixelkiez.de/wissen/answerability/#webpage"
+      },
+      "isPartOf": {
+        "@id": "https://pixelkiez.de/wissen/answerability/#webpage"
+      },
+      "author": {
+        "@id": "https://pixelkiez.de/#organisation"
+      },
+      "publisher": {
+        "@id": "https://pixelkiez.de/#organisation"
+      },
+      "dateModified": "2026-09-04"
+    },
+    {
+      "@type": "WebPage",
+      "@id": "https://pixelkiez.de/wissen/answerability/#webpage",
+      "url": "https://pixelkiez.de/wissen/answerability/",
+      "name": "Answerability",
+      "inLanguage": "de-DE",
+      "isPartOf": {
+        "@id": "https://pixelkiez.de/#website"
+      },
+      "about": {
+        "@id": "https://pixelkiez.de/#organisation"
+      },
+      "breadcrumb": {
+        "@id": "https://pixelkiez.de/wissen/answerability/#breadcrumb"
+      },
+      "dateModified": "2026-09-04"
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://pixelkiez.de/wissen/answerability/#breadcrumb",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Startseite",
+          "item": "https://pixelkiez.de/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Wissen",
+          "item": "https://pixelkiez.de/wissen/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Answerability"
+        }
+      ]
+    }
+  ]
+}
+</script>
 </head>
 <body>
 
@@ -56,7 +125,7 @@
       <span class="brand__sub">Webdesign Berlin</span>
     </a>
     <div class="header__act">
-      <a class="btn btn--split btn--primary btn--sm" href="/website-analyse/"><span class="btn__label">Zur Website-Analyse</span><span class="btn__ico"><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg></span></a>
+      <a class="btn btn--split btn--primary btn--sm" href="/#kontakt"><span class="btn__label">Gespräch anfragen</span><span class="btn__ico"><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg></span></a>
       <a class="lang" href="/en/knowledge/answerability/" hreflang="en" lang="en" aria-label="Switch to English" data-lang-switch>EN</a>
     </div>
   </div>
@@ -67,6 +136,13 @@
 <!-- ===================== AUFTAKT ===================== -->
 <section class="section section--flush auftakt">
   <div class="wrap">
+    <nav class="krumen" aria-label="Sie sind hier">
+      <ol>
+        <li><a href="/">Startseite</a></li>
+        <li><a href="/wissen/">Wissen</a></li>
+        <li aria-current="page">Answerability</li>
+      </ol>
+    </nav>
     <div class="section__head">
       <p class="kicker" data-reveal>Wissen · Antwortfähigkeit</p>
       <h1 class="h-lg" data-reveal>Answerability: Beantwortet Ihre Website konkrete Fragen?</h1>
@@ -86,11 +162,26 @@
         <li><svg aria-hidden="true"><use href="#i-check"/></svg>Belastbare Aussagen einordnen</li>
       </ul>
     </div>
+
+    <!-- Inhaltsverzeichnis: reine Sprungmarken. Kein Skript, keine
+         Aufklappmechanik — die Liste steht im ausgelieferten HTML und
+         funktioniert damit auch ohne JavaScript und mit der Tastatur. -->
+    <nav class="inhalt" aria-labelledby="inhalt-titel" data-reveal>
+      <h2 class="inhalt__t" id="inhalt-titel">In diesem Artikel</h2>
+      <ol>
+        <li><a href="#lesbar-antwortfaehig">Lesbar ist nicht gleich antwortfähig</a></li>
+        <li><a href="#explizit">Was eine Antwort explizit macht</a></li>
+        <li><a href="#kontext">Kontext und Mehrdeutigkeit</a></li>
+        <li><a href="#belege">Belege und faktische Stützung</a></li>
+        <li><a href="#methode">Wie Pixelkiez Answerability einschätzt</a></li>
+        <li><a href="#quellen">Quellen und Stand</a></li>
+      </ol>
+    </nav>
   </div>
 </section>
 
 <!-- ===================== 1. LESBAR ≠ ANTWORTFAEHIG ===================== -->
-<section class="section">
+<section class="section" id="lesbar-antwortfaehig">
   <div class="wrap">
     <div class="section__head">
       <h2 class="h-lg" data-reveal>Lesbar ist nicht gleich antwortfähig.</h2>
@@ -208,7 +299,7 @@
 </section>
 
 <!-- ===================== 2. EXPLIZIT ===================== -->
-<section class="section">
+<section class="section" id="explizit">
   <div class="wrap">
     <div class="section__head">
       <h2 class="h-lg" data-reveal>Was eine Antwort explizit macht.</h2>
@@ -256,7 +347,7 @@
 </section>
 
 <!-- ===================== 3. KONTEXT ===================== -->
-<section class="section">
+<section class="section" id="kontext">
   <div class="wrap">
     <div class="section__head">
       <h2 class="h-lg" data-reveal>Kontext und Mehrdeutigkeit.</h2>
@@ -290,7 +381,7 @@
 </section>
 
 <!-- ===================== 4. BELEGE ===================== -->
-<section class="section">
+<section class="section" id="belege">
   <div class="wrap">
     <div class="section__head">
       <h2 class="h-lg" data-reveal>Belege und faktische Stützung.</h2>
@@ -320,7 +411,7 @@
 </section>
 
 <!-- ===================== 5. EINSCHAETZUNG ===================== -->
-<section class="section">
+<section class="section" id="methode">
   <div class="wrap">
     <div class="section__head">
       <h2 class="h-lg" data-reveal>Wie Pixelkiez Answerability einschätzt.</h2>
@@ -373,7 +464,7 @@
 </section>
 
 <!-- ===================== QUELLEN ===================== -->
-<section class="section">
+<section class="section" id="quellen">
   <div class="wrap">
     <div class="section__head">
       <h2 class="h-lg" data-reveal>Quellen und Stand.</h2>
@@ -472,21 +563,21 @@
   </div>
 </section>
 
-<!-- ===================== ANALYSE-HINWEIS ===================== -->
-<section class="section inv">
+<!-- ===================== NAECHSTER SCHRITT ===================== -->
+<section class="section inv" id="naechster-schritt">
   <div class="wrap">
     <div class="section__head">
       <h2 class="h-lg" data-reveal>Kann Ihre Website zentrale Kundenfragen klar beantworten?</h2>
-      <p class="lead" data-reveal>Die kostenlose Website-Analyse prüft diese Frage an Ihrer eigenen Website und ordnet die Ergebnisse verständlich ein.</p>
+      <p class="lead" data-reveal>Diese Frage lässt sich an einer Website nur nachsehen, nicht raten. Schreiben Sie uns, um welche Adresse es geht — wir sehen sie uns an und antworten mit einer Einschätzung, hinter der jemand steht.</p>
       <div data-reveal>
-        <a class="btn btn--split btn--primary" href="/website-analyse/"><span class="btn__label">Eigene Website analysieren</span><span class="btn__ico"><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg></span></a>
+        <a class="btn btn--split btn--primary" href="/#kontakt"><span class="btn__label">Gespräch anfragen</span><span class="btn__ico"><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg></span></a>
       </div>
     </div>
   </div>
 </section>
 
 <!-- ===================== VERWANDTE THEMEN ===================== -->
-<section class="section">
+<section class="section" id="verwandt">
   <div class="wrap">
     <div class="section__head">
       <h2 class="h-lg" data-reveal>Verwandte Themen.</h2>
