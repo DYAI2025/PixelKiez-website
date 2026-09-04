@@ -956,7 +956,7 @@ async function verify() {
      sondern der erreichte Stand: Wer sie senkt, muss im selben Commit
      Inhalt geliefert haben; wer sie unabsichtlich verschiebt, faellt auf.
      Task 6 loest dieses Tor durch das benannte Tor G-3 ab. */
-  const G2_PLATZHALTER_SOLL = 12;
+  const G2_PLATZHALTER_SOLL = 6;
   let g2Platzhalter = 0;
   for (const name of g1Quellen) {
     const roh = await readFile(join(G1_SITE, 'wissen', name), 'utf8');
