@@ -44,25 +44,32 @@ FROM caddy:2.11.4-builder-alpine AS caddybuild
 ENV CGO_ENABLED=0
 WORKDIR /caddy
 COPY caddy/main.go ./main.go
-# Reihenfolge ist hier keine Geschmacksfrage: `go mod tidy` laeuft VOR den
-# Anhebungen. Umgekehrt setzt tidy die vier Module auf das Minimum zurueck,
-# das der Modulgraph verlangt, und macht die Anhebung stillschweigend wieder
-# rueckgaengig. Gemessen am 04.09.2026 im CI-Lauf 33882838213: angefordert
-# golang.org/x/crypto v0.55.0, gebaut wurde v0.53.0 — und mit ihm blieb
-# CVE-2026-56854 (CRITICAL) im Binary.
+# Zwei Fallen liegen hier hintereinander, beide gemessen am 04.09.2026.
 #
-# Weil eine solche Ruecknahme lautlos passiert, steht danach eine Gegenprobe:
+# Erstens die Reihenfolge: `go mod tidy` laeuft VOR den Anhebungen. Danach
+# setzt es die vier Module auf das Minimum zurueck, das der Modulgraph
+# verlangt, und nimmt die Anhebung stillschweigend wieder zurueck
+# (CI-Lauf 33882838213: angefordert x/crypto v0.55.0, gebaut v0.53.0 — und
+# mit ihm blieb CVE-2026-56854, CRITICAL, im Binary).
+#
+# Zweitens die Zerlegung in einzelne Aufrufe: `go get` zieht andere Module
+# herunter, um die angeforderte Version aufzuloesen. Nacheinander ausgefuehrt
+# hat `go get x/net@v0.56.0` — die von Trivy genannte Mindestfassung —
+# x/crypto von v0.55.0 auf v0.54.0 gedrueckt, `go get x/text@v0.39.0` dann
+# weiter auf v0.53.0 (CI-Lauf 33883177261). Deshalb ein einziger Aufruf mit
+# allen vieren, und zwar auf dem Stand, den x/crypto v0.55.0 ohnehin
+# mitbringt statt auf dem jeweiligen Minimum.
+#
+# Weil beide Ruecknahmen lautlos passieren, steht danach eine Gegenprobe:
 # stimmt eine der vier Versionen nicht, bricht der Bauschritt ab, statt ein
 # Binary auszuliefern, das anders zusammengesetzt ist als angegeben.
 RUN go mod init pixelkiez/caddy \
  && go get github.com/caddyserver/caddy/v2@v2.11.4 \
  && go mod tidy \
- && go get golang.org/x/crypto@v0.55.0 \
- && go get golang.org/x/net@v0.56.0 \
- && go get golang.org/x/text@v0.39.0 \
- && go get google.golang.org/grpc@v1.83.1 \
- && for paar in golang.org/x/crypto@v0.55.0 golang.org/x/net@v0.56.0 \
-                golang.org/x/text@v0.39.0 google.golang.org/grpc@v1.83.1; do \
+ && go get golang.org/x/crypto@v0.55.0 golang.org/x/net@v0.57.0 \
+           golang.org/x/text@v0.41.0 google.golang.org/grpc@v1.83.1 \
+ && for paar in golang.org/x/crypto@v0.55.0 golang.org/x/net@v0.57.0 \
+                golang.org/x/text@v0.41.0 google.golang.org/grpc@v1.83.1; do \
       modul="${paar%@*}"; soll="${paar#*@}"; ist="$(go list -m -f '{{.Version}}' "$modul")"; \
       if [ "$ist" != "$soll" ]; then \
         echo "Abbruch: ${modul} steht auf ${ist} statt ${soll}"; exit 1; \
