@@ -860,11 +860,23 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
 }
 
 /* --- Leistungsfelder: Curtain Reveal (Portierung card-curtain-reveal) -----
-   Zwei Ebenen uebereinander. Unten die Ruheansicht, darueber der Vorhang:
-   Farbflaeche samt vollstaendigem Inhalt, per clip-path aus der Mittelachse
-   nach aussen aufgezogen. Farbe und Text erscheinen damit gemeinsam von der
-   Mitte nach aussen — die Farbe bleibt stehen, sie blendet nicht weg.
-   Nur Hover und Tastaturfokus oeffnen; ohne Hover steht alles offen.
+   Frueher lagen hier zwei Ebenen uebereinander, und beide trugen denselben
+   Text: die Ruheansicht Titel und Anreisser, der Vorhang zusaetzlich
+   Zusammenfassung und Liste. Jede Ueberschrift stand damit zweimal im
+   Dokument — einmal fuer den geschlossenen, einmal fuer den offenen Zustand.
+
+   Jetzt gibt es je Karte genau einen Textsatz. Der Vorhang ist nur noch
+   die Farbflaeche und traegt keinen Text mehr; er wird wie zuvor per
+   clip-path aus der Mittelachse nach aussen aufgezogen. Was den Zustand
+   unterscheidet, ist Darstellung desselben Inhalts:
+
+     · die Farbflaeche faehrt auf (clip-path),
+     · die Schriftrampe wechselt auf die des Vorhangs,
+     · Zusammenfassung und Liste klappen auf (grid-template-rows).
+
+   Der Textblock haengt am unteren Rand und waechst nach oben — im
+   Ruhezustand stehen Titel und Anreisser damit an derselben Stelle wie
+   zuvor. Nur Hover und Tastaturfokus oeffnen; ohne Hover steht alles offen.
    ------------------------------------------------------------------------- */
 .crc-grid{display:grid;gap:clamp(14px,1.8vw,20px)}
 @media (min-width:820px){
@@ -877,7 +889,12 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
   transition:border-color var(--dur) var(--ease);
 }
 .crc:hover,.crc:focus-visible{border-color:var(--ink-45)}
-.crc__rest,.crc__open{
+.crc__vorhang{
+  position:absolute;inset:0;z-index:0;
+  background:var(--vorhang);
+}
+.crc__lage{
+  position:relative;z-index:1;
   display:flex;flex-direction:column;
   padding:clamp(22px,2.4vw,30px);
   min-height:100%;
@@ -903,8 +920,15 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
   padding-block:7px;border-bottom:1px solid var(--line-soft);
   font-size:.875rem;
 }
-.crc__head{margin-top:auto}
-.crc__body{margin-top:22px}
+/* Der Textblock haengt unten. Klappt der Zusatztext auf, waechst er nach
+   oben — der Ruhezustand behaelt damit seine Position. */
+.crc__inhalt{margin-top:auto}
+/* 0fr/1fr statt einer Hoehe in Pixeln: die Zeile misst sich selbst, es gibt
+   keine Zahl, die bei laengerem Text zu klein wird. Aeltere Browser ohne
+   Uebergang fuer grid-template-rows klappen ohne Bewegung auf oder zu — der
+   Inhalt bleibt in beiden Faellen erreichbar. */
+.crc__mehr{display:grid;grid-template-rows:1fr}
+.crc__mehr-i{overflow:hidden;min-height:0}
 
 /* Der Vorhang */
 /* Der Vorhang traegt je Karte eine eigene Markenfarbe. Sie steht hier
@@ -913,39 +937,61 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
 
    Jede Karte bekommt bewusst eine andere Farbe als ihren Ruhezustand —
    waeren beide gleich, bliebe beim Aufziehen nichts zu sehen. Zu jeder
-   Flaeche gehoert die passende Schriftrampe, sonst faellt der Kontrast. */
-.crc__open{
-  position:absolute;inset:0;
-  background:#EC5D43;
-  --ink:#0E1413;--ink-70:#151B19;--ink-45:#1A211F;
-  --accent-ink:#0E1413;--line-soft:#C8462F;--line-strong:#0E1413;
-  color:var(--ink);
+   Flaeche gehoert die passende Schriftrampe, sonst faellt der Kontrast.
+
+   Farbe und Rampe stehen jetzt als --vorhang-* auf der Karte selbst: die
+   Flaeche liest --vorhang, die Schrift uebernimmt die Rampe erst, wenn der
+   Vorhang offen ist. Die Kartenfarbe steht zuletzt und gewinnt damit gegen
+   die Abschnittsregel darueber — dieselbe Rangfolge wie zuvor, als der
+   Kartenselektor der spezifischere war. */
+.crc{
+  --vorhang:#EC5D43;
+  --vorhang-ink:#0E1413;--vorhang-ink-70:#151B19;--vorhang-ink-45:#1A211F;
+  --vorhang-accent-ink:#0E1413;--vorhang-line-soft:#C8462F;--vorhang-line-strong:#0E1413;
 }
-.crc[data-vorhang="schwarz"] .crc__open{
-  background:#0E1413;
-  --ink:#B6C7C4;--ink-70:#93A29E;--ink-45:#7C8A86;
-  --accent-ink:#EC5D43;--line-soft:#222B29;--line-strong:#566360;
-}
-.crc[data-vorhang="weiss"] .crc__open{
-  background:#FFFFFF;
-  --ink:#0E1413;--ink-70:#2A3634;--ink-45:#47534F;
-  --accent-ink:#8F2410;--line-soft:#EAEFEE;--line-strong:#5A706C;
-}
-.crc[data-vorhang="blau"] .crc__open{
-  background:#B6C7C4;
-  --ink:#0E1413;--ink-70:#2A3634;--ink-45:#47534F;
-  --accent-ink:#8F2410;--line-soft:#93A8A4;--line-strong:#5A706C;
-}
-.tone--orange .crc__open,
-.sec--orange .crc__open{
+.tone--orange.crc,
+.sec--orange .crc{
   /* auf orangem Grund fuellt der Vorhang schwarz, damit er sich abhebt */
-  background:#0E1413;
-  --ink:#B6C7C4;--ink-70:#93A29E;--ink-45:#7C8A86;
-  --accent-ink:#EC5D43;--line-soft:#2B3634;--line-strong:#566360;
+  --vorhang:#0E1413;
+  --vorhang-ink:#B6C7C4;--vorhang-ink-70:#93A29E;--vorhang-ink-45:#7C8A86;
+  --vorhang-accent-ink:#EC5D43;--vorhang-line-soft:#2B3634;--vorhang-line-strong:#566360;
+}
+.crc[data-vorhang="schwarz"]{
+  --vorhang:#0E1413;
+  --vorhang-ink:#B6C7C4;--vorhang-ink-70:#93A29E;--vorhang-ink-45:#7C8A86;
+  --vorhang-accent-ink:#EC5D43;--vorhang-line-soft:#222B29;--vorhang-line-strong:#566360;
+}
+.crc[data-vorhang="weiss"]{
+  --vorhang:#FFFFFF;
+  --vorhang-ink:#0E1413;--vorhang-ink-70:#2A3634;--vorhang-ink-45:#47534F;
+  --vorhang-accent-ink:#8F2410;--vorhang-line-soft:#EAEFEE;--vorhang-line-strong:#5A706C;
+}
+.crc[data-vorhang="blau"]{
+  --vorhang:#B6C7C4;
+  --vorhang-ink:#0E1413;--vorhang-ink-70:#2A3634;--vorhang-ink-45:#47534F;
+  --vorhang-accent-ink:#8F2410;--vorhang-line-soft:#93A8A4;--vorhang-line-strong:#5A706C;
 }
 
 @media (hover:hover) and (pointer:fine) and (min-width:820px){
-  .crc__open{
+  /* Nur hier ist die Karte ueberhaupt geschlossen. Der Zusatztext klappt
+     zu, die Karte behaelt ihre Ruhefarben. */
+  .crc__mehr{grid-template-rows:0fr;transition:grid-template-rows 480ms var(--ease)}
+  .crc__mehr-i{opacity:0;transition:opacity 240ms var(--ease)}
+  .crc:hover .crc__mehr,
+  .crc:focus-within .crc__mehr{grid-template-rows:1fr}
+  .crc:hover .crc__mehr-i,
+  .crc:focus-within .crc__mehr-i{opacity:1;transition:opacity 320ms var(--ease) 160ms}
+  /* Steht der Vorhang, traegt die Karte seine Schriftrampe. Der Selektor ist
+     bewusst spezifischer als .sec--orange .tone--orange weiter unten, sonst
+     zoege die Abschnittsregel --line zurueck. */
+  .crc[data-vorhang]:hover,
+  .crc[data-vorhang]:focus-within{
+    --ink:var(--vorhang-ink);--ink-70:var(--vorhang-ink-70);--ink-45:var(--vorhang-ink-45);
+    --accent-ink:var(--vorhang-accent-ink);
+    --line-soft:var(--vorhang-line-soft);--line-strong:var(--vorhang-line-strong);
+    color:var(--ink);
+  }
+  .crc__vorhang{
     clip-path:inset(0 50% 0 50%);
     /* Vorher cubic-bezier(.25,1.1,.5,1). Der Kontrollpunkt bei 1,1 laesst den
        Vorhang ueber seine Endlage hinausschiessen und zurueckfedern.
@@ -959,18 +1005,38 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
        es zugleich eine Geste weniger im Vokabular der Seite. */
     transition:clip-path 480ms var(--ease);
   }
-  .crc:hover .crc__open,
-  .crc:focus-within .crc__open{clip-path:inset(0 0 0 0)}
+  .crc:hover .crc__vorhang,
+  .crc:focus-within .crc__vorhang{clip-path:inset(0 0 0 0)}
   .crc:hover .crc__mark,
   .crc:focus-within .crc__mark{transform:rotate(45deg)}
 }
 
-/* Ohne Hover, mit grobem Zeiger oder unterhalb der Rasterbreite:
-   der Vorhang steht offen, die Ruheansicht entfaellt. */
-@media (hover:none),(pointer:coarse),(max-width:819px){
-  .crc__rest{display:none}
-  .crc__open{position:static;clip-path:none}
+/* Ueberall sonst — ohne Hover, mit grobem Zeiger, unterhalb der Rasterbreite
+   oder bei reduzierter Bewegung — steht der Vorhang offen. Die vier Faelle
+   stehen als eine Liste, damit die Schriftrampe nur an einer Stelle haengt.
+   Der Textblock rueckt dabei nach oben, wie zuvor die offene Ebene. */
+@media (hover:none),(pointer:coarse),(max-width:819px),(prefers-reduced-motion:reduce){
+  .crc__vorhang{clip-path:none}
+  .crc__mehr{grid-template-rows:1fr}
+  .crc__mehr-i{opacity:1}
+  .crc__inhalt{margin-top:22px}
+  .crc[data-vorhang]{
+    --ink:var(--vorhang-ink);--ink-70:var(--vorhang-ink-70);--ink-45:var(--vorhang-ink-45);
+    --accent-ink:var(--vorhang-accent-ink);
+    --line-soft:var(--vorhang-line-soft);--line-strong:var(--vorhang-line-strong);
+    color:var(--ink);
+  }
 }
+
+/* Messhilfe fuer die gleiche Kartenhoehe: das Skript setzt data-messen,
+   die Karte oeffnet ohne Uebergang, wird gemessen und schliesst wieder.
+   Die Regel steht hier und nicht im Skript, damit sie dieselbe Kaskade
+   sieht wie der Ruhezustand. */
+/* min-height:0 hebt die Streckung auf die Rasterzeile auf: sonst maesse
+   .crc__lage die Zeilenhoehe, die es gerade selbst bestimmen soll. */
+.crc[data-messen] .crc__lage{min-height:0}
+.crc[data-messen] .crc__mehr{grid-template-rows:1fr;transition:none}
+.crc[data-messen] .crc__mehr-i{opacity:1;transition:none}
 
 /* ---------- 10. Karussell auf schmalen Ansichten -------------------------
    Auf dem Desktop bleiben die Leistungen ein 2x2-Raster. Darunter waren sie
@@ -1558,33 +1624,25 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
 }
 .pil + .note{margin-top:clamp(36px,4vw,56px)}
 
-/* --- FAQ als drei laufende Reihen ----------------------------------------
-   Kompakte Kaesten mit Frage und Antwort. Die Reihen laufen gegenlaeufig,
-   beim Ueberfahren halten sie an. Rein dekorative Bewegung — der Inhalt
-   steht vollstaendig im DOM und ist ohne Interaktion lesbar.
-   ------------------------------------------------------------------------- */
-.fq{display:grid;gap:12px}
-.fq__row{
-  overflow:hidden;
-  -webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);
-  mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);
-}
-.fq__track{display:flex;width:max-content}
-.fq__set{display:flex;gap:12px;padding-right:12px}
-.fq__row--rl .fq__track{animation:fqLeft 68s linear infinite}
-.fq__row--lr .fq__track{animation:fqRight 68s linear infinite}
-.fq__row:hover .fq__track,
-.fq__row:focus-within .fq__track{animation-play-state:paused}
-@keyframes fqLeft {from{transform:translate3d(0,0,0)}   to{transform:translate3d(-50%,0,0)}}
-@keyframes fqRight{from{transform:translate3d(-50%,0,0)} to{transform:translate3d(0,0,0)}}
+/* --- FAQ als Raster ------------------------------------------------------
+   Kompakte Kaesten mit Frage und Antwort. Frueher liefen sie als drei
+   gegenlaeufige Baender; dafuer stand jede Frage sechsfach im Dokument —
+   einmal je Laufband-Kopie. Ein Laufband ohne Textkopien gibt es nicht:
+   der Endlos-Effekt lebt davon, dass hinter dem letzten Kasten derselbe
+   Satz noch einmal beginnt. Deshalb hat die semantische Eindeutigkeit hier
+   Vorrang bekommen — sechs Fragen, sechs Kaesten, ein Raster.
 
+   Das Raster braucht keine Bewegung, um die Reihe zu tragen: die Kaesten
+   fuellen die Breite und brechen nach unten um. Das Einblenden beim
+   Scrollen (data-reveal) bleibt, es haengt nicht am Inhalt.
+   ------------------------------------------------------------------------- */
+.fq{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr))}
 .fq__b{
-  flex:none;width:clamp(280px,26vw,360px);
   border:1px solid var(--line);border-radius:var(--radius);
   background:var(--paper-2);padding:18px 20px;
   transition:border-color var(--dur) var(--ease),background-color var(--dur) var(--ease);
 }
-.fq__row:hover .fq__b:hover{border-color:var(--ink-45);background:var(--paper-3)}
+.fq__b:hover{border-color:var(--ink-45);background:var(--paper-3)}
 .fq__q{
   font-family:var(--font-display);font-weight:600;
   font-size:.9375rem;letter-spacing:-.015em;line-height:1.3;
@@ -1903,10 +1961,6 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
     transition-duration:.001ms!important;scroll-behavior:auto!important;
   }
   [data-reveal]{opacity:1!important;transform:none!important}
-  .fq__track{animation:none;transform:none}
-  .fq__row{-webkit-mask-image:none;mask-image:none;overflow-x:auto}
-  .crc__rest{display:none}
-  .crc__open{position:static;clip-path:none}
   .pv__c{opacity:1;transform:none;animation:none}
   /* Statt rotierender Headline die vollstaendige Aussage — ohne jede Bewegung */
   .rotwrap{display:none}
@@ -1949,7 +2003,7 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
 @media (prefers-contrast:more){
   :root,.inv,.sec--orange,
   .tone--weiss,.tone--blau,.tone--orange,.tone--schwarz,
-  .crc__open,.pil__i{
+  .crc,.pil__i{
     --ink-45:var(--ink-70);
     --line:var(--line-strong);
     --line-soft:var(--line-strong);
@@ -1967,10 +2021,6 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
   .weg__st{border-top-color:var(--ink-45)}
   .weg__soll{border-top-color:var(--ink-45)}
   .weg__raster i{background:var(--ink-45)}
-  /* Die Verlaufsmaske an den Enden der Fragenreihen blendet Text bis auf null
-     aus. Bei erhoehtem Kontrast faellt sie weg — angeschnitten ist besser als
-     halb verschwunden. */
-  .fq__row{-webkit-mask-image:none;mask-image:none}
 }
 
 @media print{
