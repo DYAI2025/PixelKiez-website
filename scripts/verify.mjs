@@ -719,6 +719,170 @@ async function verify() {
       F(`${start}: kein Einstieg in den Wissensbereich (${hubPfad}) gefunden`);
   }
 
+  /* --- H-1 bis H-4 Startseite: ein Inhalt, ein Knoten ---------------------
+
+     Die Fragen liefen frueher als drei Endlosbaender; jedes Band trug seinen
+     Satz doppelt, und die drei Baender wiederholten dieselben sechs Fragen —
+     sechsunddreissig <article> fuer sechs Inhalte. Die Leistungskarten
+     trugen Titel und Anreisser zweimal, einmal je Vorhang-Ebene.
+
+     Beides ist strukturell aufgeloest. Diese Tore halten den Zustand:
+     Vervielfachung faellt wieder auf, und das FAQ-Schema kann nicht mehr
+     unbemerkt neben dem sichtbaren Text herlaufen.
+
+     Geprueft werden beide Sprachfassungen der Startseite. Die englische
+     entsteht beim Build aus der deutschen — ein Fehler nur dort waere einer
+     der Uebersetzungsstufe, nicht der Quelle, und faellt hier getrennt auf.
+     --------------------------------------------------------------------- */
+
+  /* Die erwartete Zahl steht als Konstante, nicht als "was gerade da ist".
+     Wer eine siebte Frage aufnimmt, aendert sie hier bewusst mit — und
+     bemerkt dabei, dass sichtbarer Text und Schema zusammen wachsen. */
+  const FAQ_ANZAHL = 6;
+  const LEISTUNGEN_ANZAHL = 4;
+  /* Die vier Leistungsfelder in der Reihenfolge des Abschnitts. Nur fuer die
+     deutsche Fassung — die englische traegt uebersetzte Titel und wird auf
+     Struktur geprueft, nicht auf Wortlaut. */
+  const LEISTUNGEN_DE = [
+    'Webdesign & Redesign',
+    'Recruiting & Bewerbungen',
+    'SEO',
+    'GEO & Agent-Readiness',
+  ];
+
+  /* Sichtbaren Text vergleichbar machen: Auszeichnung raus, Entitaeten
+     aufloesen, Leerraum auf ein Leerzeichen. Sonst scheitert der Vergleich
+     mit dem JSON-LD schon an einem Zeilenumbruch im Markup. */
+  const ENTITAETEN = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ', shy: '' };
+  const klartext = (s) => s
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCharCode(parseInt(n, 16)))
+    .replace(/&([a-z]+);/gi, (t, n) => (n.toLowerCase() in ENTITAETEN ? ENTITAETEN[n.toLowerCase()] : t))
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  /* Doppelte Eintraege benennen, statt nur zu zaehlen — die Meldung soll
+     sagen, welcher Satz zweimal dasteht. */
+  const doppelte = (liste) => {
+    const zaehler = new Map();
+    for (const x of liste) zaehler.set(x, (zaehler.get(x) || 0) + 1);
+    return [...zaehler].filter(([, n]) => n > 1).map(([x]) => x);
+  };
+  const kurz = (s, n = 70) => (s.length > n ? s.slice(0, n) + '…' : s);
+
+  for (const start of ['index.html', 'en/index.html']) {
+    const startPfad = join(ZIEL, start);
+    if (!(await existiert(startPfad))) continue;   // fehlende Seite meldet die Schleife oben
+    const startHtml = await readFile(startPfad, 'utf8');
+
+    /* ----- H-1 Jede Frage steht genau einmal im Dokument ----- */
+    const fqRoh = [...startHtml.matchAll(/<article[^>]*\bclass="[^"]*\bfq__b\b[^"]*"[^>]*>([\s\S]*?)<\/article>/g)]
+      .map((m) => m[1]);
+    const sichtbar = fqRoh.map((rumpf) => {
+      const frage = /<h3[^>]*\bclass="[^"]*\bfq__q\b[^"]*"[^>]*>([\s\S]*?)<\/h3>/.exec(rumpf);
+      const antwort = /<p[^>]*\bclass="[^"]*\bfq__a\b[^"]*"[^>]*>([\s\S]*?)<\/p>/.exec(rumpf);
+      return { frage: frage ? klartext(frage[1]) : null, antwort: antwort ? klartext(antwort[1]) : null };
+    });
+
+    if (fqRoh.length !== FAQ_ANZAHL)
+      F(start + ': ' + fqRoh.length + ' sichtbare Fragen statt ' + FAQ_ANZAHL
+        + ' — jede Frage gehoert genau einmal ins Dokument, auch fuer Animation oder Layout');
+    for (const [n, f] of sichtbar.entries()) {
+      if (!f.frage) F(start + ': sichtbare Frage ' + (n + 1) + ' ohne .fq__q');
+      if (!f.antwort) F(start + ': sichtbare Frage ' + (n + 1) + ' ohne .fq__a');
+    }
+    for (const d of doppelte(sichtbar.map((f) => f.frage).filter(Boolean)))
+      F(start + ': sichtbare Frage steht mehrfach im Dokument — "' + kurz(d) + '"');
+    for (const d of doppelte(sichtbar.map((f) => f.antwort).filter(Boolean)))
+      F(start + ': sichtbare Antwort steht mehrfach im Dokument — "' + kurz(d) + '"');
+
+    /* ----- H-2 Das Schema nennt genauso viele Fragen ----- */
+    let schema = null;
+    for (const m of startHtml.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)) {
+      let daten;
+      try { daten = JSON.parse(m[1]); } catch { continue; }  // ungueltiges JSON-LD meldet die Schleife oben
+      const suche = (o) => {
+        if (Array.isArray(o)) return o.forEach(suche);
+        if (!o || typeof o !== 'object') return;
+        if (o['@type'] === 'FAQPage' && Array.isArray(o.mainEntity)) schema = o.mainEntity;
+        Object.values(o).forEach(suche);
+      };
+      suche(daten);
+    }
+
+    if (!schema) {
+      F(start + ': kein FAQPage-Block mit mainEntity im JSON-LD');
+      continue;                                    // ohne Schema ist H-3 nicht pruefbar
+    }
+    if (schema.length !== FAQ_ANZAHL)
+      F(start + ': FAQPage nennt ' + schema.length + ' Fragen statt ' + FAQ_ANZAHL);
+
+    /* ----- H-3 Schema und sichtbarer Text sind dasselbe, in derselben
+       Reihenfolge. Eine Frage im Schema, die auf der Seite nicht steht, ist
+       gegenueber einer Suchmaschine eine Aussage ueber Inhalt, den es nicht
+       gibt — deshalb ist schon eine Abweichung ein Fehler. ----- */
+    const anzahl = Math.max(sichtbar.length, schema.length);
+    for (let n = 0; n < anzahl; n++) {
+      const dom = sichtbar[n];
+      const eintrag = schema[n];
+      if (!dom) {
+        F(start + ': FAQPage-Frage ' + (n + 1) + ' ohne sichtbare Entsprechung — "'
+          + kurz(String(eintrag && eintrag.name)) + '"');
+        continue;
+      }
+      if (!eintrag) {
+        F(start + ': sichtbare Frage ' + (n + 1) + ' fehlt im FAQPage-Schema — "'
+          + kurz(String(dom.frage)) + '"');
+        continue;
+      }
+      const sFrage = typeof eintrag.name === 'string' ? klartext(eintrag.name) : null;
+      const sAntwort = eintrag.acceptedAnswer && typeof eintrag.acceptedAnswer.text === 'string'
+        ? klartext(eintrag.acceptedAnswer.text) : null;
+      if (sFrage === null) F(start + ': FAQPage-Frage ' + (n + 1) + ' ohne name');
+      else if (sFrage !== dom.frage)
+        F(start + ': FAQ ' + (n + 1) + ' — Frage weicht ab.\n      sichtbar: "'
+          + kurz(String(dom.frage)) + '"\n      Schema:   "' + kurz(sFrage) + '"');
+      if (sAntwort === null) F(start + ': FAQPage-Frage ' + (n + 1) + ' ohne acceptedAnswer.text');
+      else if (sAntwort !== dom.antwort)
+        F(start + ': FAQ ' + (n + 1) + ' — Antwort weicht ab.\n      sichtbar: "'
+          + kurz(String(dom.antwort)) + '"\n      Schema:   "' + kurz(sAntwort) + '"');
+    }
+
+    /* ----- H-4 Die Leistungskarten tragen ihren Text einmal ----- */
+    const karten = [...startHtml.matchAll(/<article[^>]*\bclass="[^"]*\bcrc\b[^"]*"[^>]*>([\s\S]*?)<\/article>/g)]
+      .map((m) => m[1]);
+    if (karten.length !== LEISTUNGEN_ANZAHL)
+      F(start + ': ' + karten.length + ' Leistungskarten statt ' + LEISTUNGEN_ANZAHL);
+
+    const titel = [];
+    for (const [n, karte] of karten.entries()) {
+      const h3 = [...karte.matchAll(/<h3[^>]*>([\s\S]*?)<\/h3>/g)].map((m) => klartext(m[1]));
+      if (h3.length !== 1)
+        F(start + ': Leistungskarte ' + (n + 1) + ' hat ' + h3.length
+          + ' Ueberschriften statt einer — Ruhe- und Offenzustand teilen sich eine');
+      titel.push(...h3);
+      /* Anreisser und Zusammenfassung je genau einmal. Eine zweite Kopie
+         waere wieder ein Zustand, der sich seinen Text nachbaut. */
+      for (const [klasse, name] of [['crc__kick', 'Anreisser'], ['crc__sum', 'Zusammenfassung']]) {
+        const treffer = [...karte.matchAll(new RegExp('<p[^>]*\\bclass="[^"]*\\b' + klasse + '\\b[^"]*"[^>]*>([\\s\\S]*?)</p>', 'g'))];
+        if (treffer.length > 1)
+          F(start + ': Leistungskarte ' + (n + 1) + ' traegt ' + treffer.length + ' mal den ' + name);
+      }
+      const punkte = [...karte.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/g)].map((m) => klartext(m[1]));
+      for (const d of doppelte(punkte))
+        F(start + ': Leistungskarte ' + (n + 1) + ' nennt "' + kurz(d) + '" mehrfach');
+    }
+    for (const d of doppelte(titel))
+      F(start + ': Leistungstitel steht mehrfach — "' + kurz(d) + '"');
+    if (start === 'index.html' && titel.length === LEISTUNGEN_DE.length) {
+      for (const [n, erwartet] of LEISTUNGEN_DE.entries()) {
+        if (titel[n] !== erwartet)
+          F(start + ': Leistungskarte ' + (n + 1) + ' heisst "' + kurz(titel[n]) + '" statt "' + erwartet + '"');
+      }
+    }
+  }
+
   /* --- verwaiste Schriften --- */
   for (const f of fontsVorhanden) {
     if (!fontsBenutzt.has(f)) hinweise.push(`Schrift liegt in dist/, wird aber nie referenziert: ${f}`);
