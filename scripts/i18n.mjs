@@ -16,7 +16,11 @@
 /* Attribute, deren Inhalt sichtbar oder vorlesbar ist. */
 export const ATTRIBUTE = ['alt', 'title', 'aria-label', 'placeholder', 'content',
   /* Vorbelegung des Anliegen-Feldes — landet sichtbar im Formular */
-  'data-anliegen'];
+  'data-anliegen',
+  /* Beschriftung der Karussellpunkte. Das Skript setzt sie als aria-label
+     auf die erzeugten Knoepfe; sie wird also vorgelesen und gehoert damit
+     zur Sprachfassung, auch wenn sie im Markup als Datenattribut steht. */
+  'data-beschriftung'];
 
 /* Nicht uebersetzen: Eigennamen, Zahlen, technische Werte. Der Vergleich
    laeuft nach trim() und Kleinschreibung. */

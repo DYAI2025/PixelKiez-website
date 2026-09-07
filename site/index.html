@@ -861,6 +861,10 @@
         <article class="fq__b"><h3 class="fq__q">Was bedeutet GEO beziehungsweise Auffindbarkeit in KI-Suchen?</h3><p class="fq__a">GEO steht für die Auffindbarkeit in KI-Suchsystemen wie ChatGPT, Perplexity oder Copilot. Dazu gehören strukturierte Daten, zitierfähige Faktenblöcke, identische Einträge auf Google Business Profile, Bing Places und Apple Business Connect sowie Freigaben für KI-Crawler.</p></article>
         <article class="fq__b"><h3 class="fq__q">Gehört mir die Website nach dem Projekt?</h3><p class="fq__a">Ja. Das Eigentum an der Website liegt vollständig beim Kunden, inklusive Übergabe mit Einweisung und Dokumentation.</p></article>
       </div>
+      <!-- Dieselbe Bahn wie bei den Leistungskarten: schmal stehen die Kaesten
+           nebeneinander statt untereinander, gewischt wird per scroll-snap.
+           Die Punkte kommen aus demselben Skript und sind dieselbe Anzeige. -->
+      <div class="carou__dots carou__dots--fq" data-dots=".fq" role="group" aria-label="Fragen durchblättern" data-beschriftung="Frage % anzeigen"></div>
   </div>
 </section>
 
@@ -877,19 +881,21 @@
     <div class="kontakt">
       <div id="form-host" data-reveal>
         <form class="form" id="kontaktform" novalidate>
+          <p class="form__pflicht">Felder mit * sind Pflichtfelder.</p>
+
           <div class="field">
-            <label for="f-name">Name</label>
+            <label for="f-name">Name <span class="pflicht" aria-hidden="true">*</span></label>
             <input class="input" type="text" id="f-name" name="name" autocomplete="name" required placeholder="Vor- und Nachname">
           </div>
 
           <div class="field">
-            <label for="f-kontakt">Wie erreichen wir Sie?</label>
+            <label for="f-kontakt">Wie erreichen wir Sie? <span class="pflicht" aria-hidden="true">*</span></label>
             <input class="input" type="text" id="f-kontakt" name="kontakt" autocomplete="email" required placeholder="E-Mail oder Telefonnummer" aria-describedby="hint-kontakt">
             <p class="hint" id="hint-kontakt">Eines von beidem genügt. Kein Pflicht-Telefonfeld.</p>
           </div>
 
           <div class="field">
-            <label for="f-ausgangspunkt">Ausgangspunkt</label>
+            <label for="f-ausgangspunkt">Ausgangspunkt <span style="text-transform:none;letter-spacing:0">(optional)</span></label>
             <select class="select" id="f-ausgangspunkt" name="ausgangspunkt">
               <option value="">Bitte wählen</option>
               <option value="keine">Noch keine Website</option>
@@ -909,7 +915,7 @@
 
           <div class="consent">
             <input type="checkbox" id="f-consent" name="consent" required>
-            <label for="f-consent">Ich bin damit einverstanden, dass meine Angaben zur Bearbeitung meiner Anfrage verarbeitet werden. Details in der <a href="datenschutz.html">Datenschutzerklärung</a>. Die Einwilligung ist jederzeit widerrufbar.</label>
+            <label for="f-consent">Ich bin damit einverstanden, dass meine Angaben zur Bearbeitung meiner Anfrage verarbeitet werden. Details in der <a href="datenschutz.html">Datenschutzerklärung</a>. Die Einwilligung ist jederzeit widerrufbar. <span class="pflicht" aria-hidden="true">*</span></label>
           </div>
 
           <div class="btn-row">
@@ -951,6 +957,8 @@
           </div>
         </div>
       </div>
+      <!-- Schmal laufen die Hinweise als Bahn, siehe .channels im Stil. -->
+      <div class="carou__dots carou__dots--kanal" data-dots=".channels" role="group" aria-label="Hinweise durchblättern" data-beschriftung="Hinweis % anzeigen"></div>
     </div>
   </div>
 </section>
