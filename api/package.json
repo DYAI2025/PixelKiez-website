@@ -8,7 +8,9 @@
   "scripts": {
     "start": "node server.mjs",
     "dev": "node server.mjs",
-    "mailtest": "node mailtest.mjs"
+    "mailtest": "node mailtest.mjs",
+    "check": "node --check server.mjs && node --check mailtest.mjs",
+    "test": "node --test tests/*.test.mjs"
   },
   "dependencies": {
     "nodemailer": "^9.0.3"

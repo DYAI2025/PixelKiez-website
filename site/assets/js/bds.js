@@ -834,23 +834,33 @@
   })();
 
   /* --- 7. Leistungskarten: gleiche Hoehe --------------------------------
-     Der Vorhang liegt absolut ueber der Karte, seine Hoehe zaehlt also nicht
-     zum Fluss. Damit nichts abgeschnitten wird, bekommen alle vier Karten die
-     Hoehe des groessten Vorhang-Inhalts. Kein Klick-Umschalter: geoeffnet
-     wird ausschliesslich per Hover oder Tastaturfokus.
+     Im Ruhezustand ist der Zusatztext zugeklappt, die Karte waere also
+     niedriger als im geoeffneten Zustand — beim Aufklappen wuerde das
+     Raster springen. Deshalb bekommen alle vier Karten die Hoehe der
+     groessten geoeffneten Karte.
+
+     Gemessen wird an der geoeffneten Karte: data-messen klappt sie kurz und
+     ohne Uebergang auf (die Regel steht im Stylesheet), danach faellt die
+     Marke wieder weg. Kein Klick-Umschalter: geoeffnet wird ausschliesslich
+     per Hover oder Tastaturfokus.
      ---------------------------------------------------------------------- */
   (function curtainCards() {
     var cards = $$('.crc');
     if (!cards.length) return;
     var measure = function () {
       var max = 0;
-      cards.forEach(function (c) { c.style.removeProperty('height'); });
       cards.forEach(function (c) {
-        [$('.crc__open', c), $('.crc__rest', c)].forEach(function (layer) {
-          if (layer && layer.scrollHeight > max) max = layer.scrollHeight;
-        });
+        c.style.removeProperty('height');
+        c.setAttribute('data-messen', '');
       });
-      cards.forEach(function (c) { c.style.height = Math.ceil(max) + 'px'; });
+      cards.forEach(function (c) {
+        var lage = $('.crc__lage', c);
+        if (lage && lage.scrollHeight > max) max = lage.scrollHeight;
+      });
+      cards.forEach(function (c) {
+        c.removeAttribute('data-messen');
+        c.style.height = Math.ceil(max) + 'px';
+      });
     };
     whenFontsReady(measure);
     var rt;

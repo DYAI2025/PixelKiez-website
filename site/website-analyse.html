@@ -118,18 +118,20 @@
     <div class="kontakt">
       <div id="form-host" data-reveal>
         <form class="form" id="kontaktform" novalidate>
+          <p class="form__pflicht">Felder mit * sind Pflichtfelder.</p>
+
           <div class="field">
-            <label for="f-url">Adresse Ihrer Website</label>
+            <label for="f-url">Adresse Ihrer Website <span class="pflicht" aria-hidden="true">*</span></label>
             <input class="input" type="url" id="f-url" name="url" inputmode="url" autocomplete="url" required placeholder="https://ihre-website.de">
           </div>
 
           <div class="field">
-            <label for="f-name">Name</label>
+            <label for="f-name">Name <span class="pflicht" aria-hidden="true">*</span></label>
             <input class="input" type="text" id="f-name" name="name" autocomplete="name" required placeholder="Vor- und Nachname">
           </div>
 
           <div class="field">
-            <label for="f-kontakt">Wohin schicken wir das Ergebnis?</label>
+            <label for="f-kontakt">Wohin schicken wir das Ergebnis? <span class="pflicht" aria-hidden="true">*</span></label>
             <input class="input" type="email" id="f-kontakt" name="kontakt" autocomplete="email" required placeholder="ihre@e-mail-adresse.de" aria-describedby="hint-kontakt">
             <p class="hint" id="hint-kontakt">Die Analyse kommt per E-Mail. Kein Verteiler, keine Weitergabe.</p>
           </div>
@@ -144,7 +146,7 @@
 
           <div class="consent">
             <input type="checkbox" id="f-consent" name="consent" required>
-            <label for="f-consent">Ich bin damit einverstanden, dass meine Angaben zur Bearbeitung meiner Anfrage verarbeitet werden. Details in der <a href="/datenschutz.html">Datenschutzerklärung</a>. Die Einwilligung ist jederzeit widerrufbar.</label>
+            <label for="f-consent">Ich bin damit einverstanden, dass meine Angaben zur Bearbeitung meiner Anfrage verarbeitet werden. Details in der <a href="/datenschutz.html">Datenschutzerklärung</a>. Die Einwilligung ist jederzeit widerrufbar. <span class="pflicht" aria-hidden="true">*</span></label>
           </div>
 
           <div class="btn-row">
@@ -179,6 +181,8 @@
           </div>
         </div>
       </div>
+      <!-- Schmal laufen die Hinweise als Bahn, siehe .channels im Stil. -->
+      <div class="carou__dots carou__dots--kanal" data-dots=".channels" role="group" aria-label="Hinweise durchblättern" data-beschriftung="Hinweis % anzeigen"></div>
     </div>
   </div>
 </section>
