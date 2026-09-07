@@ -112,6 +112,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true" focusable="false">
   <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></symbol>
   <symbol id="i-arrow-ur" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></symbol>
   <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.8-4.8"/></symbol>
   <symbol id="i-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5a2.5 2.5 0 0 1-2.5 2.5H8l-4 3.5v-15A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5Z"/></symbol>
 </svg>
@@ -125,7 +126,7 @@
       <span class="brand__sub">Webdesign Berlin</span>
     </a>
     <div class="header__act">
-      <a class="btn btn--split btn--primary btn--sm" href="/#kontakt"><span class="btn__label">Gespräch anfragen</span><span class="btn__ico"><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg></span></a>
+      <a class="btn btn--split btn--primary btn--sm" href="/#kontakt" data-open-contact data-anliegen="Anfrage aus dem Wissensbereich: Bitte um ein Gespräch."><span class="btn__label">Gespräch anfragen</span><span class="btn__ico"><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg></span></a>
       <a class="lang" href="/en/knowledge/entity-trust/" hreflang="en" lang="en" aria-label="Switch to English" data-lang-switch>EN</a>
     </div>
   </div>
@@ -515,7 +516,7 @@
       <h2 class="h-lg" data-reveal>Sind Unternehmen, Leistungen und Standort auf Ihrer Website eindeutig zuordenbar?</h2>
       <p class="lead" data-reveal>Diese Frage lässt sich an einer Website nur nachsehen, nicht raten. Schreiben Sie uns, um welche Adresse es geht — wir sehen sie uns an und antworten mit einer Einschätzung, hinter der jemand steht.</p>
       <div data-reveal>
-        <a class="btn btn--split btn--primary" href="/#kontakt"><span class="btn__label">Gespräch anfragen</span><span class="btn__ico"><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg></span></a>
+        <a class="btn btn--split btn--primary" href="/#kontakt" data-open-contact data-anliegen="Anfrage aus dem Wissensbereich: Bitte um ein Gespräch."><span class="btn__label">Gespräch anfragen</span><span class="btn__ico"><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg></span></a>
       </div>
     </div>
   </div>
@@ -564,6 +565,78 @@
     </div>
   </div>
 </footer>
+
+
+<!-- ===================== KONTAKTFENSTER =====================
+     Dasselbe Formular wie auf der Startseite, hier als Overlay: wer im
+     Wissensbereich liest, soll zum Schreiben nicht erst zurueckgeschickt
+     werden. Ohne Skript bleibt der href der Knoepfe stehen.
+     ================================================================== -->
+<dialog class="dialog" id="kontakt-dialog" aria-labelledby="dlg-title">
+  <div class="dialog__in">
+    <div class="dialog__head">
+      <div>
+        <p class="kicker">Schnellkontakt</p>
+        <h2 class="h-md" id="dlg-title" style="margin-top:9px">Reden wir über Ihr Projekt.</h2>
+        <p class="small" style="margin-top:7px">Antwort innerhalb eines Werktags.</p>
+      </div>
+      <button type="button" class="dialog__x" data-dialog-close aria-label="Schließen"><svg aria-hidden="true"><use href="#i-x"/></svg></button>
+    </div>
+
+    <div id="dialog-slot">
+      <form class="form" id="kontaktform" novalidate>
+        <p class="form__pflicht">Felder mit * sind Pflichtfelder.</p>
+
+        <div class="field">
+          <label for="f-name">Name <span class="pflicht" aria-hidden="true">*</span></label>
+          <input class="input" type="text" id="f-name" name="name" autocomplete="name" required placeholder="Vor- und Nachname">
+        </div>
+
+        <div class="field">
+          <label for="f-kontakt">Wie erreichen wir Sie? <span class="pflicht" aria-hidden="true">*</span></label>
+          <input class="input" type="text" id="f-kontakt" name="kontakt" autocomplete="email" required placeholder="E-Mail oder Telefonnummer" aria-describedby="hint-kontakt">
+          <p class="hint" id="hint-kontakt">Eines von beidem genügt. Kein Pflicht-Telefonfeld.</p>
+        </div>
+
+        <div class="field">
+          <label for="f-ausgangspunkt">Ausgangspunkt <span style="text-transform:none;letter-spacing:0">(optional)</span></label>
+          <select class="select" id="f-ausgangspunkt" name="ausgangspunkt">
+            <option value="">Bitte wählen</option>
+            <option value="keine">Noch keine Website</option>
+            <option value="alt">Website ist veraltet</option>
+            <option value="unsichtbar">Website vorhanden, aber unsichtbar</option>
+            <option value="relaunch">Relaunch ist geplant</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="f-anliegen">Anliegen <span style="text-transform:none;letter-spacing:0">(optional)</span></label>
+          <textarea class="textarea" id="f-anliegen" name="anliegen" placeholder="Worum geht es?"></textarea>
+        </div>
+
+        <!-- Honeypot statt Captcha: für Menschen unsichtbar, für Bots verlockend -->
+        <div class="hp" aria-hidden="true"><label for="f-firma">Firma</label><input type="text" id="f-firma" name="firma" tabindex="-1" autocomplete="off"></div>
+
+        <div class="consent">
+          <input type="checkbox" id="f-consent" name="consent" required>
+          <label for="f-consent">Ich bin damit einverstanden, dass meine Angaben zur Bearbeitung meiner Anfrage verarbeitet werden. Details in der <a href="/datenschutz.html">Datenschutzerklärung</a>. Die Einwilligung ist jederzeit widerrufbar. <span class="pflicht" aria-hidden="true">*</span></label>
+        </div>
+
+        <div class="btn-row">
+          <button type="submit" class="btn btn--split btn--primary" id="form-submit"><span class="btn__label" data-label>Anfrage senden</span><span class="btn__ico"><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg></span></button>
+          <span class="mono" style="color:var(--ink-45)">Antwort in 1 Werktag</span>
+        </div>
+
+        <p class="form__status" id="form-status" role="status" aria-live="polite" data-show="false"></p>
+      </form>
+    </div>
+
+    <!-- Ablage, solange das Fenster zu ist. Steht bewusst im Fenster: ein
+         geschlossenes <dialog> ist display:none und nimmt das Formular
+         damit ohne eigene Regel aus dem Bild. -->
+    <div id="form-host"></div>
+  </div>
+</dialog>
 
 <script src="assets/js/bds.js" defer></script>
 </body>

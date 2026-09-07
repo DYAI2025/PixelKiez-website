@@ -1070,6 +1070,13 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
   .carou__dots--crc{display:flex}
 }
 
+/* Dieselbe Bahn tragen zwei weitere Reihen: die Fragen und die Hinweise
+   neben dem Kontaktformular. Ihre Grundregeln stehen weiter unten in
+   Abschnitt 12 und 13 — deshalb stehen auch ihre schmalen Fassungen dort
+   und nicht hier. Gleiche Spezifitaet entscheidet die Reihenfolge, eine
+   Bahn oberhalb ihrer eigenen Grunddefinition waere wirkungslos. Was hier
+   steht, ist der Bauplan; die beiden Verweise sparen die Suche. */
+
 /* Fortschrittspunkte. Rein anzeigend — gewischt wird auf der Bahn selbst,
    deshalb aria-hidden im Markup und keine zusaetzlichen Tabstopps. */
 .carou__dots{
@@ -1649,6 +1656,36 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
 }
 .fq__a{margin-top:8px;font-size:.8125rem;line-height:1.55;color:var(--ink-70)}
 
+/* Schmal laufen die Fragen auf derselben Bahn wie die Leistungskarten
+   (Abschnitt 10). Am Schreibtisch stehen die sechs Kaesten als Raster
+   nebeneinander; untereinander gestapelt kosteten sie rund 1450px, in
+   denen sechsmal dieselbe Kastenform untereinander steht. Nebeneinander
+   bleibt es dieselbe Ansicht wie am Schreibtisch, nur gewischt statt
+   ueberblickt — und der Abschnitt passt wieder auf ein Bild.
+
+   Die Kaesten einer Bahn sind gleich hoch (flex streckt sie), so wie sie
+   es im Raster zeilenweise auch sind. */
+@media (max-width:819px){
+  .fq{
+    display:flex;
+    overflow-x:auto;
+    scroll-snap-type:x mandatory;
+    overscroll-behavior-x:contain;
+    gap:12px;
+    margin-inline:calc(var(--gutter) * -1);
+    padding-inline:var(--gutter);
+    scroll-padding-inline:var(--gutter);
+    scrollbar-width:none;
+  }
+  .fq::-webkit-scrollbar{display:none}
+  .fq__b{
+    flex:0 0 min(86%,380px);
+    scroll-snap-align:start;
+    scroll-snap-stop:always;
+  }
+  .carou__dots--fq{display:flex}
+}
+
 /* Mobile first: 13px sind am Schreibtisch eine Auszeichnungsgroesse, am
    Handy aber zusammenhaengender Fliesstext, den man liest. Betroffen sind
    die Antworten im Fragenteil, die Fakten im Detailabschnitt und die
@@ -1676,6 +1713,23 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
    spaetere. Am Handy ist das Formularhinweis-Text, den man liest. */
 @media (max-width:899px){
   .field .hint{font-size:.875rem}
+}
+
+/* Pflichtfelder. Der Stern traegt die Nebenfarbe, weil die Etiketten selbst
+   gedaempft stehen (--ink-45) — ein Stern in derselben Daempfung waere kein
+   Hinweis, sondern ein Satzzeichen. --accent-ink haelt auf beiden Gruenden:
+   4,9:1 auf dem hellen Papier, 5,5:1 auf dem schwarzen Kontaktabschnitt.
+
+   Im Markup ist der Stern aria-hidden. Dass ein Feld ausgefuellt werden
+   muss, steht bereits im required-Attribut, und Vorlesewerkzeuge kuendigen
+   es von dort an — ohne aria-hidden hiesse es "Name Stern erforderlich". */
+.pflicht{color:var(--accent-ink)}
+
+/* Die Zeile, die den Stern erklaert. Sie steht als erstes im Formular, nicht
+   darunter: wer sie erst am Ende liest, hat die Felder schon ausgefuellt. */
+.form__pflicht{font-size:.8125rem;color:var(--ink-45);line-height:1.5;margin:0}
+@media (max-width:899px){
+  .form__pflicht{font-size:.875rem}
 }
 .input,.select,.textarea{
   width:100%;padding:14px 16px;min-height:50px;
@@ -1736,6 +1790,40 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
 .channel__i svg{width:16px;height:16px}
 .channel a{color:var(--ink);text-underline-offset:4px}
 .channel a:hover{color:var(--accent-ink)}
+
+/* Schmal laufen auch die Hinweise auf der Bahn aus Abschnitt 10. Sie
+   standen als eine Spalte unter dem Formular und kosteten dort 460px, an
+   deren Ende die Fusszeile noch gar nicht begonnen hatte.
+
+   Zwei echte Spalten waeren hier der falsche Griff: bei 165px Spaltenbreite
+   wird aus einem Absatz von vier Zeilen einer von neun. Nachgemessen wurde
+   die Reihe dadurch hoeher, nicht niedriger (611px statt 462px). Die Bahn
+   dagegen zeigt jeweils einen Hinweis in ganzer Breite — der Satz behaelt
+   seine Zeilenlaenge, und die Reihe kostet nur noch die Hoehe des
+   laengsten Hinweises.
+
+   Der erste Kasten traegt die Anschrift zum Schreiben; er steht ohne
+   Wischen da, weil die Bahn links beginnt. */
+@media (max-width:819px){
+  .channels{
+    display:flex;
+    overflow-x:auto;
+    scroll-snap-type:x mandatory;
+    overscroll-behavior-x:contain;
+    gap:12px;
+    margin-inline:calc(var(--gutter) * -1);
+    padding-inline:var(--gutter);
+    scroll-padding-inline:var(--gutter);
+    scrollbar-width:none;
+  }
+  .channels::-webkit-scrollbar{display:none}
+  .channels > .channel{
+    flex:0 0 min(86%,380px);
+    scroll-snap-align:start;
+    scroll-snap-stop:always;
+  }
+  .carou__dots--kanal{display:flex}
+}
 
 /* ---------- 14. Dialog & Sticky ------------------------------------------ */
 .dialog{
@@ -1863,12 +1951,19 @@ em.q{font-style:normal;color:var(--accent-ink);font-weight:500}
 }
 .footer nav a:hover{color:var(--accent-ink)}
 /* Schmal: untereinander gestapelte Spalten kosten zu viel Hoehe fuer wenige
-   Woerter. Marke und Kontakt bleiben breit — die Adresse braucht die Zeile —,
-   die Leistungsliste steht daneben. */
+   Woerter. Nur der Markenblock bleibt breit — er traegt Wortmarke und einen
+   ganzen Satz. Die beiden Linklisten stehen nebeneinander.
+
+   Vorher trug auch die letzte Spalte grid-column:1/-1. Bei drei Kindern
+   hiess das: erstes breit, letztes breit, und die Leistungsliste in der
+   Mitte allein in Spalte eins — Spalte zwei blieb leer, und die Fusszeile
+   war so hoch wie eine einzelne Spalte. Die kuerzere der beiden Listen
+   bestimmt jetzt nichts mehr, die hoehere die Zeile: das spart die volle
+   Hoehe der Leistungsliste. Die Anschrift steht bei 165px Spaltenbreite
+   weiterhin auf drei Zeilen, sie war nie auf eine angewiesen. */
 @media (max-width:819px){
   .footer__grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:30px 20px}
-  .footer__grid > :first-child,
-  .footer__grid > :last-child{grid-column:1 / -1}
+  .footer__grid > :first-child{grid-column:1 / -1}
   .footer nav{gap:0}
   /* Vorher 4px, das ergab bei 14px Schrift rund 31px Trefferhoehe. Auf dem
      Telefon ist das zu wenig: die Links stehen dicht untereinander, und wer
